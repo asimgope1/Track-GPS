@@ -1,6 +1,6 @@
-import React, {useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {View, Modal, TouchableOpacity, StyleSheet} from 'react-native';
-import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
+import MapView, {Polyline, PROVIDER_GOOGLE} from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -13,6 +13,16 @@ const Track = ({
   projectedTrack,
 }) => {
   const mapRef = useRef();
+  // useEffect(() => {
+  //   console.log(
+  //     'Projected Track Data:==============================================================================================',
+  //     projectedTrack,
+  //   );
+  // }, [projectedTrack]);
+  console.log(
+    'Projected Track Data:==============================================================================================',
+    projectedTrack,
+  );
 
   // Filter out undefined coordinates
   const filteredShowTrack =
@@ -56,43 +66,18 @@ const Track = ({
               origin={source}
               destination={destination}
               apikey="AIzaSyChAFxD34j5ryAcBSmWtDlCGOg3AQ6Vu8w"
-              strokeColor="green" // Green color for projected route
+              strokeColor="green" // Green for projected route
               strokeWidth={4}
               optimizeWaypoints={true}
             />
           )}
 
-          {/* Actual Covered Route */}
+          {/* Actual Covered Route using Polyline */}
           {filteredShowTrack.length > 1 && (
-            <MapViewDirections
-              origin={filteredShowTrack[0]}
-              destination={filteredShowTrack[filteredShowTrack.length - 1]}
-              waypoints={filteredShowTrack.slice(1, -1)}
-              apikey="AIzaSyChAFxD34j5ryAcBSmWtDlCGOg3AQ6Vu8w"
-              strokeColor="blue" // Blue for actual covered path
+            <Polyline
+              coordinates={filteredShowTrack}
+              strokeColor="blue" // Blue for the actual path
               strokeWidth={5}
-              optimizeWaypoints={true}
-            />
-          )}
-
-          {/* Markers */}
-          {filteredShowTrack.length > 0 && (
-            <Marker
-              coordinate={filteredShowTrack[filteredShowTrack.length - 1]}
-              title="Current Location"
-              description="Your Current Location"
-            />
-          )}
-
-          {source && (
-            <Marker coordinate={source} title="Source" pinColor="green" />
-          )}
-
-          {destination && (
-            <Marker
-              coordinate={destination}
-              title="Destination"
-              pinColor="red"
             />
           )}
         </MapView>

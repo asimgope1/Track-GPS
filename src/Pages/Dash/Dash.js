@@ -70,9 +70,23 @@ const Dash = ({}) => {
   const [pageLoad, setPageLoad] = useState(false);
   const [position, setPosition] = useState(null);
   const bottomSheetRef = useRef(null);
-  const projectedTrack = {
-    source: {latitude: 20.2961, longitude: 85.8245}, // KIIT Square, Bhubaneswar (Start)
-    destination: {latitude: 20.29, longitude: 85.8189}, // Jayadev Vihar, Bhubaneswar (End)
+  const [projectedTrackData, setProjectedTrackData] = useState(null);
+
+  // source: {latitude: 20.2961, longitude: 85.8245}, // KIIT Square, Bhubaneswar (Start)
+  // destination: {latitude: 20.29, longitude: 85.8189}, // Jayadev Vihar, Bhubaneswar (End)
+  const projectedTrack = async id => {
+    try {
+      const url = `${BASE_URL}route/assign-route/${id}/`; // Construct the API URL
+      const result = await GETNETWORK(url, true); // Use GETNETWORK with token authentication
+      console.log(
+        result,
+        'hhhhhhhhhhhhhhhhhhhhhhhhhhhhwwwwwwwwwwwwwwwwwwwwwlllllllllllllllllllllllllooooooooooooo-----------------------------',
+      );
+
+      setProjectedTrackData(result); // Update state with the fetched data
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
   };
 
   // callbacks
@@ -390,175 +404,177 @@ const Dash = ({}) => {
     </SafeAreaView>
   );
 
-  const renderVehicleCard = ({item}) => console.log('card item:', item);
-  // <TouchableOpacity
-  //   activeOpacity={0.9}
-  //   onPress={() => {
-  //     GetSelectedVehicle(item.thing_id);
-  //     connectWebSocket(item.thing_id);
-  //     mapApi(item.thing_id);
-  //     SetLog(item.thing_id);
+  const renderVehicleCard = ({item}) => (
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={() => {
+        GetSelectedVehicle(item.thing_id);
+        connectWebSocket(item.thing_id);
+        mapApi(item.thing_id);
+        SetLog(item.thing_id);
+        projectedTrack(item.thing_id);
 
-  //     setHistory(true);
-  //     setShowModal(true);
-  //   }}
-  //   style={styles.cardContainer}>
-  //   {/* Card Header */}
-  //   <View style={styles.cardHeader}>
-  //     <View style={{...styles.row}}>
-  //       <View style={styles.row}>
-  //         <Icon
-  //           name="directions-car"
-  //           type="MaterialIcons"
-  //           color={
-  //             statusMap[item.thing_id] === 'Running'
-  //               ? '#28A745'
-  //               : statusMap[item.thing_id] === 'Stopped'
-  //               ? '#DC3545'
-  //               : statusMap[item.thing_id] === 'Unreachable'
-  //               ? '#6C757D'
-  //               : '#4db6b3'
-  //           }
-  //           size={30}
-  //           style={styles.icon}
-  //         />
+        setHistory(true);
+        setShowModal(true);
+      }}
+      style={styles.cardContainer}>
+      {/* Card Header */}
+      <View style={styles.cardHeader}>
+        <View style={{...styles.row}}>
+          <View style={styles.row}>
+            <Icon
+              name="directions-car"
+              type="MaterialIcons"
+              color={
+                statusMap[item.thing_id] === 'Running'
+                  ? '#28A745'
+                  : statusMap[item.thing_id] === 'Stopped'
+                  ? '#DC3545'
+                  : statusMap[item.thing_id] === 'Unreachable'
+                  ? '#6C757D'
+                  : '#4db6b3'
+              }
+              size={30}
+              style={styles.icon}
+            />
 
-  //         <View>
-  //           <Text style={{...styles.cardTitle}}>{item.thing_name}</Text>
-  //         </View>
-  //       </View>
-  //       <View style={styles.row}>
-  //         <Text style={styles.cardLabel}>Vehicle No: </Text>
-  //         <Text style={styles.cardValue}>
-  //           {item.properties.default_properties.vehicle_no}
-  //         </Text>
-  //       </View>
-  //     </View>
-  //     {/* Separation Line */}
-  //     <Text
-  //       style={{
-  //         ...styles.cardValue,
-  //         fontSize: 13,
-  //         color: 'grey',
-  //         marginLeft: 10,
-  //       }}>
-  //       {moment(item.derived_live_config.received_datetime).format(
-  //         'DD/MM/YYYY h:mm a',
-  //       )}
-  //     </Text>
-  //     <View style={styles.separator} />
-  //   </View>
+            <View>
+              <Text style={{...styles.cardTitle}}>{item.thing_name}</Text>
+            </View>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.cardLabel}>Vehicle No: </Text>
+            <Text style={styles.cardValue}>
+              {item.properties.default_properties.vehicle_no}
+            </Text>
+          </View>
+        </View>
+        {/* Separation Line */}
+        <Text
+          style={{
+            ...styles.cardValue,
+            fontSize: 13,
+            color: 'grey',
+            marginLeft: 10,
+          }}>
+          {moment(item.derived_live_config.received_datetime).format(
+            'DD/MM/YYYY h:mm a',
+          )}
+        </Text>
+        <View style={styles.separator} />
+      </View>
 
-  //   {/* Card Body */}
-  //   {/* Row 1: Vehicle Type and Driver */}
-  //   <View style={styles.row}>
-  //     <View style={styles.row}>
-  //       <View style={styles.rowWithIcon}>
-  //         <Icon
-  //           name="check-circle"
-  //           type="MaterialIcons"
-  //           color="#1E90FF"
-  //           size={23}
-  //           style={styles.icon}
-  //         />
-  //         <Text style={{...styles.cardLabel}}>Status: </Text>
-  //       </View>
-  //       <Text style={{...styles.cardValue}}>
-  //         {item.derived_live_config.status}
-  //       </Text>
-  //     </View>
-  //     <View style={styles.row}>
-  //       <View style={styles.rowWithIcon}>
-  //         <Icon
-  //           name="account-circle"
-  //           type="MaterialIcons"
-  //           color="#1E90FF"
-  //           size={23}
-  //           style={styles.icon}
-  //         />
-  //         <Text style={styles.cardLabel}>Driver: </Text>
-  //       </View>
-  //       <Text style={styles.cardValue}>{item.desc}</Text>
-  //     </View>
-  //   </View>
+      {/* Card Body */}
+      {/* Row 1: Vehicle Type and Driver */}
+      <View style={styles.row}>
+        <View style={styles.row}>
+          <View style={styles.rowWithIcon}>
+            <Icon
+              name="check-circle"
+              type="MaterialIcons"
+              color="#1E90FF"
+              size={23}
+              style={styles.icon}
+            />
+            <Text style={{...styles.cardLabel}}>Status: </Text>
+          </View>
+          <Text style={{...styles.cardValue}}>
+            {item.derived_live_config.status}
+          </Text>
+        </View>
+        <View style={styles.row}>
+          <View style={styles.rowWithIcon}>
+            <Icon
+              name="account-circle"
+              type="MaterialIcons"
+              color="#1E90FF"
+              size={23}
+              style={styles.icon}
+            />
+            <Text style={styles.cardLabel}>Driver: </Text>
+          </View>
+          <Text style={styles.cardValue}>{item.desc}</Text>
+        </View>
+      </View>
 
-  //   {/* Row 2: Status and Speed */}
-  //   <View style={styles.row}>
-  //     <View style={styles.row}>
-  //       <View style={styles.rowWithIcon}>
-  //         <Icon
-  //           name="trending-up"
-  //           type="MaterialIcons"
-  //           color="#1E90FF"
-  //           size={23}
-  //           style={styles.icon}
-  //         />
-  //         <Text style={styles.cardLabel}>Acc: </Text>
-  //       </View>
-  //       <Text style={styles.cardValue}>
-  //         {item?.derived_live_config?.acceleration > 0
-  //           ? `${item.derived_live_config.acceleration.toFixed(2)} m/s²`
-  //           : '0 m/s²'}
-  //       </Text>
-  //     </View>
-  //     <View style={styles.row}>
-  //       <View style={styles.rowWithIcon}>
-  //         <Icon
-  //           name="speed"
-  //           type="MaterialIcons"
-  //           color="#1E90FF"
-  //           size={23}
-  //           style={styles.icon}
-  //         />
-  //         <Text style={styles.cardLabel}>Speed: </Text>
-  //       </View>
-  //       <Text style={styles.cardValue}>
-  //         {item?.derived_live_config?.speed?.toFixed(2) || '0.00'} km/h
-  //       </Text>
-  //     </View>
-  //   </View>
+      {/* Row 2: Status and Speed */}
+      <View style={styles.row}>
+        <View style={styles.row}>
+          <View style={styles.rowWithIcon}>
+            <Icon
+              name="trending-up"
+              type="MaterialIcons"
+              color="#1E90FF"
+              size={23}
+              style={styles.icon}
+            />
+            <Text style={styles.cardLabel}>Acc: </Text>
+          </View>
+          <Text style={styles.cardValue}>
+            {item?.derived_live_config?.acceleration > 0
+              ? `${item.derived_live_config.acceleration.toFixed(2)} m/s²`
+              : '0 m/s²'}
+          </Text>
+        </View>
+        <View style={styles.row}>
+          <View style={styles.rowWithIcon}>
+            <Icon
+              name="speed"
+              type="MaterialIcons"
+              color="#1E90FF"
+              size={23}
+              style={styles.icon}
+            />
+            <Text style={styles.cardLabel}>Speed: </Text>
+          </View>
+          <Text style={styles.cardValue}>
+            {item?.derived_live_config?.speed?.toFixed(2) || '0.00'} km/h
+          </Text>
+        </View>
+      </View>
 
-  //   {/* Row 3: Acceleration and Total Distance */}
-  //   <View style={styles.row}></View>
-  //   <View style={styles.rowWithIcon}>
-  //     <Icon
-  //       name="straighten"
-  //       type="MaterialIcons"
-  //       color="#1E90FF"
-  //       size={23}
-  //       style={styles.icon}
-  //     />
-  //     <Text style={styles.cardLabel}>Total Dist: </Text>
-  //     <Text style={styles.cardValue}>
-  //       {(item.derived_live_config.total_distance / 1000).toFixed(2)} km
-  //     </Text>
-  //   </View>
+      {/* Row 3: Acceleration and Total Distance */}
+      <View style={styles.row}></View>
+      <View style={styles.rowWithIcon}>
+        <Icon
+          name="straighten"
+          type="MaterialIcons"
+          color="#1E90FF"
+          size={23}
+          style={styles.icon}
+        />
+        <Text style={styles.cardLabel}>Total Dist: </Text>
+        <Text style={styles.cardValue}>
+          {(item.derived_live_config.total_distance / 1000).toFixed(2)} km
+        </Text>
+      </View>
 
-  //   {/* Row 4: Current Distance and Updated On */}
-  //   <View style={styles.row}>
-  //     <View style={styles.row}>
-  //       <View style={styles.rowWithIcon}>
-  //         <Icon
-  //           name="place"
-  //           type="MaterialIcons"
-  //           color="#1E90FF"
-  //           size={23}
-  //           style={styles.icon}
-  //         />
-  //         <Text style={styles.cardLabel}>Current Dist: </Text>
-  //       </View>
-  //       <Text style={styles.cardValue}>
-  //         {(item.derived_live_config.current_distance / 1000).toFixed(2)} km
-  //       </Text>
-  //     </View>
-  //   </View>
-  //   <View style={styles.rowWithIcon}></View>
-  // </TouchableOpacity>
+      {/* Row 4: Current Distance and Updated On */}
+      <View style={styles.row}>
+        <View style={styles.row}>
+          <View style={styles.rowWithIcon}>
+            <Icon
+              name="place"
+              type="MaterialIcons"
+              color="#1E90FF"
+              size={23}
+              style={styles.icon}
+            />
+            <Text style={styles.cardLabel}>Current Dist: </Text>
+          </View>
+          <Text style={styles.cardValue}>
+            {(item.derived_live_config.current_distance / 1000).toFixed(2)} km
+          </Text>
+        </View>
+      </View>
+      <View style={styles.rowWithIcon}></View>
+    </TouchableOpacity>
+  );
 
-  // console.log('showTrack', showTrack);
-  // console.log('projectedTrack', projectedTrack);
-  // console.log('Location0', Location[0]);
-  // console.log('Location1', Location[1]);
+  console.log('showTrack', showTrack);
+  console.log('projectedTrack', projectedTrack);
+  console.log('Location0', Location[0]);
+  console.log('Location1', Location[1]);
 
   return (
     <>
