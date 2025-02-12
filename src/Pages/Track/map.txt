@@ -1,0 +1,56 @@
+  {/* Map */}
+        {!loading && (
+          <MapView
+            ref={mapRef}
+            provider={PROVIDER_GOOGLE}
+            style={styles.map}
+            region={region}
+            mapType="hybrid">
+            <MapViewDirections
+              origin={origin}
+              destination={destination}
+              strokeWidth={7}
+              strokeColor="#90EE90"
+              apikey={'AIzaSyChAFxD34j5ryAcBSmWtDlCGOg3AQ6Vu8w'}
+            />
+            {/* Render Start and End Markers */}
+            {showTrack?.length > 0 && (
+              <>
+                <Marker
+                  coordinate={showTrack[0]}
+                  title="Start Point"
+                  pinColor="green"
+                  description={`${showTrack[0].latitude}, ${showTrack[0].longitude}`}
+                />
+                <Marker
+                  coordinate={showTrack[showTrack.length - 1]}
+                  title="End Point"
+                  pinColor="red"
+                  description={`${showTrack[showTrack.length - 1].latitude}, ${
+                    showTrack[showTrack.length - 1].longitude
+                  }`}
+                />
+              </>
+            )}
+
+            {/* Render Actual Route */}
+            {showTrack?.length > 1 && (
+              <Polyline
+                coordinates={showTrack}
+                strokeColor="blue"
+                strokeWidth={5}
+              />
+            )}
+
+            {/* Render Projected Route */}
+
+            {/* Render Directions Polyline */}
+            {directions && (
+              <Polyline
+                coordinates={directions}
+                strokeColor="blue"
+                strokeWidth={5}
+              />
+            )}
+          </MapView>
+        )}
