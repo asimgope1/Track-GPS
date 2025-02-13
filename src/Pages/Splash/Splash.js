@@ -6,9 +6,9 @@ import {
   StyleSheet,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import {MyStatusBar} from '../../constants/config';
-import {WHITE} from '../../constants/color';
 import {HEIGHT, WIDTH} from '../../constants/config';
 import RNPermissions, {PERMISSIONS, RESULTS} from 'react-native-permissions';
 import Geolocation from '@react-native-community/geolocation';
@@ -16,13 +16,15 @@ import Geolocation from '@react-native-community/geolocation';
 const Splash = ({navigation}) => {
   const [location, setLocation] = useState(null);
 
-  // Animated values for circles
-  const circlePositions = useRef([
-    {x: new Animated.Value(-50), y: new Animated.Value(-50)}, // Circle 1
-    {x: new Animated.Value(WIDTH + 50), y: new Animated.Value(-50)}, // Circle 2
-    {x: new Animated.Value(-50), y: new Animated.Value(-50)}, // Circle 3
-    {x: new Animated.Value(WIDTH + 50), y: new Animated.Value(-50)}, // Circle 4
+  // Animated values for markers
+  const markerPositions = useRef([
+    {x: new Animated.Value(-50), y: new Animated.Value(-50)},
+    {x: new Animated.Value(WIDTH + 50), y: new Animated.Value(-50)},
+    {x: new Animated.Value(-50), y: new Animated.Value(-50)},
+    {x: new Animated.Value(WIDTH + 50), y: new Animated.Value(-50)},
   ]).current;
+
+  const markerSize = useRef(new Animated.Value(40)).current; // Initial size
 
   useEffect(() => {
     // Request location permission and get geolocation
@@ -36,10 +38,9 @@ const Splash = ({navigation}) => {
         const result = await RNPermissions.request(permission);
 
         if (result === RESULTS.GRANTED) {
-          // Permission granted, get geolocation
           Geolocation.getCurrentPosition(
             position => {
-              setLocation(position.coords); // Set the user's location
+              setLocation(position.coords);
               console.log('Location:', position.coords);
             },
             error => {
@@ -58,35 +59,60 @@ const Splash = ({navigation}) => {
 
     requestLocationPermission();
 
-    // Define target positions for each circle
-    const targetPositions = [
-      {x: WIDTH / 4 - 100, y: HEIGHT / 2.3}, // Circle 1
-      {x: WIDTH / 2 + 95, y: HEIGHT / 3}, // Circle 2
-      {x: WIDTH / 4 - 70, y: HEIGHT / 2 + 140}, // Circle 3
-      {x: WIDTH / 2 - 15, y: HEIGHT / 2 + 40}, // Circle 4
+    // Define target positions for each marker
+    const initialTargetPositions = [
+      {x: WIDTH / 4 - 50, y: HEIGHT / 2.3},
+      {x: WIDTH / 2 + 60, y: HEIGHT / 2.5},
+      {x: WIDTH / 4 - 30, y: HEIGHT / 2 + 140},
+      {x: WIDTH / 2 + 35, y: HEIGHT / 2 + 80},
     ];
 
-    // Sequential animation for all circles
+    // Step 1: Move markers to initial positions
     Animated.sequence(
-      targetPositions.map((target, index) =>
+      initialTargetPositions.map((target, index) =>
         Animated.parallel([
-          Animated.timing(circlePositions[index].x, {
+          Animated.timing(markerPositions[index].x, {
             toValue: target.x,
             duration: 1000,
-            useNativeDriver: true,
+            //useNativeDriver: true,
           }),
-          Animated.timing(circlePositions[index].y, {
+          Animated.timing(markerPositions[index].y, {
             toValue: target.y,
             duration: 1000,
-            useNativeDriver: true,
+            //useNativeDriver: true,
           }),
         ]),
       ),
     ).start(() => {
-      // Navigate to the next screen after animation
-      if (navigation) navigation.navigate('Login');
+      // Step 2: Merge all markers to the center point
+      Animated.parallel(
+        markerPositions.map(pos =>
+          Animated.parallel([
+            Animated.timing(pos.x, {
+              toValue: WIDTH / 2 - 20, // Move to center
+              duration: 800,
+              //useNativeDriver: true,
+            }),
+            Animated.timing(pos.y, {
+              toValue: HEIGHT / 2 - 20, // Move to center
+              duration: 800,
+              //useNativeDriver: true,
+            }),
+          ]),
+        ),
+      ).start(() => {
+        // Step 3: Increase marker size (useNativeDriver: false for width/height)
+        Animated.timing(markerSize, {
+          toValue: 100, // Increase size
+          duration: 500,
+          useNativeDriver: false, // Fixes the native driver issue
+        }).start(() => {
+          // Step 4: Navigate to login page after animation completes
+          if (navigation) navigation.replace('Login');
+        });
+      });
     });
-  }, [circlePositions, navigation]);
+  }, [markerPositions, navigation]);
 
   return (
     <>
@@ -96,19 +122,20 @@ const Splash = ({navigation}) => {
       />
       <ImageBackground
         resizeMode="cover"
-        source={require('../../assets/images/map1.jpeg')}
+        source={require('../../assets/images/sattelite.jpg')}
         style={styles.backgroundImage}>
         <SafeAreaView style={styles.container}>
-          {/* Render Animated Circles Dynamically */}
-          {circlePositions.map((pos, index) => (
-            <Animated.View
+          {/* Render Animated Markers Dynamically */}
+          {markerPositions.map((pos, index) => (
+            <Animated.Image
               key={index}
+              source={require('../../assets/images/location.png')} // Replace with your marker icon
               style={[
-                styles.circle,
-                index === 0 && styles.smallCircle, // Apply smaller size for Circle 1
+                styles.marker,
                 {
-                  backgroundColor: WHITE,
                   transform: [{translateX: pos.x}, {translateY: pos.y}],
+                  width: markerSize,
+                  height: markerSize,
                 },
               ]}
             />
@@ -124,21 +151,14 @@ export default Splash;
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    width: WIDTH,
-    height: HEIGHT,
+    width: WIDTH * 1.2,
+    height: HEIGHT * 1.2,
   },
   container: {
     flex: 1,
     position: 'relative',
   },
-  circle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  marker: {
     position: 'absolute',
-  },
-  smallCircle: {
-    width: 40,
-    height: 40,
   },
 });

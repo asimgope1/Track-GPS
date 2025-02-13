@@ -1,1 +1,1 @@
-export const AUTH_STATUS = "AUTH_STATUS";
+export const AUTH_STATUS = 'AUTH_STATUS';

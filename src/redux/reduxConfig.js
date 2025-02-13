@@ -1,14 +1,13 @@
-import {configureStore,applyMiddleware,compose} from '@reduxjs/toolkit';
+import {configureStore, applyMiddleware, compose} from '@reduxjs/toolkit';
 import thunk from 'redux-thunk';
 import rootReducer from './reducers/index';
 
-const middleware = [
-    thunk
-]
+const middleware = [thunk];
 
 export default configure = (initialState = {}) => {
-    return configureStore(
-        rootReducer,
-        initialState,
-        compose(applyMiddleware(...middleware)))
-}
+  return configureStore(
+    rootReducer,
+    initialState,
+    compose(applyMiddleware(...middleware)),
+  );
+};

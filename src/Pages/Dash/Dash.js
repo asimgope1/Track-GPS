@@ -175,7 +175,7 @@ const Dash = ({}) => {
   useEffect(() => {
     GetDerivedData();
     GetUser();
-  }, []); // Only run once when the component mounts
+  }, [projectedTrackData]); // Only run once when the component mounts
 
   const GetDerivedData = async () => {
     const Url = `${BASE_URL}projects/117/things/?page=1&search=&type=gps`;
@@ -247,6 +247,8 @@ const Dash = ({}) => {
     const url = `${BASE_URL}things/datalog/`;
     setPageLoad(true);
 
+    console.log('inside map api ');
+
     // Get today's date in 'YYYY-MM-DD' format
     const today = new Date();
     const todayDate = today.toISOString().split('T')[0]; // Extract the date portion
@@ -257,6 +259,7 @@ const Dash = ({}) => {
       thing_id: id,
       to_date: todayDate, // Use today's date for "to_date" as well
     };
+    console.log('inside map payload ', payload);
 
     try {
       const response = await POSTNETWORK(url, payload, true); // Pass true for token-based auth
@@ -296,6 +299,8 @@ const Dash = ({}) => {
           const [lat, lon] = item.derived_data.location; // Extract latitude and longitude
           return {latitude: lat, longitude: lon};
         });
+
+        console.log('inside the map api data', locationData);
 
         setShowTrack(locationData); // Pass location data to the state for rendering
       } else {
@@ -413,7 +418,6 @@ const Dash = ({}) => {
         mapApi(item.thing_id);
         SetLog(item.thing_id);
         projectedTrack(item.thing_id);
-
         setHistory(true);
         setShowModal(true);
       }}
@@ -571,7 +575,10 @@ const Dash = ({}) => {
     </TouchableOpacity>
   );
 
-  console.log('showTrack', showTrack);
+  console.log(
+    'showTrack--------------------------------------------------',
+    showTrack,
+  );
   console.log('projectedTrack', projectedTrack);
   console.log('Location0', Location[0]);
   console.log('Location1', Location[1]);
@@ -813,7 +820,7 @@ const Dash = ({}) => {
         <View style={{flex: 1}}>
           <Track
             showTrack={showTrack}
-            projectedTrack={projectedTrack}
+            projectedTrack={projectedTrackData}
             latitude={Location[0]} // Pass the latitude value
             longitude={Location[1]} // Pass the longitude value
             onClose={handleClose} // Handle close functionality

@@ -7,6 +7,7 @@ import rootReducer from '../redux/reducers/index';
 import Appnavigator from './Appnavigator';
 
 const store = configureStore({reducer: rootReducer});
+
 export default Navigation = () => {
   return (
     <Provider store={store}>

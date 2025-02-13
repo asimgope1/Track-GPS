@@ -37,7 +37,8 @@ import {useDispatch} from 'react-redux';
 import {checkuserToken} from '../../redux/actions/auth';
 import {encode, decode} from 'base-64';
 import FastImage from 'react-native-fast-image';
-
+import Toast from 'react-native-toast-message';
+import NetInfo from '@react-native-community/netinfo';
 const Login = ({navigation, route}) => {
   const [loader, setLoader] = useState(false);
   const [email, setEmail] = useState('');
@@ -59,6 +60,77 @@ const Login = ({navigation, route}) => {
     });
     return unsubscribe;
   }, [navigation]);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (state.isConnected) {
+        // Green toast for internet connected
+
+        Toast.show({
+          type: 'success',
+          position: 'top',
+          text1: 'Internet Connected',
+          text2: 'You are now connected to the internet.',
+          visibilityTime: 7000,
+          autoHide: true,
+          style: {
+            backgroundColor: 'green', // Green for success
+            borderRadius: 20, // Rounded corners
+            paddingVertical: 15,
+            paddingHorizontal: 20,
+            marginBottom: 50, // Some space from the bottom
+            shadowColor: 'black', // Shadow for elevation effect
+            shadowOffset: {width: 0, height: 5},
+            shadowOpacity: 0.2,
+            shadowRadius: 10,
+          },
+          text1Style: {
+            color: 'green',
+            fontSize: 18,
+            fontWeight: 'bold',
+          },
+          text2Style: {
+            color: 'lightgreen',
+            fontSize: 14,
+          },
+        });
+      } else {
+        // Red toast for no internet connection
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'No Internet Connection',
+          text2: 'Please check your internet connection.',
+          visibilityTime: 7000,
+          autoHide: true,
+          style: {
+            backgroundColor: 'red', // Red for error
+            borderRadius: 20,
+            paddingVertical: 15,
+            paddingHorizontal: 20,
+            marginBottom: 50,
+            shadowColor: 'black',
+            shadowOffset: {width: 0, height: 5},
+            shadowOpacity: 0.3,
+            shadowRadius: 10,
+          },
+          text1Style: {
+            color: 'red',
+            fontSize: 18,
+            // fontFamily: 'Arial-BoldMT',
+            fontWeight: 'bold',
+          },
+          text2Style: {
+            color: 'orange',
+            fontSize: 14,
+            // fontFamily: 'Arial',
+          },
+        });
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup on component unmount
+  }, []);
 
   const handleLogin = () => {
     console.log('Credentials:', email, password);
@@ -156,6 +228,10 @@ const Login = ({navigation, route}) => {
                   shadowRadius: 10,
                 }}>
                 {/* Logo and Title */}
+                <Image
+                  source={require('../../assets/images/tracking.png')}
+                  style={{width: 120, height: 120, marginBottom: HEIGHT * 0.05}}
+                />
 
                 {/* Email Input */}
                 <TextInput
@@ -329,6 +405,7 @@ const Login = ({navigation, route}) => {
         />
       )}
       <Loader visible={pageLoad} />
+      <Toast ref={ref => Toast.setRef(ref)} />
     </Fragment>
   );
 };
