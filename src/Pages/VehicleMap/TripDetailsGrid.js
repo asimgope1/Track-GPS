@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {View, StyleSheet, FlatList, Text} from 'react-native';
-import {WIDTH} from '../../constants/config';
+import {HEIGHT, WIDTH} from '../../constants/config';
 import {BOLD, SEMIBOLD} from '../../constants/fontfamily';
 import {RFValue} from 'react-native-responsive-fontsize';
 import LinearGradient from 'react-native-linear-gradient';
@@ -106,8 +106,11 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     alignItems: 'center',
-    width: WIDTH * 0.29,
+    width: WIDTH * 0.28,
+    height: HEIGHT * 0.1,
     backgroundColor: 'white',
+    padding: 0,
+    margin: 5,
   },
   circle: {
     width: WIDTH * 0.18,

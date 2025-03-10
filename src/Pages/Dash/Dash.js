@@ -14,11 +14,12 @@ import {
   RefreshControl,
   Alert,
   ImageBackground,
+  Button,
 } from 'react-native';
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {Avatar, Icon} from '@rneui/themed';
 import {BOLD, LIGHT, REGULAR, SEMIBOLD} from '../../constants/fontfamily';
-import {HEIGHT, STYLES, WIDTH} from '../../constants/config';
+import {HEIGHT, MyStatusBar, STYLES, WIDTH} from '../../constants/config';
 import {clearAll} from '../../utils/Storage';
 import {checkuserToken} from '../../redux/actions/auth';
 import {useDispatch} from 'react-redux';
@@ -69,6 +70,7 @@ const Dash = ({}) => {
   const [data, setData] = useState([]);
   const [pageLoad, setPageLoad] = useState(false);
   const [position, setPosition] = useState(null);
+  const [showsLocation, setShowsLocation] = useState(false);
   const bottomSheetRef = useRef(null);
   const projectedTrack = {
     source: {latitude: 20.2961, longitude: 85.8245}, // KIIT Square, Bhubaneswar (Start)
@@ -390,170 +392,171 @@ const Dash = ({}) => {
     </SafeAreaView>
   );
 
-  const renderVehicleCard = ({item}) => console.log('card item:', item);
-  // <TouchableOpacity
-  //   activeOpacity={0.9}
-  //   onPress={() => {
-  //     GetSelectedVehicle(item.thing_id);
-  //     connectWebSocket(item.thing_id);
-  //     mapApi(item.thing_id);
-  //     SetLog(item.thing_id);
+  const renderVehicleCard = ({item}) => (
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={() => {
+        GetSelectedVehicle(item.thing_id);
+        connectWebSocket(item.thing_id);
+        mapApi(item.thing_id);
+        SetLog(item.thing_id);
 
-  //     setHistory(true);
-  //     setShowModal(true);
-  //   }}
-  //   style={styles.cardContainer}>
-  //   {/* Card Header */}
-  //   <View style={styles.cardHeader}>
-  //     <View style={{...styles.row}}>
-  //       <View style={styles.row}>
-  //         <Icon
-  //           name="directions-car"
-  //           type="MaterialIcons"
-  //           color={
-  //             statusMap[item.thing_id] === 'Running'
-  //               ? '#28A745'
-  //               : statusMap[item.thing_id] === 'Stopped'
-  //               ? '#DC3545'
-  //               : statusMap[item.thing_id] === 'Unreachable'
-  //               ? '#6C757D'
-  //               : '#4db6b3'
-  //           }
-  //           size={30}
-  //           style={styles.icon}
-  //         />
+        setHistory(true);
+        setShowModal(true);
+      }}
+      style={styles.cardContainer}>
+      {/* Card Header */}
+      <View style={styles.cardHeader}>
+        <View style={{...styles.row}}>
+          <View style={styles.row}>
+            <Icon
+              name="directions-car"
+              type="MaterialIcons"
+              color={
+                statusMap[item.thing_id] === 'Running'
+                  ? '#28A745'
+                  : statusMap[item.thing_id] === 'Stopped'
+                  ? '#DC3545'
+                  : statusMap[item.thing_id] === 'Unreachable'
+                  ? '#6C757D'
+                  : '#4db6b3'
+              }
+              size={30}
+              style={styles.icon}
+            />
 
-  //         <View>
-  //           <Text style={{...styles.cardTitle}}>{item.thing_name}</Text>
-  //         </View>
-  //       </View>
-  //       <View style={styles.row}>
-  //         <Text style={styles.cardLabel}>Vehicle No: </Text>
-  //         <Text style={styles.cardValue}>
-  //           {item.properties.default_properties.vehicle_no}
-  //         </Text>
-  //       </View>
-  //     </View>
-  //     {/* Separation Line */}
-  //     <Text
-  //       style={{
-  //         ...styles.cardValue,
-  //         fontSize: 13,
-  //         color: 'grey',
-  //         marginLeft: 10,
-  //       }}>
-  //       {moment(item.derived_live_config.received_datetime).format(
-  //         'DD/MM/YYYY h:mm a',
-  //       )}
-  //     </Text>
-  //     <View style={styles.separator} />
-  //   </View>
+            <View>
+              <Text style={{...styles.cardTitle}}>{item.thing_name}</Text>
+            </View>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.cardLabel}>Vehicle No: </Text>
+            <Text style={styles.cardValue}>
+              {item.properties.default_properties.vehicle_no}
+            </Text>
+          </View>
+        </View>
+        {/* Separation Line */}
+        <Text
+          style={{
+            ...styles.cardValue,
+            fontSize: 13,
+            color: 'grey',
+            marginLeft: 10,
+          }}>
+          {moment(item.derived_live_config.received_datetime).format(
+            'DD/MM/YYYY h:mm a',
+          )}
+        </Text>
+        <View style={styles.separator} />
+      </View>
 
-  //   {/* Card Body */}
-  //   {/* Row 1: Vehicle Type and Driver */}
-  //   <View style={styles.row}>
-  //     <View style={styles.row}>
-  //       <View style={styles.rowWithIcon}>
-  //         <Icon
-  //           name="check-circle"
-  //           type="MaterialIcons"
-  //           color="#1E90FF"
-  //           size={23}
-  //           style={styles.icon}
-  //         />
-  //         <Text style={{...styles.cardLabel}}>Status: </Text>
-  //       </View>
-  //       <Text style={{...styles.cardValue}}>
-  //         {item.derived_live_config.status}
-  //       </Text>
-  //     </View>
-  //     <View style={styles.row}>
-  //       <View style={styles.rowWithIcon}>
-  //         <Icon
-  //           name="account-circle"
-  //           type="MaterialIcons"
-  //           color="#1E90FF"
-  //           size={23}
-  //           style={styles.icon}
-  //         />
-  //         <Text style={styles.cardLabel}>Driver: </Text>
-  //       </View>
-  //       <Text style={styles.cardValue}>{item.desc}</Text>
-  //     </View>
-  //   </View>
+      {/* Card Body */}
+      {/* Row 1: Vehicle Type and Driver */}
+      <View style={styles.row}>
+        <View style={styles.row}>
+          <View style={styles.rowWithIcon}>
+            <Icon
+              name="check-circle"
+              type="MaterialIcons"
+              color="#1E90FF"
+              size={23}
+              style={styles.icon}
+            />
+            <Text style={{...styles.cardLabel}}>Status: </Text>
+          </View>
+          <Text style={{...styles.cardValue}}>
+            {item.derived_live_config.status}
+          </Text>
+        </View>
+        <View style={styles.row}>
+          <View style={styles.rowWithIcon}>
+            <Icon
+              name="account-circle"
+              type="MaterialIcons"
+              color="#1E90FF"
+              size={23}
+              style={styles.icon}
+            />
+            <Text style={styles.cardLabel}>Driver: </Text>
+          </View>
+          <Text style={styles.cardValue}>{item.desc}</Text>
+        </View>
+      </View>
 
-  //   {/* Row 2: Status and Speed */}
-  //   <View style={styles.row}>
-  //     <View style={styles.row}>
-  //       <View style={styles.rowWithIcon}>
-  //         <Icon
-  //           name="trending-up"
-  //           type="MaterialIcons"
-  //           color="#1E90FF"
-  //           size={23}
-  //           style={styles.icon}
-  //         />
-  //         <Text style={styles.cardLabel}>Acc: </Text>
-  //       </View>
-  //       <Text style={styles.cardValue}>
-  //         {item?.derived_live_config?.acceleration > 0
-  //           ? `${item.derived_live_config.acceleration.toFixed(2)} m/s²`
-  //           : '0 m/s²'}
-  //       </Text>
-  //     </View>
-  //     <View style={styles.row}>
-  //       <View style={styles.rowWithIcon}>
-  //         <Icon
-  //           name="speed"
-  //           type="MaterialIcons"
-  //           color="#1E90FF"
-  //           size={23}
-  //           style={styles.icon}
-  //         />
-  //         <Text style={styles.cardLabel}>Speed: </Text>
-  //       </View>
-  //       <Text style={styles.cardValue}>
-  //         {item?.derived_live_config?.speed?.toFixed(2) || '0.00'} km/h
-  //       </Text>
-  //     </View>
-  //   </View>
+      {/* Row 2: Status and Speed */}
+      <View style={styles.row}>
+        <View style={styles.row}>
+          <View style={styles.rowWithIcon}>
+            <Icon
+              name="trending-up"
+              type="MaterialIcons"
+              color="#1E90FF"
+              size={23}
+              style={styles.icon}
+            />
+            <Text style={styles.cardLabel}>Acc: </Text>
+          </View>
+          <Text style={styles.cardValue}>
+            {item?.derived_live_config?.acceleration > 0
+              ? `${item.derived_live_config.acceleration.toFixed(2)} m/s²`
+              : '0 m/s²'}
+          </Text>
+        </View>
+        <View style={styles.row}>
+          <View style={styles.rowWithIcon}>
+            <Icon
+              name="speed"
+              type="MaterialIcons"
+              color="#1E90FF"
+              size={23}
+              style={styles.icon}
+            />
+            <Text style={styles.cardLabel}>Speed: </Text>
+          </View>
+          <Text style={styles.cardValue}>
+            {item?.derived_live_config?.speed?.toFixed(2) || '0.00'} km/h
+          </Text>
+        </View>
+      </View>
 
-  //   {/* Row 3: Acceleration and Total Distance */}
-  //   <View style={styles.row}></View>
-  //   <View style={styles.rowWithIcon}>
-  //     <Icon
-  //       name="straighten"
-  //       type="MaterialIcons"
-  //       color="#1E90FF"
-  //       size={23}
-  //       style={styles.icon}
-  //     />
-  //     <Text style={styles.cardLabel}>Total Dist: </Text>
-  //     <Text style={styles.cardValue}>
-  //       {(item.derived_live_config.total_distance / 1000).toFixed(2)} km
-  //     </Text>
-  //   </View>
+      {/* Row 3: Acceleration and Total Distance */}
+      <View style={styles.row}></View>
+      <View style={styles.rowWithIcon}>
+        <Icon
+          name="straighten"
+          type="MaterialIcons"
+          color="#1E90FF"
+          size={23}
+          style={styles.icon}
+        />
+        <Text style={styles.cardLabel}>Total Dist: </Text>
+        <Text style={styles.cardValue}>
+          {(item.derived_live_config.total_distance / 1000).toFixed(2)} km
+        </Text>
+      </View>
 
-  //   {/* Row 4: Current Distance and Updated On */}
-  //   <View style={styles.row}>
-  //     <View style={styles.row}>
-  //       <View style={styles.rowWithIcon}>
-  //         <Icon
-  //           name="place"
-  //           type="MaterialIcons"
-  //           color="#1E90FF"
-  //           size={23}
-  //           style={styles.icon}
-  //         />
-  //         <Text style={styles.cardLabel}>Current Dist: </Text>
-  //       </View>
-  //       <Text style={styles.cardValue}>
-  //         {(item.derived_live_config.current_distance / 1000).toFixed(2)} km
-  //       </Text>
-  //     </View>
-  //   </View>
-  //   <View style={styles.rowWithIcon}></View>
-  // </TouchableOpacity>
+      {/* Row 4: Current Distance and Updated On */}
+      <View style={styles.row}>
+        <View style={styles.row}>
+          <View style={styles.rowWithIcon}>
+            <Icon
+              name="place"
+              type="MaterialIcons"
+              color="#1E90FF"
+              size={23}
+              style={styles.icon}
+            />
+            <Text style={styles.cardLabel}>Current Dist: </Text>
+          </View>
+          <Text style={styles.cardValue}>
+            {(item.derived_live_config.current_distance / 1000).toFixed(2)} km
+          </Text>
+        </View>
+      </View>
+      <View style={styles.rowWithIcon}></View>
+    </TouchableOpacity>
+  );
 
   // console.log('showTrack', showTrack);
   // console.log('projectedTrack', projectedTrack);
@@ -572,222 +575,234 @@ const Dash = ({}) => {
         locations={[0, 1]} // Gradient stops
       > */}
       {/* <MapView provider={PROVIDER_GOOGLE} style={STYLES.map}> */}
-      <KeyboardAvoidingView
-        style={{flex: 1}}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        {/* Header Container */}
+      <SafeAreaView
+        style={{
+          flex: 1,
+          backgroundColor: 'transparent',
+          // padding: 1,
+        }}>
+        <KeyboardAvoidingView
+          style={{flex: 1}}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          {/* Header Container */}
 
-        <GestureHandlerRootView>
-          <ScrollView
-            contentContainerStyle={{
-              flexGrow: 1,
-              // padding: 10,
-              alignSelf: 'center',
-            }}
-            scrollEnabled={true}>
-            <MapView
-              provider={PROVIDER_GOOGLE}
-              style={{
-                width: WIDTH,
-                flex: 1,
-                // marginTop: 5,
-                // height: HEIGHT * 0.45,
-                // marginBottom: 10,
+          <GestureHandlerRootView>
+            <ScrollView
+              contentContainerStyle={{
+                flexGrow: 1,
+                // paddingTop: 10,
+                alignSelf: 'center',
               }}
-              mapType="hybrid"
-              showsUserLocation={true}
-              showsCompass={true}
-              loadingEnabled={true}
-              userLocationFastestInterval={1000}
-              region={region}>
-              <Marker coordinate={region} title="You are Here" description="" />
-            </MapView>
-            <View
-              style={{
-                height: 50,
-                width: WIDTH * 0.85,
-                // backgroundColor: 'rgba(100,100,100,0.5)',
-                margin: 10,
-                marginTop: 25,
-                position: 'absolute',
-                flexDirection: 'row',
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-                borderRadius: 5,
-              }}>
+              scrollEnabled={true}>
+              <MapView
+                provider={PROVIDER_GOOGLE}
+                style={{
+                  width: WIDTH,
+                  flex: 1,
+                  padding: 10,
+                  // height: HEIGHT * 0.45,
+                  // marginBottom: 10,
+                }}
+                mapType="hybrid"
+                showsUserLocation={true}
+                showsCompass={true}
+                loadingEnabled={true}
+                userLocationFastestInterval={1000}
+                region={region}>
+                <Marker
+                  coordinate={region}
+                  title="You are Here"
+                  description=""
+                />
+              </MapView>
+
               <View
                 style={{
-                  width: 50,
                   height: 50,
-                  justifyContent: 'center',
+                  width: WIDTH * 0.85,
+                  // backgroundColor: 'rgba(100,100,100,0.5)',
+                  margin: 10,
+                  marginTop: 13,
+                  position: 'absolute',
+                  flexDirection: 'row',
+                  justifyContent: 'flex-start',
                   alignItems: 'center',
-                  borderRadius: 25,
-                  backgroundColor: '#1E90FF',
+                  borderRadius: 5,
                 }}>
-                <Icon
-                  onPress={() => {
-                    clearAll();
-                    Dispatch(checkuserToken());
-                  }}
-                  name="logout"
-                  type="SimpleLineIcons"
-                  color="white"
-                  size={25}
-                />
-              </View>
-            </View>
-
-            <BottomSheet
-              ref={bottomSheetRef}
-              enableDynamicSizing={true}
-              onChange={handleSheetChanges}
-              snapPoints={['15%', '45%', '90%']}>
-              <BottomSheetView style={styles.contentContainer}>
                 <View
                   style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
+                    width: 50,
+                    height: 50,
+                    justifyContent: 'center',
                     alignItems: 'center',
-                    width: '99%',
-                    paddingVertical: 25,
-                    paddingHorizontal: 10,
-                    // backgroundColor: '#4db6b3',
-                    alignSelf: 'center',
+                    borderRadius: 25,
+                    backgroundColor: '#1E90FF',
                   }}>
-                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                    {User && (
-                      <View
+                  <Icon
+                    onPress={() => {
+                      clearAll();
+                      Dispatch(checkuserToken());
+                    }}
+                    name="logout"
+                    type="SimpleLineIcons"
+                    color="white"
+                    size={25}
+                  />
+                </View>
+              </View>
+
+              <BottomSheet
+                ref={bottomSheetRef}
+                enableDynamicSizing={true}
+                onChange={handleSheetChanges}
+                snapPoints={['15%', '45%', '90%']}>
+                <BottomSheetView style={styles.contentContainer}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      width: '99%',
+                      paddingVertical: 25,
+                      paddingHorizontal: 10,
+                      // backgroundColor: '#4db6b3',
+                      alignSelf: 'center',
+                    }}>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                      {User && (
+                        <View
+                          style={{
+                            // elevation: 8,
+                            backgroundColor: 'white',
+                            borderRadius: 5,
+                            padding: 5,
+                            marginLeft: 5,
+                            justifyContent: 'center',
+                          }}>
+                          <Avatar
+                            size="medium"
+                            rounded
+                            source={{
+                              uri: 'https://randomuser.me/api/portraits/men/1.jpg',
+                            }}
+                          />
+                        </View>
+                      )}
+                      <Text
                         style={{
-                          // elevation: 8,
-                          backgroundColor: 'white',
-                          borderRadius: 5,
-                          padding: 5,
-                          marginLeft: 5,
-                          justifyContent: 'center',
+                          color: 'grey',
+                          // fontWeight: 'bold',
+                          fontFamily: SEMIBOLD,
+                          fontSize: 15,
+                          marginLeft: 10,
                         }}>
-                        <Avatar
-                          size="medium"
-                          rounded
-                          source={{
-                            uri: 'https://randomuser.me/api/portraits/men/1.jpg',
+                        Welcome, {User?.name}
+                        {'\n'}
+                        Last login:{' '}
+                        {moment(User?.last_active).format('DD/MM/YYYY h:mm a')}
+                      </Text>
+                    </View>
+                  </View>
+                  <View
+                    style={{
+                      width: WIDTH,
+                      height: HEIGHT * 0.3,
+                      padding: 5,
+                      // position: 'absolute',
+                    }}>
+                    <TripDetailsGrid data={statusMap} />
+                  </View>
+
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      width: '95%',
+                      height: HEIGHT * 0.055,
+                      marginTop: 5,
+                      // paddingHorizontal: 10,
+                      // backgroundColor: '#4db6b3',
+                      alignSelf: 'center',
+                    }}>
+                    {/* recent trips */}
+                    <Text
+                      style={{
+                        fontFamily: BOLD,
+                        fontSize: RFValue(15),
+                        color: 'black',
+                        marginBottom: 10,
+                        marginLeft: 10,
+                      }}>
+                      Recent Trips
+                    </Text>
+                    <Icon
+                      onPress={() => {
+                        onRefresh();
+                      }}
+                      name="refresh"
+                      size={30}
+                      type="MaterialIcons"
+                    />
+                  </View>
+
+                  <View
+                    style={{
+                      width: WIDTH,
+                      height: HEIGHT * 0.5,
+                      orderTopRightRadius: 25,
+                      borderTopLeftRadius: 25,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: WIDTH,
+                      alignSelf: 'centerß',
+                      shadowColor: '#000',
+                      shadowOffset: {width: 0, height: 2},
+                      shadowOpacity: 0.25,
+                      shadowRadius: 3.5,
+                    }}>
+                    {loading ? (
+                      renderLoading()
+                    ) : error ? (
+                      renderError()
+                    ) : (
+                      <View>
+                        <FlatList
+                          nestedScrollEnabled={true}
+                          data={vehicleData}
+                          renderItem={renderVehicleCard}
+                          keyExtractor={(item, index) => index.toString()}
+                          contentContainerStyle={{
+                            width: '100%',
                           }}
+                          // refreshControl={
+                          //   <RefreshControl
+                          //     refreshing={refreshing}
+                          //     onRefresh={onRefresh}
+                          //     colors={['black']}
+                          //   />
+                          // }
+                          ListFooterComponent={
+                            <View
+                              style={{
+                                width: '100%',
+                                height: HEIGHT * 0.2,
+                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}
+                            />
+                          }
                         />
                       </View>
                     )}
-                    <Text
-                      style={{
-                        color: 'grey',
-                        // fontWeight: 'bold',
-                        fontFamily: SEMIBOLD,
-                        fontSize: 15,
-                        marginLeft: 10,
-                      }}>
-                      Welcome, {User?.name}
-                      {'\n'}
-                      Last login:{' '}
-                      {moment(User?.last_active).format('DD/MM/YYYY h:mm a')}
-                    </Text>
                   </View>
-                </View>
-                <View
-                  style={{
-                    width: WIDTH,
-                    height: HEIGHT * 0.3,
-                    padding: 5,
-                    // position: 'absolute',
-                  }}>
-                  <TripDetailsGrid data={statusMap} />
-                </View>
-
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    width: '95%',
-                    height: HEIGHT * 0.055,
-                    marginTop: 5,
-                    // paddingHorizontal: 10,
-                    // backgroundColor: '#4db6b3',
-                    alignSelf: 'center',
-                  }}>
-                  {/* recent trips */}
-                  <Text
-                    style={{
-                      fontFamily: BOLD,
-                      fontSize: RFValue(15),
-                      color: 'black',
-                      marginBottom: 10,
-                      marginLeft: 10,
-                    }}>
-                    Recent Trips
-                  </Text>
-                  <Icon
-                    onPress={() => {
-                      onRefresh();
-                    }}
-                    name="refresh"
-                    size={30}
-                    type="MaterialIcons"
-                  />
-                </View>
-
-                <View
-                  style={{
-                    width: WIDTH,
-                    height: HEIGHT * 0.5,
-                    orderTopRightRadius: 25,
-                    borderTopLeftRadius: 25,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: WIDTH,
-                    alignSelf: 'centerß',
-                    shadowColor: '#000',
-                    shadowOffset: {width: 0, height: 2},
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.5,
-                  }}>
-                  {loading ? (
-                    renderLoading()
-                  ) : error ? (
-                    renderError()
-                  ) : (
-                    <View>
-                      <FlatList
-                        nestedScrollEnabled={true}
-                        data={vehicleData}
-                        renderItem={renderVehicleCard}
-                        keyExtractor={(item, index) => index.toString()}
-                        contentContainerStyle={{
-                          width: '100%',
-                        }}
-                        // refreshControl={
-                        //   <RefreshControl
-                        //     refreshing={refreshing}
-                        //     onRefresh={onRefresh}
-                        //     colors={['black']}
-                        //   />
-                        // }
-                        ListFooterComponent={
-                          <View
-                            style={{
-                              width: '100%',
-                              height: HEIGHT * 0.2,
-                              backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                            }}
-                          />
-                        }
-                      />
-                    </View>
-                  )}
-                </View>
-              </BottomSheetView>
-            </BottomSheet>
-          </ScrollView>
-        </GestureHandlerRootView>
-      </KeyboardAvoidingView>
+                </BottomSheetView>
+              </BottomSheet>
+            </ScrollView>
+          </GestureHandlerRootView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
 
       {showMap &&
       Array.isArray(Location) &&
@@ -825,6 +840,10 @@ const Dash = ({}) => {
               <Text style={styles.modalTitle}>Vehicle Details</Text>
               <View style={styles.headerActions}>
                 <TouchableOpacity
+                  style={{
+                    width: WIDTH * 0.15,
+                    height: HEIGHT * 0.03,
+                  }}
                   onPress={() => {
                     // setHistory(true);
                     setViewHistory(true);
@@ -841,6 +860,10 @@ const Dash = ({}) => {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
+                  style={{
+                    width: WIDTH * 0.15,
+                    height: HEIGHT * 0.03,
+                  }}
                   onPress={() => {
                     setShowMap(true);
                     // console.log('Track pressed', Location);

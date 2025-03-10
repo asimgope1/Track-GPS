@@ -233,7 +233,7 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
             {isLoading ? (
               <ActivityIndicator size="large" color="blue" />
             ) : (
-              <ScrollView>
+              <ScrollView contentContainerStyle={{padding: 10}}>
                 <Text style={styles.infoTitle}>Vehicle Information</Text>
                 <View style={styles.infoContainer}>
                   {selectedValue.error ? (
@@ -241,58 +241,56 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
                   ) : Object.keys(selectedValue).length > 0 ? (
                     Object.entries(selectedValue).map(([key, value]) => {
                       // Skip 'location' key
-                      if (key === 'locations') return null;
-                      if (key === 'location') return null;
+                      if (key === 'locations' || key === 'location')
+                        return null;
+
                       if (key === 'acceleration') {
                         value = value < 0 ? 0 : value; // Set negative acceleration to 0
                         value = `${value.toFixed(4)} m/s²`; // Add unit for acceleration
                       }
 
-                      // Handle Distance: Convert from meters to kilometers and add unit
+                      // Convert Distance: Meters → Kilometers
                       if (
                         key === 'current_distance' ||
                         key === 'total_distance'
                       ) {
-                        value = (value / 1000).toFixed(2); // Convert meters to kilometers and keep two decimal places
-                        value = `${value} km`; // Add unit for distance
+                        value = (value / 1000).toFixed(2) + ' km';
                       }
 
-                      // Handle Speed: Convert from m/s to km/h and add unit
+                      // Convert Speed: m/s → km/h
                       if (key === 'speed') {
-                        value = (value * 3.6).toFixed(2); // Convert m/s to km/h and keep two decimal places
-                        value = `${value} km/h`; // Add unit for speed
+                        value = (value * 3.6).toFixed(2) + ' km/h';
                       }
 
-                      if (key === 'timestamp' && value === undefined) {
-                        return (
-                          <View style={styles.labelContainer} key={key}>
-                            <Text style={styles.label}>Updated On:</Text>
-                            <Text style={styles.value}>Not Available</Text>
-                          </View>
-                        );
-                      } else if (key === 'timestamp' && value) {
-                        return (
-                          <View style={styles.labelContainer} key={key}>
-                            <Text style={styles.label}>Updated On:</Text>
-                            <Text style={styles.value}>
-                              {moment(value).format('DD/MM/YYYY h:mm a')}
-                            </Text>
-                          </View>
-                        );
-                      } else {
-                        return (
-                          <View style={styles.labelContainer} key={key}>
-                            <Text style={styles.label}>
-                              {key.replace(/_/g, ' ').toUpperCase()}:
-                            </Text>
-                            <Text style={styles.value}>{String(value)}</Text>
-                          </View>
-                        );
+                      // Handle Timestamp
+                      if (key === 'timestamp') {
+                        value = value
+                          ? moment(value).format('DD/MM/YYYY h:mm a')
+                          : 'Not Available';
                       }
+
+                      return (
+                        <View style={styles.labelContainer} key={key}>
+                          <Text
+                            style={[
+                              styles.label,
+                              {flexWrap: 'wrap', width: '45%'},
+                            ]}>
+                            {key.replace(/_/g, ' ').toUpperCase()}:
+                          </Text>
+                          <Text
+                            style={[
+                              styles.value,
+                              {flexWrap: 'wrap', width: '55%'},
+                            ]}>
+                            {String(value)}
+                          </Text>
+                        </View>
+                      );
                     })
                   ) : (
                     <Text style={styles.noDataText}>
-                      {/* No data found for the selected range. */}
+                      No data found for the selected range.
                     </Text>
                   )}
                 </View>
@@ -389,6 +387,7 @@ const styles = StyleSheet.create({
     color: BLACK,
   },
   infoContainer: {
+    // width: WIDTH * 0.8,
     padding: 10,
   },
   labelContainer: {

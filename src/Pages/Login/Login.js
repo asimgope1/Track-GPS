@@ -81,8 +81,15 @@ const Login = ({navigation, route}) => {
     fetch(`${BASE_URL}user/auth/`, requestOptions)
       .then(response => response.json())
       .then(result => {
-        storeObjByKey('loginResponse', result);
-        Dispatch(checkuserToken());
+        console.log('result', result);
+        if (result.status === 'success') {
+          storeObjByKey('loginResponse', result);
+          Dispatch(checkuserToken());
+          setPageLoad(false);
+        } else {
+          alert(result.msg);
+          setPageLoad(false);
+        }
         setPageLoad(false);
         console.log(result);
       })
