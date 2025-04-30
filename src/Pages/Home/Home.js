@@ -15,6 +15,8 @@ import {MyStatusBar} from '../../constants/config';
 import {GETNETWORK} from '../../utils/Network';
 import {BASE_URL} from '../../constants/url';
 import {PieChart} from 'react-native-gifted-charts';
+import {LineChart} from 'react-native-gifted-charts';
+
 
 const WHITE = '#FFFFFF';
 
@@ -31,19 +33,25 @@ const FleetSummaryCard = ({statusMap, total}) => {
     {
       value: statusMap.Running || 0,
       color: '#28a745',
-      text: 'Running',
+      text: `${statusMap.Running || 0}`,  // show value inside
     },
     {
       value: statusMap.Stopped || 0,
       color: '#ffc107',
-      text: 'Stopped',
+      text: `${statusMap.Stopped || 0}`,
     },
     {
       value: statusMap.Unreachable || 0,
       color: '#dc3545',
-      text: 'Unreachable',
+      text: `${statusMap.Unreachable || 0}`,
+    },
+    {
+      value: total,
+      color: '#007bff',
+      text: `${total}`,
     },
   ];
+  
 
   const items = [
     {label: 'Running', value: statusMap.Running || 0, color: '#28a745'},
@@ -51,39 +59,40 @@ const FleetSummaryCard = ({statusMap, total}) => {
     {label: 'Unreachable', value: statusMap.Unreachable || 0, color: '#dc3545'},
     {label: 'Total', value: total, color: '#007bff'},
   ];
+  
 
   return (
     <View style={styles.summaryCard}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          width: '100%',
-        }}>
-        {items.map(item => (
-          <View key={item.label} style={styles.summaryItem}>
-            <View style={[styles.statusDot, {backgroundColor: item.color}]} />
-            <Text style={styles.summaryLabel}>{item.label}</Text>
-            <Text style={styles.summaryValue}>{item.value}</Text>
-          </View>
-        ))}
-      </View>
-      <View style={styles.pieContainer}>
+        <Text style={styles.headerText}>Status</Text>
+
+      <View style={styles.pieRowContainer}>
+        <View style={styles.pieContainer}>
+
         <PieChart
-          data={pieData}
-          donut
-          showText
-          textColor="white"
-          radius={80}
-          innerRadius={45}
-          centerLabelComponent={() => (
-            <Text style={{fontWeight: 'bold', fontSize: 16}}>{total}</Text>
-          )}
-        />
+  data={pieData}
+  donut
+  showText
+  textColor="white"
+  radius={70}
+  innerRadius={40}
+/>
+
+        </View>
+
+        <View style={styles.legendContainer}>
+          {items.map(item => (
+            <View key={item.label} style={styles.summaryItem}>
+              <View style={[styles.statusDot, {backgroundColor: item.color}]} />
+              <Text style={styles.summaryLabel}>{item.label}</Text>
+              <Text style={styles.summaryValue}>{item.value}</Text>
+            </View>
+          ))}
+        </View>
       </View>
     </View>
   );
 };
+
 
 const FleetDashboard = () => {
   const [statusMap, setStatusMap] = useState({});
@@ -95,12 +104,15 @@ const FleetDashboard = () => {
     const url = `${BASE_URL}projects/117/things/?page=1&search=&type=gps`;
     try {
       const response = await GETNETWORK(url, true);
+      console.log(' ======================================= response:', response);
+
       if (response.data && response.data.things) {
+        console.log('thingssssssssssssssssssssssssssssssssssss', response.data.things);
         const fetchedData = response.data.things.map(item => ({
           thing_id: item.thing_id,
           updated_on: new Date(item.updated_on),
         }));
-
+        console.log('data=================================', fetchedData);
         const currentTime = new Date();
         const statusCounts = {
           Running: 0,
@@ -144,7 +156,7 @@ const FleetDashboard = () => {
             icon: 'list',
           },
         ];
-
+        console.log('TRAnSFormed***************************************:', transformedData)
         setFleetData(transformedData);
       }
     } catch (error) {
@@ -211,6 +223,14 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 3},
     shadowRadius: 8,
   },
+  headerText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    // textAlign: 'center',
+    color: '#333',
+    marginLeft:'5%'
+  },
   cardTitle: {
     fontSize: RFValue(14),
     color: '#fff',
@@ -225,43 +245,65 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   summaryCard: {
-    backgroundColor: WHITE,
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 10,
     elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: {width: 0, height: 2},
-    shadowRadius: 4,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    marginTop: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
+    margin: 5,
   },
+  
+  pieRowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start', // aligns everything from left
+    paddingHorizontal: 20,
+    // backgroundColor:'green'
+    
+  },
+  
+  pieContainer: {
+    flex: 1,
+    alignItems: 'center',
+    // justifyContent: 'center',
+    marginRight: 5,
+  },
+  
+  legendContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingLeft: 10,
+    marginLeft:30
+
+  },
+  
   summaryItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 10,
+    marginBottom: 8,
   },
+  
   statusDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    marginBottom: 4,
+    marginRight: 8,
   },
+  
   summaryLabel: {
-    fontSize: RFValue(12),
-    fontWeight: '600',
+    fontSize: 12,
+    flex: 1,
     color: '#333',
-  },
-  summaryValue: {
-    fontSize: RFValue(14),
     fontWeight: 'bold',
-    marginTop: 2,
+
   },
-  pieContainer: {
-    marginTop: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+  
+  summaryValue: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#333',
+
   },
+  
 });
 
 export default FleetDashboard;
