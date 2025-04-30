@@ -1,5 +1,5 @@
-import React, {useRef} from 'react';
-import {View, Modal, TouchableOpacity, StyleSheet} from 'react-native';
+import React, {useRef, useEffect} from 'react';
+import {View, Modal, TouchableOpacity, StyleSheet, Alert} from 'react-native';
 import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -12,9 +12,9 @@ const Track = ({
   onClose,
   projectedTrack,
 }) => {
-  const mapRef = useRef();
+  const mapRef = useRef(null);
 
-  // Filter out undefined coordinates
+  // Filter out undefined coordinates from showTrack
   const filteredShowTrack =
     showTrack?.filter(
       item => item?.latitude !== undefined && item?.longitude !== undefined,
@@ -24,12 +24,27 @@ const Track = ({
   const source = projectedTrack?.source;
   const destination = projectedTrack?.destination;
 
-  const region = {
-    latitude: latitude || 28.6139, // Default to New Delhi
-    longitude: longitude || 77.209,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
-  };
+  useEffect(() => {
+    if (visible && (!source || !destination)) {
+      Alert.alert('Error', 'No projected route found.');
+    }
+
+    // Fit map to both paths
+    if (visible && mapRef.current) {
+      const coordinates = [];
+
+      if (source) coordinates.push(source);
+      if (destination) coordinates.push(destination);
+      if (filteredShowTrack.length > 0) coordinates.push(...filteredShowTrack);
+
+      if (coordinates.length > 0) {
+        mapRef.current.fitToCoordinates(coordinates, {
+          edgePadding: {top: 50, right: 50, bottom: 50, left: 50},
+          animated: true,
+        });
+      }
+    }
+  }, [visible, source, destination, filteredShowTrack]);
 
   return (
     <Modal
@@ -48,7 +63,12 @@ const Track = ({
           ref={mapRef}
           provider={PROVIDER_GOOGLE}
           style={styles.map}
-          region={region}
+          initialRegion={{
+            latitude: latitude || 28.6139, // Default to New Delhi
+            longitude: longitude || 77.209,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}
           mapType="hybrid">
           {/* Expected Route (Projected Track) */}
           {source && destination && (
@@ -56,20 +76,20 @@ const Track = ({
               origin={source}
               destination={destination}
               apikey="AIzaSyChAFxD34j5ryAcBSmWtDlCGOg3AQ6Vu8w"
-              strokeColor="green" // Green color for projected route
-              strokeWidth={4}
+              strokeColor="yellow" // Projected route in Yellow
+              strokeWidth={5.5}
               optimizeWaypoints={true}
             />
           )}
 
-          {/* Actual Covered Route */}
+          {/* Actual Covered Route (Overlay on Projected Route) */}
           {filteredShowTrack.length > 1 && (
             <MapViewDirections
               origin={filteredShowTrack[0]}
               destination={filteredShowTrack[filteredShowTrack.length - 1]}
               waypoints={filteredShowTrack.slice(1, -1)}
               apikey="AIzaSyChAFxD34j5ryAcBSmWtDlCGOg3AQ6Vu8w"
-              strokeColor="blue" // Blue for actual covered path
+              strokeColor="blue" // Actual route in Blue
               strokeWidth={5}
               optimizeWaypoints={true}
             />
@@ -92,7 +112,7 @@ const Track = ({
             <Marker
               coordinate={destination}
               title="Destination"
-              pinColor="red"
+              pinColor="blue"
             />
           )}
         </MapView>

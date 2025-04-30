@@ -41,6 +41,7 @@ import BottomSheet, {
   BottomSheetFlatList,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
+import Assignment from '../Assignment';
 
 const Dash = ({}) => {
   const [vehicleData, setVehicleData] = useState([]);
@@ -52,6 +53,9 @@ const Dash = ({}) => {
   const [selectedValue, setSelectedValue] = useState({});
   const [Location, setLocation] = useState([]); // Location state
   const [datalog, setDatalog] = useState({});
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedRoute, setSelectedRoute] = useState(null);
 
   const navigation = useNavigation();
   const Dispatch = useDispatch();
@@ -72,9 +76,50 @@ const Dash = ({}) => {
   const [position, setPosition] = useState(null);
   const [showsLocation, setShowsLocation] = useState(false);
   const bottomSheetRef = useRef(null);
-  const projectedTrack = {
-    source: {latitude: 20.2961, longitude: 85.8245}, // KIIT Square, Bhubaneswar (Start)
-    destination: {latitude: 20.29, longitude: 85.8189}, // Jayadev Vihar, Bhubaneswar (End)
+
+  const [projectedTrack, setProjectedTrack] = useState(null);
+  // const projectedTrack = {
+  //   source: {latitude: 20.2961, longitude: 85.8245}, // KIIT Square, Bhubaneswar (Start)
+  //   destination: {latitude: 20.29, longitude: 85.8189}, // Jayadev Vihar, Bhubaneswar (End)
+  // };
+
+  const GetProjectedTrack = async () => {
+    try {
+      const URL = `${BASE_URL}route/assign-route/${Log}/`;
+      const response = await GETNETWORK(URL, true);
+
+      if (
+        response &&
+        response.status === 'success' &&
+        response.data.length > 0
+      ) {
+        // Extract the first route
+        const firstRoute = response.data[0];
+
+        // Format the projected track to match the required structure
+        const projectedTrack = {
+          source: {
+            latitude: parseFloat(firstRoute.source_lat),
+            longitude: parseFloat(firstRoute.source_lon),
+          },
+          destination: {
+            latitude: parseFloat(firstRoute.destination_lat),
+            longitude: parseFloat(firstRoute.destination_lon),
+          },
+        };
+
+        console.log('Updated Projected Track:', projectedTrack);
+
+        // Update state with correct format
+        setProjectedTrack(projectedTrack);
+      } else {
+        Alert.alert('Error', 'No projected route found.');
+        console.error('No valid route data received');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to fetch projected route.');
+      console.error('Error fetching projected track:', error);
+    }
   };
 
   // callbacks
@@ -92,6 +137,7 @@ const Dash = ({}) => {
   // Fetch data at intervals
   useEffect(() => {
     GetLocation();
+
     const interval = setInterval(() => {
       GetDerivedData();
     }, 1000000); // Fetch every 10 seconds
@@ -316,7 +362,7 @@ const Dash = ({}) => {
     try {
       // Parse the incoming message
       const json_data = JSON.parse(event.data);
-      // console.log('Parsed data:', json_data);
+      console.log('Parsed data: websocket', json_data);
 
       // Extract derived values from the message
       const {derived_values, timestamp} = json_data?.message || {};
@@ -620,6 +666,7 @@ const Dash = ({}) => {
                 style={{
                   height: 50,
                   width: WIDTH * 0.85,
+                  top: 6,
                   // backgroundColor: 'rgba(100,100,100,0.5)',
                   margin: 10,
                   marginTop: 13,
@@ -720,10 +767,14 @@ const Dash = ({}) => {
                       alignItems: 'center',
                       width: '95%',
                       height: HEIGHT * 0.055,
-                      marginTop: 5,
+                      elevation: 10,
+                      marginTop: 10,
                       // paddingHorizontal: 10,
-                      // backgroundColor: '#4db6b3',
-                      alignSelf: 'center',
+                      alignContent: 'center',
+                      borderRadius: 10,
+
+                      backgroundColor: 'white',
+                      // alignSelf: 'center',
                     }}>
                     {/* recent trips */}
                     <Text
@@ -731,7 +782,7 @@ const Dash = ({}) => {
                         fontFamily: BOLD,
                         fontSize: RFValue(15),
                         color: 'black',
-                        marginBottom: 10,
+                        // marginBottom: 10,
                         marginLeft: 10,
                       }}>
                       Recent Trips
@@ -866,11 +917,16 @@ const Dash = ({}) => {
                   }}
                   onPress={() => {
                     setShowMap(true);
+                    GetProjectedTrack();
                     // console.log('Track pressed', Location);
                   }}>
                   <Text style={styles.headerButton}>Track</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
+                  style={{
+                    width: WIDTH * 0.15,
+                    height: HEIGHT * 0.03,
+                  }}
                   onPress={() => {
                     setViewHistory(false);
                     setShowModal(false);
@@ -997,6 +1053,26 @@ const Dash = ({}) => {
                 </Text>
               </View>
             </View>
+            <TouchableOpacity
+              onPress={() => setModalVisible(true)}
+              style={{
+                width: WIDTH * 0.4,
+                height: HEIGHT * 0.05,
+                backgroundColor: '#1E90FF',
+                borderRadius: 10,
+                alignSelf: 'center',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <Text
+                style={{
+                  color: '#FFFFFF',
+                  fontSize: 16,
+                  fontWeight: 'bold',
+                }}>
+                Assign Route
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1006,6 +1082,13 @@ const Dash = ({}) => {
         onDateSelect={handleDateSelect}
         vehicleData={vehicleData}
         log={Log}
+      />
+
+      <Assignment
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        id={Log}
+        onSelect={route => setSelectedRoute(route)} // Get selected route
       />
       {/* </LinearGradient> */}
       {/* </MapView> */}
