@@ -4,12 +4,14 @@ import DashBoard from '../Pages/DashBoard/DashBoard';
 import VehicleMap from '../Pages/VehicleMap/VehicleMap';
 import Track from '../Pages/Track/Track';
 import HistoryModal from '../Pages/History/HistoryModal';
+import Home from '../Pages/Home/Home';
 
 const {Navigator, Screen} = createNativeStackNavigator();
 
 export default HomeStack = () => {
   return (
-    <Navigator initialRouteName="DashBoard">
+    <Navigator initialRouteName="Home">
+      <Screen options={{headerShown: false}} name="Home" component={Home} />
       <Screen
         options={{headerShown: false}}
         name="DashBoard"
