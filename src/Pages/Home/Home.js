@@ -512,9 +512,8 @@ const FleetDashboard = () => {
     setSelectedDateType(null);
   };
   
-
-
-  const toggleFilterModal = (title) => {
+      
+const toggleFilterModal = (title) => {
     setFilterModalVisible(prev => (prev === title ? null : title));
     setFromModalVisible(false);
     setToModalVisible(false);
