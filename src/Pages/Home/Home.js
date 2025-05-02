@@ -9,10 +9,13 @@ import {
   RefreshControl,
   TouchableOpacity,
   ImageBackground,
+  StatusBar,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Icon} from '@rneui/themed';
-import {HEIGHT, MyStatusBar} from '../../constants/config';
+import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
 import {GETNETWORK} from '../../utils/Network';
 import {BASE_URL} from '../../constants/url';
 import {
@@ -32,6 +35,8 @@ import {
   ZONE,
 } from '../../constants/imagepath';
 import {RFValue} from 'react-native-responsive-fontsize';
+import Header from '../../components/Header';
+import { BRAND } from '../../constants/color';
 
 const WHITE = '#FFFFFF';
 const data1 = [
@@ -45,13 +50,19 @@ const data1 = [
 
 const FleetCard = ({
   title,
-  color,
   icon,
-  openCalendarFor,
+  color,
   fromDate,
   toDate,
   selectedDateType,
   handleDateSelect,
+  openCalendarFor,
+  isFilterVisible,
+  toggleFilterModal,
+  isFromModalVisible,
+  isToModalVisible,
+  setFromModalVisible,
+  setToModalVisible,
 }) => (
   <View style={styles.cardContainer}>
     <ImageBackground
@@ -64,7 +75,7 @@ const FleetCard = ({
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>{title}</Text>
 
-          <View style={styles.dateButtons}>
+          {/* <View style={styles.dateButtons}>
             <TouchableOpacity
               style={styles.dateButton}
               onPress={() => openCalendarFor('start', title)}>
@@ -80,20 +91,132 @@ const FleetCard = ({
                 {toDate ? `To: ${toDate}` : 'To'}
               </Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
+
+<TouchableOpacity onPress={() => toggleFilterModal(title)}>
+    <Text style={{ color: 'black', fontWeight: 'bold' }}>Filter</Text>
+  </TouchableOpacity>
         </View>
-        {selectedDateType?.title === title && (
-          <Calendar
-            style={styles.calendar}
-            onDayPress={day => handleDateSelect(day, title)}
-            markedDates={{
-              [fromDate]: {selected: true, selectedColor: '#28a745'},
-              [toDate]: {selected: true, selectedColor: '#dc3545'},
-            }}
-          />
-        )}
-        {title === 'Usage' && (
-          <LineChart
+        {isFilterVisible && (
+  <Modal
+    visible={isFilterVisible}
+    transparent
+    animationType="slide"
+    onRequestClose={() => toggleFilterModal(title)}
+  >
+    <TouchableWithoutFeedback onPress={() => toggleFilterModal(title)}>
+      <View style={styles.modalOverlay}>
+        <TouchableWithoutFeedback>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Select Date Range</Text>
+
+            {/* From Date Button */}
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => openCalendarFor('start', title)}
+            >
+              <Text style={styles.dateButtonText}>
+                {fromDate ? `From: ${fromDate}` : 'From'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* To Date Button */}
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => openCalendarFor('end', title)}
+            >
+              <Text style={styles.dateButtonText}>
+                {toDate ? `To: ${toDate}` : 'To'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Close Button */}
+            <TouchableOpacity
+              style={[styles.dateButton, { backgroundColor: 'gray' }]}
+              onPress={() => toggleFilterModal(title)}
+            >
+              <Text style={styles.dateButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </TouchableWithoutFeedback>
+  </Modal>
+)}
+
+{/* Calendar Modal for From */}
+{isFromModalVisible && (
+  <Modal
+    visible={isFromModalVisible}
+    transparent
+    animationType="slide"
+    onRequestClose={() => setFromModalVisible(false)}
+  >
+    <TouchableWithoutFeedback onPress={() => setFromModalVisible(false)}>
+      <View style={styles.modalOverlay}>
+        <TouchableWithoutFeedback>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Select Start Date</Text>
+            <Calendar
+              onDayPress={day => handleDateSelect(day, title)}
+              markedDates={{
+                [fromDate]: { selected: true, selectedColor: '#28a745' },
+                [toDate]: { selected: true, selectedColor: '#dc3545' },
+              }}
+            />
+            <TouchableOpacity
+              style={[styles.dateButton, { backgroundColor: 'gray' }]}
+              onPress={() => setFromModalVisible(false)}
+            >
+              <Text style={styles.dateButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </TouchableWithoutFeedback>
+  </Modal>
+)}
+
+{/* Calendar Modal for To */}
+{isToModalVisible && (
+  <Modal
+    visible={isToModalVisible}
+    transparent
+    animationType="slide"
+    onRequestClose={() => setToModalVisible(false)}
+  >
+    <TouchableWithoutFeedback onPress={() => setToModalVisible(false)}>
+      <View style={styles.modalOverlay}>
+        <TouchableWithoutFeedback>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Select End Date</Text>
+            <Calendar
+              onDayPress={day => handleDateSelect(day, title)}
+              markedDates={{
+                [fromDate]: { selected: true, selectedColor: '#28a745' },
+                [toDate]: { selected: true, selectedColor: '#dc3545' },
+              }}
+            />
+            <TouchableOpacity
+              style={[styles.dateButton, { backgroundColor: 'gray' }]}
+              onPress={() => setToModalVisible(false)}
+            >
+              <Text style={styles.dateButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </TouchableWithoutFeedback>
+  </Modal>
+)}
+
+
+        
+        {title === 'Total Distance' && (
+         <View style={{height: HEIGHT * 0.50, width: '100%'}}>
+
+<LineChart
+height={HEIGHT * 0.19}
             areaChart
             curved
             data={data1}
@@ -129,7 +252,7 @@ const FleetCard = ({
                 return (
                   <View
                     style={{
-                      height: 120,
+                      height: 100,
                       width: 100,
                       backgroundColor: '#282C3E',
                       borderRadius: 4,
@@ -153,7 +276,9 @@ const FleetCard = ({
                 );
               },
             }}
-          />
+      />
+         </View>
+          
         )}
         {title === 'OverSpeed' && (
           <View style={styles.overSpeedDetails}>
@@ -304,6 +429,10 @@ const FleetSummaryCard = ({statusMap, total}) => {
   ];
 
   return (
+    <>
+   
+    
+   
     <View style={styles.summaryCard}>
       <Text style={styles.headerText}>Status</Text>
       <View style={styles.pieRowContainer}>
@@ -313,6 +442,7 @@ const FleetSummaryCard = ({statusMap, total}) => {
             donut
             showText
             textColor="white"
+            textSize={12}
             radius={70}
             innerRadius={40}
             centerLabelComponent={() => (
@@ -337,6 +467,7 @@ const FleetSummaryCard = ({statusMap, total}) => {
         </View>
       </View>
     </View>
+    </>
   );
 };
 
@@ -347,6 +478,11 @@ const FleetDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDateType, setSelectedDateType] = useState(null);
   const [dateRanges, setDateRanges] = useState({});
+  const [filterModalVisible, setFilterModalVisible] = useState(null); // <-- For which card's modal
+  const [isFromModalVisible, setFromModalVisible] = useState(false);
+  const [isToModalVisible, setToModalVisible] = useState(false);
+
+
 
   const onDateSelect = (type, date, title) => {
     setDateRanges(prev => ({
@@ -360,14 +496,40 @@ const FleetDashboard = () => {
 
   const handleDateSelect = (day, title) => {
     const date = day.dateString;
-    if (!selectedDateType) return;
-    onDateSelect(selectedDateType.type, date, title);
+    if (selectedDateType?.type === 'start') {
+      setFromModalVisible(false);
+      setDateRanges(prev => ({
+        ...prev,
+        [title]: { ...prev[title], from: date },
+      }));
+    } else if (selectedDateType?.type === 'end') {
+      setToModalVisible(false);
+      setDateRanges(prev => ({
+        ...prev,
+        [title]: { ...prev[title], to: date },
+      }));
+    }
     setSelectedDateType(null);
   };
+  
 
-  const openCalendar = (type, cardTitle) => {
-    setSelectedDateType({type, title: cardTitle});
+
+  const toggleFilterModal = (title) => {
+    setFilterModalVisible(prev => (prev === title ? null : title));
+    setFromModalVisible(false);
+    setToModalVisible(false);
   };
+  const openCalendarFor = (type, cardTitle) => {
+    setSelectedDateType({ type, title: cardTitle });
+    if (type === 'start') {
+      setFromModalVisible(true);
+      setToModalVisible(false);
+    } else if (type === 'end') {
+      setFromModalVisible(false);
+      setToModalVisible(true);
+    }
+  };
+  
 
   const fetchDerivedData = useCallback(async () => {
     const url = `${BASE_URL}projects/117/things/?page=1&search=&type=gps`;
@@ -396,7 +558,7 @@ const FleetDashboard = () => {
         setTotal(fetchedData.length);
 
         const transformedData = [
-          {title: 'Usage', color: '#28a745', icon: USAGE},
+          {title: 'Total Distance', color: '#28a745', icon: USAGE},
           {title: 'OverSpeed', color: '#ffc107', icon: OVERSPEED},
           {title: 'Idle', color: '#dc3545', icon: IDLE},
           {title: 'Fuel', color: '#007bff', icon: FUEL},
@@ -425,24 +587,37 @@ const FleetDashboard = () => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={WHITE} barStyle="dark-content" />
+      <StatusBar backgroundColor={BRAND} barStyle="dark-content" />
       <SafeAreaView style={styles.safeareacontainer}>
+      <Header
+      title="Dashboard"
+
+    
+    />
+       
         <KeyboardAvoidingView
           style={{flex: 1}}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <FlatList
+     <FlatList
             ListHeaderComponent={
               <FleetSummaryCard statusMap={statusMap} total={total} />
             }
             data={fleetData}
             renderItem={({item}) => (
               <FleetCard
-                {...item}
-                fromDate={dateRanges[item.title]?.from}
-                toDate={dateRanges[item.title]?.to}
-                selectedDateType={selectedDateType}
-                handleDateSelect={handleDateSelect}
-                openCalendarFor={openCalendar}
+              {...item}
+              fromDate={dateRanges[item.title]?.from}
+              toDate={dateRanges[item.title]?.to}
+              selectedDateType={selectedDateType}
+              handleDateSelect={handleDateSelect}
+              openCalendarFor={openCalendarFor}
+              toggleFilterModal={toggleFilterModal}
+              isFilterVisible={filterModalVisible === item.title}
+              isFromModalVisible={isFromModalVisible}
+              isToModalVisible={isToModalVisible}
+              setFromModalVisible={setFromModalVisible}
+              setToModalVisible={setToModalVisible}
+            
               />
             )}
             keyExtractor={item => item.title}
@@ -467,7 +642,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   headerText: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#333',
@@ -479,6 +654,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     elevation: 3,
     marginBottom: 15,
+    marginTop:20,
+    width: WIDTH * 0.90,
   },
   pieRowContainer: {
     flexDirection: 'row',
@@ -486,13 +663,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   pieContainer: {
-    width: '60%',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: '50%',
+    // alignItems: 'center',
+    // justifyContent: 'center',
   },
   legendContainer: {
-    width: '35%',
-  },
+    width: '45%',
+    bottom: 50,
+    backgroundColor:'#FFE',
+// width: '100%', 
+right: 10,
+padding: 10,
+
+},
   summaryItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -587,9 +770,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: HEIGHT * 0.2,
+    height: HEIGHT * 0.20,
     paddingTop: 50,
-    marginTop: 20,
+    // marginTop: 20,
     backgroundColor: 'rgba(220,53,69,0.05)', // subtle light red
     borderRadius: 10,
     width: '100%',
@@ -625,9 +808,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   idleDetails: {
-    height: HEIGHT * 0.2,
+    height: HEIGHT * 0.20,
     paddingTop: 50,
-    marginTop: 20,
+    // marginTop: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -673,9 +856,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: HEIGHT * 0.2,
+    height: HEIGHT * 0.20,
     paddingTop: 50,
-    marginTop: 20,
+    // marginTop: 20,
     backgroundColor: 'rgba(40,167,69,0.05)', // light green background
     borderRadius: 10,
     width: '100%',
@@ -714,9 +897,9 @@ const styles = StyleSheet.create({
     color: '#28a745',
   },
   zoneDetails: {
-    height: HEIGHT * 0.2,
+    height: HEIGHT * 0.20,
     paddingTop: 50,
-    marginTop: 20,
+    // marginTop: 20,
     backgroundColor: 'rgba(0,123,255,0.05)', // light blue background
     borderRadius: 10,
     padding: 12,
@@ -745,12 +928,13 @@ const styles = StyleSheet.create({
     color: '#007bff',
   },
   timelineDeviation: {
-    height: HEIGHT * 0.22,
+    height: HEIGHT * 0.20,
     width: '100%',
     backgroundColor: 'rgba(255, 193, 7, 0.1)', // light amber
     borderRadius: 8,
     padding: 12,
     justifyContent: 'space-around',
+    marginBottom:100
   },
 
   timelineItem: {
@@ -774,6 +958,37 @@ const styles = StyleSheet.create({
     color: '#fd7e14',
     marginTop: 2,
   },
+  modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+modalContainer: {
+  width: '80%',
+  backgroundColor: 'white',
+  padding: 20,
+  borderRadius: 10,
+  elevation: 5,
+},
+modalTitle: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  marginBottom: 20,
+  textAlign: 'center',
+},
+dateButton: {
+  backgroundColor: '#007bff',
+  padding: 12,
+  borderRadius: 6,
+  marginVertical: 8,
+  alignItems: 'center',
+},
+dateButtonText: {
+  color: 'white',
+  fontSize: 14,
+},
+
 });
 
 export default FleetDashboard;

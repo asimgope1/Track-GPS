@@ -1,50 +1,25 @@
-import {StatusBar, StyleSheet} from 'react-native';
-import {BLACK, BRAND, BROWN, WHITE} from '../../constants/color';
-import {RFPercentage, RFValue} from 'react-native-responsive-fontsize';
-import {BOLD, LIGHT, REGULAR, SEMIBOLD} from '../../constants/fontfamily';
-import {HEIGHT, WIDTH} from '../../constants/config';
+import { StyleSheet } from 'react-native';
+import { BRAND } from '../../constants/color';
+
 export const headerStyles = StyleSheet.create({
-  headercontainer: {
-    // marginTop: StatusBar.currentHeight,
-    flexDirection: 'row',
-    width: '90%',
-    height: 55,
-    alignItems: 'center',
-    backgroundColor: WHITE,
-  },
-  iconview: {
-    width: '15%',
-    height: '100%',
+  simpleHeaderContainer: {
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: BRAND, // soft light background
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4, // for Android shadow
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#d1d5db', // subtle border
   },
-  image: {
-    width: '80%',
-    height: '80%',
-  },
-  headertextview: {
-    width: '55%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    color: BLACK,
-    fontSize: RFValue(14),
-    fontFamily: SEMIBOLD,
-  },
-  skiptext: {
-    color: BLACK,
-    fontSize: RFValue(13),
-    fontFamily: BOLD,
-  },
-  skipview: {
-    width: '35%',
-    height: '70%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: WHITE,
-    borderRadius: 10,
-    borderWidth: 1,
+  simpleHeaderTitle: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    color: 'white', // dark gray-blue
+    letterSpacing: 0.5,
+
   },
 });
