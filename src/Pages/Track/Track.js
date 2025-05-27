@@ -48,6 +48,13 @@ const Track = ({
       item => item?.latitude !== undefined && item?.longitude !== undefined,
     ) || [];
 
+  //  const filteredShowTrack = Array.isArray(showTrack)
+  //    ? showTrack.filter(
+  //        item =>
+  //          item?.latitude !== undefined && item?.longitude !== undefined,
+  //      )
+  //    : [];
+
   const region = {
     latitude: latitude || 28.6139, // Default to New Delhi
     longitude: longitude || 77.209,

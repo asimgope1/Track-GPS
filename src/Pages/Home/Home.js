@@ -1005,7 +1005,7 @@ const FleetSummaryCard = ({
     if (selectedStatus !== 'Total') {
       fetchCardData(item.thing_id);
       // setSelectedValue(selectedValue);
-      setLocation(item.Location || []); // assumes item.Location = [lat, long]
+      setLocation(item?.derived_live_config?.location || []); // assumes item.Location = [lat, long]
       setModalVisible(false);
       setShowModal(true);
     } else {
@@ -1283,7 +1283,11 @@ const FleetSummaryCard = ({
                     History
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setShowMap(true)}>
+                <TouchableOpacity
+                  onPress={
+                    () => setShowMap(true)
+                    // console.log('track', Location)
+                  }>
                   <Text
                     style={{
                       marginHorizontal: 5,
@@ -1311,36 +1315,6 @@ const FleetSummaryCard = ({
             />
 
             <View style={{gap: 12}}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                  alignContent: 'space-between',
-                  justifyContent: 'space-between',
-                }}>
-                <View
-                  style={[
-                    styles.parkingIcon,
-                    {borderColor: parked ? 'green' : 'red'},
-                  ]}>
-                  <Text
-                    style={styles.parkingText}
-                    onPress={() => {
-                      setParked(!parked);
-                      console.log('Parking status toggled');
-                    }}>
-                    P
-                  </Text>
-                </View>
-                <Text
-                  style={{fontWeight: '600', color: 'white'}}
-                  onPress={() => {
-                    console.log('genfencing clicked');
-                  }}>
-                  Geofencing{' '}
-                </Text>
-              </View>
               {/* Speed */}
               <View
                 style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>

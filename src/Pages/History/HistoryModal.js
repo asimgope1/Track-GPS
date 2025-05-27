@@ -15,7 +15,7 @@ import {BLACK, WHITE} from '../../constants/color';
 import {BASE_URL} from '../../constants/url';
 import {POSTNETWORK} from '../../utils/Network';
 import moment from 'moment';
-import MapView, {Marker, Polyline} from 'react-native-maps';
+import MapView, {Circle, Marker, Polyline} from 'react-native-maps';
 import {HEIGHT, WIDTH} from '../../constants/config';
 import {Icon} from '@rneui/themed';
 
@@ -137,54 +137,30 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
       visible={visible}
       onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        {/* Map View as Background */}
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            // bottom: HEIGHT * 0.1, // Position the button a little above the bottom
-            left: WIDTH * 0.85, // Center horizontally
-            height: HEIGHT * 0.05,
-            width: WIDTH * 0.11,
-            marginTop: 25,
-            backgroundColor: '#1E90FF',
-            borderRadius: WIDTH * 0.1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            elevation: 5,
-            zIndex: 2, // Ensure the button is on top of the map
-          }}
-          onPress={() => {
-            setShowModalContent(!showModalContent);
-          }}>
-          <Icon
-            name="calendar-view-week"
-            type="MaterialCommunityIcons"
-            color={WHITE}
-            size={24}
-          />
-
-          {/* You can place an icon or text inside the red dot here */}
-        </TouchableOpacity>
+        {/* MapView in Background */}
         <MapView
-          style={styles.map}
+          style={StyleSheet.absoluteFillObject}
           mapType="hybrid"
           initialRegion={{
-            latitude: 20.3480968, // Default center lat
-            longitude: 85.8439865, // Default center long
+            latitude: 20.3480968,
+            longitude: 85.8439865,
             latitudeDelta: 0.0922,
             longitudeDelta: 0.0421,
           }}>
-          {/* want a cirlcle view of the map */}
-
-          {/* Place a marker if vehicle location is available */}
+          <Circle
+            center={{latitude: 20.3236637, longitude: 85.8217621}}
+            radius={1000}
+            strokeWidth={2}
+            strokeColor="rgba(255, 140, 0, 0.8)"
+            fillColor="rgba(255, 140, 0, 0.2)"
+          />
           {selectedValue.location && selectedValue.location.latitude && (
             <Marker
               coordinate={selectedValue.location}
               title="Vehicle Location"
+              description={`longitude: ${selectedValue.location.longitude}, latitude: ${selectedValue.location.latitude}`}
             />
           )}
-
-          {/* Add Polyline if locations are available */}
           {selectedValue.locations && selectedValue.locations.length > 1 && (
             <Polyline
               coordinates={selectedValue.locations}
@@ -194,6 +170,44 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
           )}
         </MapView>
 
+        {/* Floating Side Menu */}
+        <View style={styles.sideMenu}>
+          <TouchableOpacity
+            style={styles.toggleButton}
+            onPress={() => setShowModalContent(!showModalContent)}>
+            <Icon
+              name="calendar-view-week"
+              type="MaterialCommunityIcons"
+              color={WHITE}
+              size={24}
+            />
+          </TouchableOpacity>
+
+          <View
+            style={[
+              styles.parkingIcon,
+              {borderColor: true ? 'lightgreen' : 'red'},
+            ]}>
+            <Text style={styles.parkingText}>P</Text>
+          </View>
+
+          {/* icon button for genfencing */}
+          <TouchableOpacity
+            style={{...styles.toggleButton, marginTop: 20}}
+            onPress={() => {
+              // Handle geofencing action here
+              console.log('Geofencing button pressed');
+            }}>
+            <Icon
+              name="map"
+              // type="MaterialCommunityIcons"
+              color={WHITE}
+              size={24}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Floating Modal Content */}
         {/* Conditionally render Modal Content */}
         {showModalContent && (
           <View style={styles.modalContent}>
@@ -223,7 +237,11 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
                 // console.log('log', log, 'log thing id', log[0].thing_id)
               }>
               <Text
-                style={{...styles.dateButtonText, color: WHITE, fontSize: 16}}>
+                style={{
+                  ...styles.dateButtonText,
+                  color: WHITE,
+                  fontSize: 16,
+                }}>
                 Get History
               </Text>
             </Pressable>
@@ -328,10 +346,23 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    width: '100%',
-    alignSelf: 'center',
+    width: '85%',
+    alignSelf: 'flex-start',
 
     backgroundColor: WHITE,
+  },
+  parkingIcon: {
+    width: 50,
+    height: 50,
+    borderWidth: 3,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  parkingText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
   },
   modalContent: {
     backgroundColor: WHITE,
@@ -421,6 +452,57 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: WHITE,
     fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  sideMenu: {
+    position: 'absolute',
+    width: WIDTH * 0.15,
+    height: HEIGHT,
+    left: WIDTH * 0.85,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    justifyContent: 'flex-start',
+    zIndex: 10,
+    alignItems: 'center',
+    paddingTop: 25,
+  },
+  toggleButton: {
+    height: HEIGHT * 0.05,
+    width: WIDTH * 0.11,
+    backgroundColor: '#1E90FF',
+    borderRadius: WIDTH * 0.1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    marginBottom: 20,
+  },
+  parkingIcon: {
+    width: 40,
+    height: 40,
+    borderWidth: 2,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  parkingText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  modalContent: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: 100,
+    left: 0,
+    width: '85%',
+    height: '55%',
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    zIndex: 20,
+    padding: 16,
   },
 });
 
