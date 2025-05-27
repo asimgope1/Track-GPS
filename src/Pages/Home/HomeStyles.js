@@ -7,6 +7,19 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f1f5f9',
   },
+  parkingIcon: {
+    width: 50,
+    height: 50,
+    borderWidth: 3,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  parkingText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+  },
   listContainer: {
     paddingHorizontal: 16,
     paddingBottom: 20,
@@ -93,10 +106,6 @@ export const styles = StyleSheet.create({
   cardContent: {
     padding: 10,
   },
-  
-
-  
-
 
   cardHeader: {
     flexDirection: 'row',
@@ -110,20 +119,20 @@ export const styles = StyleSheet.create({
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
   },
-  
+
   cardTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
   },
-  
+
   filterIcon: {
     width: 20,
     width: 20,
     height: 20,
     tintColor: '#CCCCCC',
   },
-  
+
   dateButtons: {
     flexDirection: 'column',
     alignItems: 'flex-end',
@@ -400,6 +409,27 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 10,
+  },
+  optionButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#eee',
+    borderRadius: 5,
+  },
+  optionButtonSelected: {
+    backgroundColor: '#cdeffd',
+  },
+
   dateButton: {
     backgroundColor: '#007bff',
     padding: 12,
@@ -415,7 +445,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
   },
-  
+
   statusCard: {
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -423,15 +453,15 @@ export const styles = StyleSheet.create({
     // marginBottom: 2,
     elevation: 3,
     borderLeftWidth: 4,
-    marginTop:5
+    marginTop: 5,
   },
-  
+
   statusTitle: {
     fontSize: 9,
     color: '#333',
     fontWeight: '600',
   },
-  
+
   statusCount: {
     fontSize: 11,
     fontWeight: 'bold',
@@ -443,7 +473,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   modalContentPie: {
     width: '80%',
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -452,13 +482,13 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 5,
   },
-  
+
   modalHeaderPie: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#007bff',
   },
-  
+
   modalCloseButtonPie: {
     marginTop: 20,
     backgroundColor: '#007bff',
@@ -466,7 +496,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 6,
   },
-  
+
   modalCloseTextPie: {
     color: '#fff',
     fontSize: 16,
@@ -502,6 +532,5 @@ export const styles = StyleSheet.create({
   tableCell: {
     flex: 1,
     color: '#555',
-    
   },
 });

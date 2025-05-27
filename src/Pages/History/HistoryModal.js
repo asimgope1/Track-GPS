@@ -48,6 +48,7 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
   };
 
   const fetchVehicleData = async id => {
+    console.log('idd log ', id);
     if (!fromDate || !toDate) {
       setSelectedValue({error: 'Please select both from and to dates.'});
       return;
@@ -217,7 +218,10 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
 
             <Pressable
               style={styles.getButton}
-              onPress={() => fetchVehicleData(log)}>
+              onPress={
+                () => fetchVehicleData(log[0].thing_id)
+                // console.log('log', log, 'log thing id', log[0].thing_id)
+              }>
               <Text
                 style={{...styles.dateButtonText, color: WHITE, fontSize: 16}}>
                 Get History
