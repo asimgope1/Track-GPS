@@ -5,6 +5,7 @@ import VehicleMap from '../Pages/VehicleMap/VehicleMap';
 import Track from '../Pages/Track/Track';
 import HistoryModal from '../Pages/History/HistoryModal';
 import Home from '../Pages/Home/Home';
+import DescriptionData from '../Pages/Piedata/DescriptionData';
 
 const {Navigator, Screen} = createNativeStackNavigator();
 
@@ -20,6 +21,7 @@ export default HomeStack = () => {
       <Screen name="VehicleMap" component={VehicleMap} />
       <Screen name="Track" component={Track} />
       <Screen name="HistoryModal" component={HistoryModal} />
+      <Screen name="DescriptionData" component={DescriptionData} />
     </Navigator>
   );
 };

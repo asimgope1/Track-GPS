@@ -17,3 +17,6 @@ export const OVERSPEED = require('../assets/images/deadline.png');
 export const FUEL = require('../assets/images/fuel.png');
 export const ZONE = require('../assets/images/target.png');
 export const TIMELINE = require('../assets/images/timeline.png');
+export const FILTER = require('../assets/images/filter.png');
+export const STAYZONE = require('../assets/images/Zone.png');
+export const STAYAWAY = require('../assets/images/awayZone.png');

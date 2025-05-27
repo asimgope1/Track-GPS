@@ -1,0 +1,507 @@
+import {StyleSheet} from 'react-native';
+import {HEIGHT, WIDTH} from '../../constants/config';
+import {RFValue} from 'react-native-responsive-fontsize';
+
+export const styles = StyleSheet.create({
+  safeareacontainer: {
+    flex: 1,
+    backgroundColor: '#f1f5f9',
+  },
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+    marginLeft: '5%',
+  },
+  summaryCard: {
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    elevation: 3,
+    marginBottom: 15,
+    marginTop: 20,
+    width: WIDTH * 0.9,
+  },
+  pieRowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pieContainer: {
+    width: '50%',
+    // alignItems: 'center',
+    // justifyContent: 'center',
+  },
+  legendContainer: {
+    width: '45%',
+    bottom: 50,
+    backgroundColor: '#FFE',
+    // width: '100%',
+    right: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#333',
+    flex: 1,
+  },
+  summaryValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  cardContainer: {
+    height: HEIGHT * 0.35,
+    borderRadius: 12,
+    overflow: 'scroll',
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    elevation: 3,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'flex-start',
+  },
+  imageStyle: {
+    resizeMode: 'center',
+    opacity: 0.3,
+    tintColor: 'rgba(109, 103, 103, 0.48)',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  cardContent: {
+    padding: 10,
+  },
+  
+
+  
+
+
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F5F5F5', // Light background
+    borderBottomWidth: 1,
+    borderColor: '#E0E0E0', // Subtle bottom border
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+  },
+  
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  
+  filterIcon: {
+    width: 20,
+    width: 20,
+    height: 20,
+    tintColor: '#CCCCCC',
+  },
+  
+  dateButtons: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  dateButton: {
+    width: '100%',
+    backgroundColor: '#e9ecef',
+    padding: 6,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  dateButtonText: {
+    fontSize: 12,
+    color: '#333',
+    textAlign: 'center',
+  },
+  calendarContainer: {
+    marginTop: 10,
+  },
+  calendar: {
+    // bottom: -200,
+    // position: 'absolute',
+    marginTop: -100,
+    // borderRadius: 10,
+    // padding: 5,
+  },
+  watermarkIcon: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    opacity: 0.2,
+  },
+  overSpeedDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: HEIGHT * 0.2,
+    paddingTop: 50,
+    // marginTop: 20,
+    backgroundColor: 'rgba(220,53,69,0.05)', // subtle light red
+    borderRadius: 10,
+    width: '100%',
+  },
+
+  detailBox: {
+    // flex: 1,
+    // height: HEIGHT * 0.15,
+    // marginTop: 50,
+
+    marginHorizontal: 5,
+    padding: 12,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    elevation: 3, // shadow for Android
+    shadowColor: '#000', // shadow for iOS
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 2},
+    shadowRadius: 4,
+    alignItems: 'center',
+  },
+
+  detailLabel: {
+    fontSize: RFValue(12),
+    color: '#6c757d', // muted gray
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+
+  detailValue: {
+    fontSize: RFValue(16),
+    color: '#dc3545',
+    fontWeight: '700',
+  },
+  idleDetails: {
+    height: HEIGHT * 0.2,
+    paddingTop: 50,
+    // marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+
+    backgroundColor: 'rgba(23,162,184,0.05)', // light info background
+    borderRadius: 10,
+    width: '100%',
+  },
+
+  idleBox: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 12,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 2},
+    shadowRadius: 4,
+    alignItems: 'center',
+  },
+
+  iconTextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+
+  idleLabel: {
+    fontSize: RFValue(13),
+    color: '#6c757d',
+    fontWeight: '500',
+    marginLeft: 6,
+  },
+
+  idleValue: {
+    fontSize: RFValue(16),
+    color: '#17a2b8',
+    fontWeight: '700',
+  },
+  fuelDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: HEIGHT * 0.2,
+    paddingTop: 50,
+    // marginTop: 20,
+    backgroundColor: 'rgba(40,167,69,0.05)', // light green background
+    borderRadius: 10,
+    width: '100%',
+  },
+
+  fuelBox: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 12,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 2},
+    shadowRadius: 4,
+    alignItems: 'center',
+  },
+
+  iconTextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+
+  fuelLabel: {
+    fontSize: RFValue(13),
+    color: '#6c757d',
+    fontWeight: '500',
+    marginLeft: 6,
+  },
+
+  fuelValue: {
+    fontSize: RFValue(16),
+    fontWeight: '700',
+    color: '#28a745',
+  },
+  zoneDetails: {
+    height: HEIGHT * 0.2,
+    paddingTop: 50,
+    // marginTop: 20,
+    backgroundColor: 'rgba(0,123,255,0.05)', // light blue background
+    borderRadius: 10,
+    // padding: 12,
+    width: '100%',
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: HEIGHT * 0.2,
+    // marginTop: 20,
+  },
+
+  zoneContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  zoneTextBox: {
+    marginLeft: 10,
+  },
+
+  zoneLabel: {
+    fontSize: RFValue(13),
+    color: '#6c757d',
+    fontWeight: '500',
+  },
+
+  zoneValue: {
+    fontSize: RFValue(16),
+    fontWeight: '700',
+    color: '#007bff',
+  },
+  timelineDeviation: {
+    height: HEIGHT * 0.2,
+    width: '100%',
+    backgroundColor: 'rgba(255, 193, 7, 0.1)', // light amber
+    borderRadius: 8,
+    padding: 12,
+    justifyContent: 'space-around',
+    marginBottom: 100,
+  },
+  StayZone: {
+    height: HEIGHT * 0.2,
+    width: '100%',
+    backgroundColor: 'rgba(200, 141, 210, 0.1)', // light amber
+    borderRadius: 8,
+    padding: 12,
+    justifyContent: 'space-around',
+    marginBottom: 100,
+  },
+  StayAwayZone: {
+    height: HEIGHT * 0.2,
+    width: '100%',
+    backgroundColor: 'rgba(255, 75, 4, 0.1)', // light amber
+    borderRadius: 8,
+    padding: 12,
+    justifyContent: 'space-around',
+    marginBottom: 100,
+  },
+  ObjectAlerts: {
+    height: HEIGHT * 0.23,
+    width: '100%',
+    backgroundColor: 'rgba(46, 201, 43, 0.11)', // light amber
+    borderRadius: 8,
+    padding: 12,
+    justifyContent: 'space-around',
+    marginBottom: 100,
+  },
+
+  timelineItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  timelineTextBox: {
+    marginLeft: 12,
+  },
+
+  timelineLabel: {
+    fontSize: RFValue(15),
+    color: '#343a40',
+    fontWeight: '600',
+  },
+
+  timelineValue: {
+    fontSize: RFValue(14),
+    color: '#fd7e14',
+    marginTop: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '80%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  dateButton: {
+    backgroundColor: '#007bff',
+    padding: 12,
+    borderRadius: 6,
+    marginVertical: 8,
+    alignItems: 'center',
+  },
+  dateButtonText: {
+    color: 'white',
+    fontSize: 14,
+  },
+  statusCardsContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  
+  statusCard: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 7,
+    // marginBottom: 2,
+    elevation: 3,
+    borderLeftWidth: 4,
+    marginTop:5
+  },
+  
+  statusTitle: {
+    fontSize: 9,
+    color: '#333',
+    fontWeight: '600',
+  },
+  
+  statusCount: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  modalOverlayPie: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  modalContentPie: {
+    width: '80%',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    elevation: 5,
+  },
+  
+  modalHeaderPie: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#007bff',
+  },
+  
+  modalCloseButtonPie: {
+    marginTop: 20,
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+  },
+  
+  modalCloseTextPie: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  tableContainer: {
+    // marginTop: 10,
+    marginHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'grey',
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: 'transparent', // Transparent background
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(34, 87, 249, 0.17)', // light blue background
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+  },
+  tableHeaderCell: {
+    flex: 1,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderTopWidth: 1,
+    borderColor: 'grey',
+    backgroundColor: 'transparent', // Transparent row background
+  },
+  tableCell: {
+    flex: 1,
+    color: '#555',
+    
+  },
+});

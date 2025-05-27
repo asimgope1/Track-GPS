@@ -1,25 +1,30 @@
 import { StyleSheet } from 'react-native';
-import { BRAND } from '../../constants/color';
 
 export const headerStyles = StyleSheet.create({
-  simpleHeaderContainer: {
-    height: 50,
-    justifyContent: 'center',
+  enhancedHeaderContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: BRAND, // soft light background
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4, // for Android shadow
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#d1d5db', // subtle border
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
-  simpleHeaderTitle: {
-    fontSize: 25,
-    fontWeight: 'bold',
-    color: 'white', // dark gray-blue
-    letterSpacing: 0.5,
-
+  iconButton: {
+    padding: 8,
+  },
+  titleWrapper: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  enhancedHeaderTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
