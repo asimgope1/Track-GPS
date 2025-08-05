@@ -1411,7 +1411,7 @@ const FleetSummaryCard = ({
   );
 };
 
-const FleetDashboard = () => {
+const FleetDashboard = navigation => {
   const [statusMap, setStatusMap] = useState({});
   const [fleetData, setFleetData] = useState([]);
   const [total, setTotal] = useState(0);
@@ -1574,7 +1574,10 @@ const FleetDashboard = () => {
     <Fragment>
       <StatusBar backgroundColor={'#0284c7'} barStyle="dark-content" />
       <SafeAreaView style={styles.safeareacontainer}>
-        <Header title="Dashboard" />
+        <Header onMenuPress={()=>{
+          console.log('here i want drawer navigation open', navigation);
+          navigation.navigation.openDrawer();
+        }} title="Dashboard" />
 
         <KeyboardAvoidingView
           style={{flex: 1}}
