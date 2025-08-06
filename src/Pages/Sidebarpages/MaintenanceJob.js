@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,9 @@ import {
 import DropDownPicker from 'react-native-dropdown-picker';
 import {Calendar} from 'react-native-calendars';
 import Header from '../../components/Header';
+import { BASE_URL } from '../../constants/url';
+import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
+import { useFocusEffect } from '@react-navigation/native';
 
 const MaintenanceJobScreen = ({navigation}) => {
   const [projectOpen, setProjectOpen] = useState(false);
@@ -27,15 +30,13 @@ const MaintenanceJobScreen = ({navigation}) => {
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const [vehicleValue, setVehicleValue] = useState(null);
   const [vehicleItems, setVehicleItems] = useState([
-    {label: 'TRK-001', value: 'TRK-001'},
-    {label: 'TRK-002', value: 'TRK-002'},
+    
   ]);
 
   const [maintenanceOpen, setMaintenanceOpen] = useState(false);
   const [maintenanceValue, setMaintenanceValue] = useState(null);
   const [maintenanceItems, setMaintenanceItems] = useState([
-    {label: 'Oil Change', value: 'oil_change'},
-    {label: 'Brake Check', value: 'brake_check'},
+   
   ]);
 
   const [issues, setIssues] = useState('');
@@ -58,28 +59,198 @@ const MaintenanceJobScreen = ({navigation}) => {
     setCalendarVisible(prev => ({...prev, [type]: false}));
   };
 
-  const handleCreateJob = () => {
-    const job = {
-      id: jobList.length + 1,
-      project: projectValue,
-      vehicle: vehicleValue,
-      type: maintenanceValue,
-      issues,
-      work,
-      parts,
-      cost,
-      jobStart,
-      jobEnd,
-    };
-    setJobList([...jobList, job]);
-    // Reset form
-    setIssues('');
-    setWork('');
-    setParts('');
-    setCost('');
-    setJobStart('');
-    setJobEnd('');
+  useEffect(() => {
+    GetVehicle()
+    GetMaintenance();
+    GetJobList()
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      GetVehicle();
+      GetMaintenance();
+      GetJobList();
+      // Cleanup function to reset state if needed
+      // This is optional, depending on your use case
+      // setVehicleItems([]);
+      // setMaintenanceItems([]);
+      // setJobList([]);
+      // clear all the states
+      setProjectItems([]);
+      setProjectValue(null);
+
+      setIssues('');
+      setWork('');
+      setParts('');
+      setCost('');
+      setJobStart('');
+      setJobEnd('');
+      setProjectOpen(false);
+      setVehicleOpen(false);
+      setMaintenanceOpen(false);
+      setCalendarVisible({start: false, end: false});
+      setJobList([]);
+      setProjectValue(null);
+      
+      return () => {
+        setVehicleItems([]);
+        setMaintenanceItems([]);
+        setJobList([]);
+      };
+    }, []),
+  );
+
+
+
+  const GetVehicle = async () => {
+    const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
+  
+    try {
+      const response = await GETNETWORK(Url, true);
+      console.log('Vehicle Data:', response.data);
+  
+      const vehicles = response.data?.things || [];
+  
+      const mappedItems = vehicles.map(item => ({
+        label: item.thing_name,
+        value: item.thing_id,
+      }));
+  
+      setVehicleItems(mappedItems);
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
+      alert('Failed to fetch vehicle data. Please try again.');
+    }
   };
+
+
+
+  const GetMaintenance = () => {
+    const Url = `${BASE_URL}maintenance/maintenance_master/`;
+  
+    // setLoading(true); // Optional: show a loading indicator
+  
+    GETNETWORK(Url, true)
+      .then(response => {
+        console.log('Maintenance Data:', response.data);
+        const mappedItems = response.data.map(item => ({
+          label: item.maintenance_name,
+          value: item.maintenance_id,
+        }));
+        setMaintenanceItems(mappedItems);
+        // setMaintenanceList(response.data); // Or handle it according to your stater
+        // setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching maintenance:', error);
+        // setLoading(false);
+        alert('Failed to fetch maintenance data. Please try again.');
+      });
+  };
+
+
+
+
+const GetJobList = () => {
+  console.log('Fetching job list...');
+  const Url = `${BASE_URL}maintenance/maintenance_job_card/`;
+
+  GETNETWORK(Url, true)
+    .then(response => {
+      console.log('Job List Response:', response);
+
+      if (!response || !response.data) {
+        throw new Error('No data returned from server');
+      }
+
+      const jobs = response.data.map(job => ({
+        id: job.id,
+        vehicle: job.thing_id,
+        type: job.maintenance_id,
+        issues: job.reported_issue,
+        work: job.work_performed,
+        parts: job.parts_replaced,
+        cost: job.estimated_cost,
+        jobStart: job.job_start_datetime,
+        jobEnd: job.job_end_datetime,
+      }));
+
+      setJobList(jobs);
+    })
+    .catch(error => {
+      console.error('Error fetching job list:', error);
+      alert('Failed to fetch job list. Please try again.');
+    });
+};
+
+
+
+const handleCreateJob = async () => {
+  if (!vehicleValue || !maintenanceValue) return;
+
+  const payload = {
+    thing_id: vehicleValue,
+    maintenance_id: maintenanceValue,
+    reported_issue: issues,
+    work_performed: work,
+    parts_replaced: parts,
+    estimated_cost: parseFloat(cost),
+    job_start_datetime: jobStart,
+    job_end_datetime: jobEnd,
+  };
+  console.log('Creating job with payload:', payload);
+
+  try {
+    const response = await POSTNETWORK(
+      `${BASE_URL}maintenance/maintenance_job_card/`,
+      payload,
+      true, // includeAuthHeader
+    );
+
+    console.log('Job creation response:', response);
+
+    if (response && response.success !== false) {
+      const job = {
+        id: jobList.length + 1,
+        project: projectValue,
+        vehicle: vehicleValue,
+        type: maintenanceValue,
+        issues,
+        work,
+        parts,
+        cost,
+        jobStart,
+        jobEnd,
+      };
+      setJobList([...jobList, job]);
+
+      // Reset form
+      setProjectValue(null);
+      setVehicleValue(null);
+      setMaintenanceValue(null);
+      setIssues('');
+      setWork('');
+      setParts('');
+      setCost('');
+      setJobStart('');
+      setJobEnd('');
+      setProjectOpen(false);
+      setVehicleOpen(false);
+      setMaintenanceOpen(false);
+
+      alert('Job created successfully.');
+    } else {
+      alert(response?.message || 'Failed to create job. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error creating job:', error);
+    alert('Error creating job. Please try again later.');
+  }
+};
+
+
+
+
 
   return (
     <>
@@ -95,7 +266,7 @@ const MaintenanceJobScreen = ({navigation}) => {
         <ScrollView contentContainerStyle={styles.container}>
           {/* Project & Vehicle Row */}
           <View style={styles.row}>
-            <View style={styles.column}>
+            <View style={[styles.column, {zIndex: 5000}]}>
               <Text style={styles.label}>Project</Text>
               <DropDownPicker
                 open={projectOpen}
@@ -106,12 +277,13 @@ const MaintenanceJobScreen = ({navigation}) => {
                 setItems={setProjectItems}
                 placeholder="Select Project"
                 zIndex={5000}
+                zIndexInverse={1000}
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
               />
             </View>
 
-            <View style={styles.column}>
+            <View style={[styles.column, {zIndex: 4000}]}>
               <Text style={styles.label}>Vehicle</Text>
               <DropDownPicker
                 open={vehicleOpen}
@@ -119,9 +291,15 @@ const MaintenanceJobScreen = ({navigation}) => {
                 items={vehicleItems}
                 setOpen={setVehicleOpen}
                 setValue={setVehicleValue}
+                onSelectItem={(item) => {
+                  console.log('Selected Vehicle:', item);
+                  setVehicleValue(item);
+                }
+                }
                 setItems={setVehicleItems}
                 placeholder="Select Vehicle"
                 zIndex={4000}
+                zIndexInverse={2000}
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
               />
@@ -129,7 +307,7 @@ const MaintenanceJobScreen = ({navigation}) => {
           </View>
 
           {/* Maintenance Type */}
-          <View style={styles.inputBlock}>
+          <View style={[styles.inputBlock, {zIndex: 3000}]}>
             <Text style={styles.label}>Maintenance Type</Text>
             <DropDownPicker
               open={maintenanceOpen}
@@ -138,8 +316,13 @@ const MaintenanceJobScreen = ({navigation}) => {
               setOpen={setMaintenanceOpen}
               setValue={setMaintenanceValue}
               setItems={setMaintenanceItems}
+              onSelectItem={(item) => {
+                console.log('Selected Maintenance Type:', item);
+                setMaintenanceValue(item);
+              }}
               placeholder="Select Type"
               zIndex={3000}
+              zIndexInverse={3000}
               style={styles.dropdown}
               dropDownContainerStyle={styles.dropdownContainer}
             />
@@ -256,7 +439,7 @@ const MaintenanceJobScreen = ({navigation}) => {
                   <Text style={styles.tableCell}>{index + 1}</Text>
                   <Text style={styles.tableCell}>{job.vehicle}</Text>
                   <Text style={styles.tableCell}>{job.type}</Text>
-                  <Text style={styles.tableCell}>{job.issues}</Text>
+                  <Text style={styles.tableCell}>{job.category}</Text>
                   <Text style={styles.tableCell}>{job.work}</Text>
                   <Text style={styles.tableCell}>{job.parts}</Text>
                   <Text style={styles.tableCell}>{job.cost}</Text>

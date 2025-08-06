@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,14 @@ import {
   KeyboardAvoidingView,
   StyleSheet,
   Modal,
+  Alert,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {Calendar} from 'react-native-calendars';
 import Header from '../../components/Header';
+import { GETNETWORK } from '../../utils/Network';
+import { BASE_URL } from '../../constants/url';
 
 const MaintenanceScheduleScreen = () => {
   const navigation = useNavigation();
@@ -26,27 +29,120 @@ const MaintenanceScheduleScreen = () => {
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const [vehicleValue, setVehicleValue] = useState(null);
   const [vehicleItems, setVehicleItems] = useState([
-    {label: 'TRK-001', value: 'TRK-001'},
-    {label: 'TRK-002', value: 'TRK-002'},
-    {label: 'TRK-003', value: 'TRK-003'},
-    {label: 'TRK-004', value: 'TRK-004'},
+
   ]);
 
   // Maintenance Type Dropdown
   const [maintenanceOpen, setMaintenanceOpen] = useState(false);
   const [maintenanceValue, setMaintenanceValue] = useState(null);
   const [maintenanceItems, setMaintenanceItems] = useState([
-    {label: 'Oil Change', value: 'oil_change'},
-    {label: 'Brake Inspection', value: 'brake_inspection'},
-    {label: 'Tire Rotation', value: 'tire_rotation'},
-    {label: 'Fluid Check', value: 'fluid_check'},
-    {label: 'Battery Check', value: 'battery_check'},
+
   ]);
 
   const handleDayPress = day => {
     setSelectedDate(day.dateString);
     setShowCalendar(false);
   };
+
+
+  useFocusEffect(
+    useCallback(() => {
+      // Reset all form fields
+      setSelectedDate('');
+      setVehicleValue(null);
+      setMaintenanceValue(null);
+      setComments('');
+
+      // Fetch data again if needed
+      GetVehicle();
+      GetMaintenance();
+
+      // Optional cleanup
+      return () => {
+        // any cleanup if needed
+      };
+    }, []),
+  );
+
+
+  useEffect(() => {
+    GetVehicle()
+    GetMaintenance();
+  }, []);
+
+
+    useFocusEffect(
+      useCallback(() => {
+        // Reset all form fields
+        setSelectedDate('');
+        setVehicleValue(null);
+        setMaintenanceValue(null);
+        setComments('');
+        // reset the states
+        setVehicleItems([]);
+        setMaintenanceItems([]);
+        // Fetch data again if needed
+        
+       
+
+    
+  
+  
+        // Optional cleanup
+        return () => {
+          // any cleanup if needed
+        };
+      }, []),
+    );
+
+
+const GetMaintenance = () => {
+  const Url = `${BASE_URL}maintenance/maintenance_master/`;
+
+  // setLoading(true); // Optional: show a loading indicator
+
+  GETNETWORK(Url, true)
+    .then(response => {
+      console.log('Maintenance Data:', response.data);
+      const mappedItems = response.data.map(item => ({
+        label: item.maintenance_name,
+        value: item.maintenance_id,
+      }));
+      setMaintenanceItems(mappedItems);
+      // setMaintenanceList(response.data); // Or handle it according to your stater
+      // setLoading(false);
+    })
+    .catch(error => {
+      console.error('Error fetching maintenance:', error);
+      // setLoading(false);
+      alert('Failed to fetch maintenance data. Please try again.');
+    });
+};
+
+const GetVehicle = async () => {
+  const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
+
+  try {
+    const response = await GETNETWORK(Url, true);
+    console.log('Vehicle Data:', response.data);
+
+    const vehicles = response.data?.things || [];
+
+    const mappedItems = vehicles.map(item => ({
+      label: item.thing_name,
+      value: item.thing_id,
+    }));
+
+    setVehicleItems(mappedItems);
+  } catch (error) {
+    console.error('Error fetching vehicles:', error);
+    alert('Failed to fetch vehicle data. Please try again.');
+  }
+};
+
+
+
+
 
   const handleSubmit = () => {
     const maintenanceData = {
@@ -56,6 +152,13 @@ const MaintenanceScheduleScreen = () => {
       comments,
     };
     console.log('Maintenance scheduled:', maintenanceData);
+
+    // Reset form
+    setSelectedDate('');
+    setVehicleValue(null);
+    setMaintenanceValue(null);
+    setComments('');
+    Alert.alert('Success', 'Maintenance scheduled successfully!');
   };
 
   return (
@@ -86,7 +189,7 @@ const MaintenanceScheduleScreen = () => {
             </View>
 
             {/* Vehicle Dropdown */}
-            <View style={styles.inputItem}>
+            <View style={[styles.inputItem, {zIndex: 3000}]}>
               <Text style={styles.label}>Vehicle ID</Text>
               <DropDownPicker
                 open={vehicleOpen}
@@ -97,14 +200,11 @@ const MaintenanceScheduleScreen = () => {
                 setValue={setVehicleValue}
                 setItems={setVehicleItems}
                 placeholder="Select Vehicle"
+                
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
                 textStyle={styles.dropdownText}
                 placeholderStyle={styles.dropdownPlaceholder}
-   
-                modalContentContainerStyle={styles.modalContent}
-                modalTitle="Select Vehicle"
-                modalTitleStyle={styles.modalTitle}
                 zIndex={3000}
                 zIndexInverse={1000}
               />
@@ -112,7 +212,7 @@ const MaintenanceScheduleScreen = () => {
           </View>
 
           {/* Maintenance Type Dropdown */}
-          <View style={styles.inputItem}>
+          <View style={[styles.inputItem, {zIndex: 2000}]}>
             <Text style={styles.label}>Maintenance Type</Text>
             <DropDownPicker
               open={maintenanceOpen}
@@ -127,10 +227,6 @@ const MaintenanceScheduleScreen = () => {
               dropDownContainerStyle={styles.dropdownContainer}
               textStyle={styles.dropdownText}
               placeholderStyle={styles.dropdownPlaceholder}
-       
-              modalContentContainerStyle={styles.modalContent}
-              modalTitle="Select Maintenance Type"
-              modalTitleStyle={styles.modalTitle}
               zIndex={2000}
               zIndexInverse={2000}
             />

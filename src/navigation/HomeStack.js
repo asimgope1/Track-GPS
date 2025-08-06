@@ -28,6 +28,8 @@ import { clearAll } from '../utils/Storage';
 import { useDispatch } from 'react-redux';
 import { checkuserToken } from '../redux/actions/auth';
 import MaintenanceJob from '../Pages/Sidebarpages/MaintenanceJob';
+import TripStart from '../Pages/Sidebarpages/TripStart';
+import TripStop from '../Pages/Sidebarpages/TripStop';
 // Import other screens as needed for the drawer items
 
 // Create both navigators
@@ -52,6 +54,10 @@ function HomeStack() {
       <Stack.Screen name="Track" component={Track} />
       <Stack.Screen name="HistoryModal" component={HistoryModal} />
       <Stack.Screen name="DescriptionData" component={DescriptionData} />
+      <Stack.Screen
+        name="MaintenanceSchedule"
+        component={MaintenanceScheduleScreen}
+      />
     </Stack.Navigator>
   );
 }
@@ -254,6 +260,8 @@ function AppNavigator() {
       <Drawer.Screen name="TripExpenses" component={TripExpenses} />
       <Drawer.Screen name="DriverRating" component={DriverRating} />
       <Drawer.Screen name="MaintenanceJob" component={MaintenanceJob} />
+      <Drawer.Screen name="TripStart" component={TripStart} />
+      <Drawer.Screen name="TripStop" component={TripStop} />
 
       {/* Add other screens similarly */}
     </Drawer.Navigator>

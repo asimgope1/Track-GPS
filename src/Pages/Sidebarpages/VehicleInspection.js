@@ -1,4 +1,4 @@
-import React, {useState, useCallback, useRef} from 'react';
+import React, {useState, useCallback, useRef, useEffect} from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,9 @@ import {
 import DropDownPicker from 'react-native-dropdown-picker';
 import Header from '../../components/Header';
 import {Calendar} from 'react-native-calendars';
+import { BASE_URL } from '../../constants/url';
+import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
+import { useFocusEffect } from '@react-navigation/native';
 
 const DEFAULT_STATUS_OPTIONS = [
   {label: 'OK', value: 'OK', color: '#22c55e'},
@@ -36,19 +39,23 @@ const DEFAULT_INSPECTION_ITEMS = [
 
 const VehicleInspection = ({
   navigation,
-  statusOptions = DEFAULT_STATUS_OPTIONS,
-  inspectionItems = DEFAULT_INSPECTION_ITEMS,
+
 }) => {
   const [inspectorName, setInspectorName] = useState('');
+  const [comments, setComments] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
   const [inspectionResults, setInspectionResults] = useState({});
   const [selectedStatusDetails, setSelectedStatusDetails] = useState({});
+    const [statusOptions, setStatusOptions] = useState(DEFAULT_STATUS_OPTIONS);
+    const [inspectionItems, setInspectionItems] = useState(
+      DEFAULT_INSPECTION_ITEMS,
+    );
 
 
   // Vehicle Dropdown
   const [vehicleOpen, setVehicleOpen] = useState(false);
-  const [vehicleValue, setVehicleValue] = useState(null);
+  const [vehicleValue, setVehicleValue] = useState('');
   const [vehicleItems, setVehicleItems] = useState([
     {label: 'TRK-001', value: 'TRK-001'},
     {label: 'TRK-002', value: 'TRK-002'},
@@ -81,6 +88,59 @@ const VehicleInspection = ({
   }, []);
 
 
+  useEffect(() => {
+    fetchChecklistAndStatus();
+  }, []);
+
+  const fetchChecklistAndStatus = async () => {
+    const Url = `${BASE_URL}maintenance/checklist/`;
+    try {
+      const response = await GETNETWORK(Url, true);
+      console.log('checklist Data:', response.data);
+
+      const data = response?.data || [];
+
+      // Extract statusOptions (unique keys from checklist_value)
+      const rawStatus = data.flatMap(item =>
+        item.checklist_value.map(cv => cv.key),
+      );
+      const uniqueStatus = [
+        ...new Set(rawStatus.map(key => key.toLowerCase())),
+      ];
+
+      const statusOptionMapped = uniqueStatus.map(key => ({
+        label: capitalize(key),
+        value: key,
+        color: getStatusColor(key),
+      }));
+
+      // Extract inspection items (name & id)
+      const inspectionMapped = data.map(item => ({
+        id: item.id,
+        name: item.checklist_name,
+      }));
+
+      setStatusOptions(statusOptionMapped);
+      setInspectionItems(inspectionMapped);
+    } catch (error) {
+      console.error('Failed to fetch checklist/status', error);
+    }
+  };
+
+
+
+  const capitalize = str =>
+    str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+  const getStatusColor = key => {
+    const lower = key.toLowerCase();
+    if (lower === 'ok') return '#22c55e';
+    if (lower === 'attention' || lower === 'repair') return '#eab308';
+    if (lower === 'replace') return '#ef4444';
+    return '#94a3b8'; // default gray
+  };
+
+
 const handleStatusSelect = useCallback(
   (itemId, value) => {
     const selectedStatus = statusOptions.find(status => status.value === value);
@@ -103,25 +163,109 @@ const handleStatusSelect = useCallback(
   [statusOptions],
 );
 
+useFocusEffect(
+  useCallback(() => {
+    // Reset z-index counter when component is focused
+    zIndexCounter.current = 1000;
 
+    // fetch vehicle data when component is focused
+    GetVehicle();
 
-  const handleSubmit = () => {
-    const inspectionData = {
-      date: selectedDate,
-      vehicleId: vehicleValue,
-      inspectorName,
-      results: inspectionResults,
-    };
-    console.log('Inspection submitted:', inspectionData);
-    // clear all the states
+    // reset openDropdowns and states
+    setOpenDropdowns({});
     setSelectedDate('');
     setVehicleValue(null);
     setInspectorName('');
     setInspectionResults({});
     setSelectedStatusDetails({});
-    setOpenDropdowns({});
-    
+    setVehicleOpen(false);
+    setVehicleItems([]);
+
+
+
+    return () => {
+
+      // Reset z-index counter when component is unfocused
+      zIndexCounter.current = 1000;
+    };
+  }, []),
+);
+
+
+
+const GetVehicle = async () => {
+  const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
+
+  try {
+    const response = await GETNETWORK(Url, true);
+    console.log('Vehicle Data:', response.data);
+
+    const vehicles = response.data?.things || [];
+
+    const mappedItems = vehicles.map(item => ({
+      label: item.thing_name,
+      value: item.thing_id,
+    }));
+
+    setVehicleItems(mappedItems);
+  } catch (error) {
+    console.error('Error fetching vehicles:', error);
+    alert('Failed to fetch vehicle data. Please try again.');
+  }
+};
+
+
+
+
+const handleSubmit = async () => {
+  const payload = {
+    thing_id: vehicleValue, // vehicle ID
+    creation_date: selectedDate, // format: 'YYYY-MM-DD'
+    inpector_name: inspectorName,
+    comments: comments?.trim() || '',
+    details: Object.entries(inspectionResults).map(
+      ([checklistId, selectedValue]) => ({
+        checklist_master_id: parseInt(checklistId),
+        selected_value: selectedValue,
+      }),
+    ),
   };
+
+  console.log(
+    'Inspection Checklist Payload:',
+    JSON.stringify(payload, null, 2),
+  );
+
+  try {
+    const response = await POSTNETWORK(
+      `${BASE_URL}maintenance/inspection_checklist/`,
+      payload,
+      true, // include auth token
+    );
+
+    console.log('Inspection submission response:', response);
+
+    if (response && response.success !== false) {
+      alert('✅ Inspection submitted successfully.');
+
+      // Clear all states after submission
+      setSelectedDate('');
+      setVehicleValue(null);
+      setInspectorName('');
+      setComments('');
+      setInspectionResults({});
+      setSelectedStatusDetails({});
+      setOpenDropdowns({});
+    } else {
+      alert(response?.message || '⚠️ Failed to submit inspection.');
+    }
+  } catch (error) {
+    console.error('Error submitting inspection:', error);
+    alert('❌ Error submitting inspection. Please try again.');
+  }
+};
+
+
 
   const renderItem = ({item}) => {
     const selectedStatus = inspectionResults[item.id];
@@ -294,6 +438,21 @@ const handleStatusSelect = useCallback(
             />
           </View>
 
+          {/* comment input */}
+          <View style={{...styles.inputItem}}>
+            <Text style={styles.label}>Comments</Text>
+            <TextInput
+              style={styles.input}
+              placeholderTextColor={'#9ca3af'}
+              placeholder="Enter any comments"
+              multiline={true}
+              numberOfLines={4}
+              textAlignVertical="top"
+              value={comments}
+              onChangeText={setComments}
+            />
+          </View>
+
           {/* Calendar Modal */}
           <Modal
             visible={showCalendar}
@@ -322,7 +481,6 @@ const handleStatusSelect = useCallback(
 
           {/* Checklist Section */}
           <Text style={styles.sectionHeader}>Checklist</Text>
-
 
           <View style={styles.tableContainer}>
             <FlatList
