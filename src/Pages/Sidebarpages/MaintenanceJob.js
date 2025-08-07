@@ -17,6 +17,7 @@ import Header from '../../components/Header';
 import { BASE_URL } from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import { useFocusEffect } from '@react-navigation/native';
+import moment from 'moment';
 
 const MaintenanceJobScreen = ({navigation}) => {
   const [projectOpen, setProjectOpen] = useState(false);
@@ -43,6 +44,7 @@ const MaintenanceJobScreen = ({navigation}) => {
   const [work, setWork] = useState('');
   const [parts, setParts] = useState('');
   const [cost, setCost] = useState('');
+  const [Km, SetKm] = useState('');
 
   const [jobStart, setJobStart] = useState('');
   const [jobEnd, setJobEnd] = useState('');
@@ -194,9 +196,10 @@ const handleCreateJob = async () => {
     reported_issue: issues,
     work_performed: work,
     parts_replaced: parts,
+    total_km: Km,
     estimated_cost: parseFloat(cost),
-    job_start_datetime: jobStart,
-    job_end_datetime: jobEnd,
+    job_start_datetime: moment(jobStart).format('YYYY-MM-DDTHH:mm:ss'),
+    job_end_datetime: moment(jobEnd).format('YYYY-MM-DDTHH:mm:ss'),
   };
   console.log('Creating job with payload:', payload);
 
@@ -219,8 +222,8 @@ const handleCreateJob = async () => {
         work,
         parts,
         cost,
-        jobStart,
-        jobEnd,
+         jobStart: moment(jobStart).format('YYYY-MM-DDTHH:mm:ss'),
+  jobEnd: moment(jobEnd).format('YYYY-MM-DDTHH:mm:ss'),
       };
       setJobList([...jobList, job]);
 
@@ -251,7 +254,7 @@ const handleCreateJob = async () => {
 
 
 
-
+console.log('jobdate', jobStart, jobEnd);
   return (
     <>
       <StatusBar backgroundColor="#0284c7" barStyle="light-content" />
@@ -266,18 +269,22 @@ const handleCreateJob = async () => {
         <ScrollView contentContainerStyle={styles.container}>
           {/* Project & Vehicle Row */}
           <View style={styles.row}>
-            <View style={[styles.column, {zIndex: 5000}]}>
-              <Text style={styles.label}>Project</Text>
+            <View style={[styles.column, {zIndex: 3000}]}>
+              <Text style={styles.label}>Maintenance Type</Text>
               <DropDownPicker
-                open={projectOpen}
-                value={projectValue}
-                items={projectItems}
-                setOpen={setProjectOpen}
-                setValue={setProjectValue}
-                setItems={setProjectItems}
-                placeholder="Select Project"
-                zIndex={5000}
-                zIndexInverse={1000}
+                open={maintenanceOpen}
+                value={maintenanceValue}
+                items={maintenanceItems}
+                setOpen={setMaintenanceOpen}
+                setValue={setMaintenanceValue}
+                setItems={setMaintenanceItems}
+                onSelectItem={item => {
+                  console.log('Selected Maintenance Type:', item);
+                  setMaintenanceValue(item);
+                }}
+                placeholder="Select Type"
+                zIndex={3000}
+                zIndexInverse={3000}
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
               />
@@ -291,11 +298,10 @@ const handleCreateJob = async () => {
                 items={vehicleItems}
                 setOpen={setVehicleOpen}
                 setValue={setVehicleValue}
-                onSelectItem={(item) => {
+                onSelectItem={item => {
                   console.log('Selected Vehicle:', item);
                   setVehicleValue(item);
-                }
-                }
+                }}
                 setItems={setVehicleItems}
                 placeholder="Select Vehicle"
                 zIndex={4000}
@@ -304,28 +310,6 @@ const handleCreateJob = async () => {
                 dropDownContainerStyle={styles.dropdownContainer}
               />
             </View>
-          </View>
-
-          {/* Maintenance Type */}
-          <View style={[styles.inputBlock, {zIndex: 3000}]}>
-            <Text style={styles.label}>Maintenance Type</Text>
-            <DropDownPicker
-              open={maintenanceOpen}
-              value={maintenanceValue}
-              items={maintenanceItems}
-              setOpen={setMaintenanceOpen}
-              setValue={setMaintenanceValue}
-              setItems={setMaintenanceItems}
-              onSelectItem={(item) => {
-                console.log('Selected Maintenance Type:', item);
-                setMaintenanceValue(item);
-              }}
-              placeholder="Select Type"
-              zIndex={3000}
-              zIndexInverse={3000}
-              style={styles.dropdown}
-              dropDownContainerStyle={styles.dropdownContainer}
-            />
           </View>
 
           {/* Reported Issues */}
@@ -367,16 +351,30 @@ const handleCreateJob = async () => {
           </View>
 
           {/* Cost */}
-          <View style={styles.inputBlock}>
-            <Text style={styles.label}>Cost</Text>
-            <TextInput
-              placeholderTextColor={'gray'}
-              style={styles.input}
-              placeholder="Cost"
-              value={cost}
-              onChangeText={setCost}
-              keyboardType="numeric"
-            />
+
+          <View style={styles.row}>
+            <View style={styles.column}>
+              <Text style={styles.label}>Cost</Text>
+              <TextInput
+                placeholderTextColor={'gray'}
+                style={styles.input}
+                placeholder="Cost"
+                value={cost}
+                onChangeText={setCost}
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.column}>
+              <Text style={styles.label}>KM</Text>
+              <TextInput
+                placeholderTextColor={'gray'}
+                style={styles.input}
+                placeholder="Total KM"
+                value={Km}
+                onChangeText={SetKm}
+                keyboardType="numeric"
+              />
+            </View>
           </View>
 
           {/* Dates */}

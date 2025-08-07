@@ -11,39 +11,47 @@ import {
   StyleSheet,
   Modal,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {Calendar} from 'react-native-calendars';
 import Header from '../../components/Header';
-import { GETNETWORK } from '../../utils/Network';
-import { BASE_URL } from '../../constants/url';
+import {GETNETWORK, POSTNETWORK} from '../../utils/Network';
+import {BASE_URL} from '../../constants/url';
 
 const MaintenanceScheduleScreen = () => {
   const navigation = useNavigation();
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
   const [comments, setComments] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Vehicle Dropdown
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const [vehicleValue, setVehicleValue] = useState(null);
-  const [vehicleItems, setVehicleItems] = useState([
-
-  ]);
+  const [vehicleItems, setVehicleItems] = useState([]);
 
   // Maintenance Type Dropdown
   const [maintenanceOpen, setMaintenanceOpen] = useState(false);
   const [maintenanceValue, setMaintenanceValue] = useState(null);
-  const [maintenanceItems, setMaintenanceItems] = useState([
-
-  ]);
+  const [maintenanceItems, setMaintenanceItems] = useState([]);
 
   const handleDayPress = day => {
     setSelectedDate(day.dateString);
     setShowCalendar(false);
   };
 
+
+  const resetForm = () => {
+    setSelectedDate('');
+    setVehicleValue(null);
+    setMaintenanceValue(null);
+    setComments('');
+    // Also reset the dropdown states if needed
+    setVehicleOpen(false);
+    setMaintenanceOpen(false);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -57,108 +65,87 @@ const MaintenanceScheduleScreen = () => {
       GetVehicle();
       GetMaintenance();
 
-      // Optional cleanup
       return () => {
-        // any cleanup if needed
+        // Cleanup if needed
       };
     }, []),
   );
 
+  const GetMaintenance = () => {
+    const Url = `${BASE_URL}maintenance/maintenance_master/`;
+    GETNETWORK(Url, true)
+      .then(response => {
+        console.log('Maintenance Data:', response.data);
+        const mappedItems = response.data.map(item => ({
+          label: item.maintenance_name,
+          value: item.maintenance_id,
+        }));
+        setMaintenanceItems(mappedItems);
+      })
+      .catch(error => {
+        console.error('Error fetching maintenance:', error);
+        Alert.alert(
+          'Error',
+          'Failed to fetch maintenance data. Please try again.',
+        );
+      });
+  };
 
-  useEffect(() => {
-    GetVehicle()
-    GetMaintenance();
-  }, []);
-
-
-    useFocusEffect(
-      useCallback(() => {
-        // Reset all form fields
-        setSelectedDate('');
-        setVehicleValue(null);
-        setMaintenanceValue(null);
-        setComments('');
-        // reset the states
-        setVehicleItems([]);
-        setMaintenanceItems([]);
-        // Fetch data again if needed
-        
-       
-
-    
-  
-  
-        // Optional cleanup
-        return () => {
-          // any cleanup if needed
-        };
-      }, []),
-    );
-
-
-const GetMaintenance = () => {
-  const Url = `${BASE_URL}maintenance/maintenance_master/`;
-
-  // setLoading(true); // Optional: show a loading indicator
-
-  GETNETWORK(Url, true)
-    .then(response => {
-      console.log('Maintenance Data:', response.data);
-      const mappedItems = response.data.map(item => ({
-        label: item.maintenance_name,
-        value: item.maintenance_id,
+  const GetVehicle = async () => {
+    const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
+    try {
+      const response = await GETNETWORK(Url, true);
+      console.log('Vehicle Data:', response.data);
+      const vehicles = response.data?.things || [];
+      const mappedItems = vehicles.map(item => ({
+        label: item.thing_name,
+        value: item.thing_id,
       }));
-      setMaintenanceItems(mappedItems);
-      // setMaintenanceList(response.data); // Or handle it according to your stater
-      // setLoading(false);
-    })
-    .catch(error => {
-      console.error('Error fetching maintenance:', error);
-      // setLoading(false);
-      alert('Failed to fetch maintenance data. Please try again.');
-    });
-};
+      setVehicleItems(mappedItems);
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
+      Alert.alert('Error', 'Failed to fetch vehicle data. Please try again.');
+    }
+  };
 
-const GetVehicle = async () => {
-  const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
+  const handleSubmit = async () => {
+    if (!selectedDate || !vehicleValue || !maintenanceValue) {
+      Alert.alert('Error', 'Please fill all required fields');
+      return;
+    }
 
-  try {
-    const response = await GETNETWORK(Url, true);
-    console.log('Vehicle Data:', response.data);
+    setIsSubmitting(true);
 
-    const vehicles = response.data?.things || [];
+    try {
+      const maintenanceData = {
+        thing_id: vehicleValue,
+        maintenance_id: maintenanceValue,
+        scheduled_date: selectedDate,
+        remarks: comments || 'No remarks',
+      };
 
-    const mappedItems = vehicles.map(item => ({
-      label: item.thing_name,
-      value: item.thing_id,
-    }));
+      const response = await POSTNETWORK(
+        `${BASE_URL}maintenance/maintenance_schedule/`,
+        maintenanceData,
+        true,
+      );
 
-    setVehicleItems(mappedItems);
-  } catch (error) {
-    console.error('Error fetching vehicles:', error);
-    alert('Failed to fetch vehicle data. Please try again.');
-  }
-};
+      console.log('API Response:', response);
+      Alert.alert('Success', 'Maintenance scheduled successfully!');
 
-
-
-
-
-  const handleSubmit = () => {
-    const maintenanceData = {
-      date: selectedDate,
-      vehicleId: vehicleValue,
-      maintenanceType: maintenanceValue,
-      comments,
-    };
-    console.log('Maintenance scheduled:', maintenanceData);
-
-    // Reset form
-    setSelectedDate('');
-    setVehicleValue(null);
-    setMaintenanceValue(null);
-    setComments('');
-    Alert.alert('Success', 'Maintenance scheduled successfully!');
+      // Reset form
+      setSelectedDate('');
+      setVehicleValue(null);
+      setMaintenanceValue(null);
+      setComments('');
+      
+    } catch (error) {
+      console.error('Error scheduling maintenance:', error);
+      Alert.alert('Error', 'Failed to schedule maintenance. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+      resetForm()
+    }
   };
 
   return (
@@ -200,7 +187,6 @@ const GetVehicle = async () => {
                 setValue={setVehicleValue}
                 setItems={setVehicleItems}
                 placeholder="Select Vehicle"
-                
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
                 textStyle={styles.dropdownText}
@@ -247,8 +233,15 @@ const GetVehicle = async () => {
           </View>
 
           {/* Save Button */}
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Schedule Maintenance</Text>
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={handleSubmit}
+            disabled={isSubmitting}>
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitButtonText}>Schedule Maintenance</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
 
@@ -279,6 +272,7 @@ const GetVehicle = async () => {
   );
 };
 
+// ... (keep your existing styles)
 const styles = StyleSheet.create({
   container: {
     flex: 1,

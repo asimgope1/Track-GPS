@@ -9,12 +9,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
+  Alert,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Header from '../../components/Header';
 import {Calendar} from 'react-native-calendars';
-// import DateTimePicker from '@react-native-community/datetimepicker';
+import { BASE_URL } from '../../constants/url';
+import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
+import moment from 'moment';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const TripAssignment = ({navigation}) => {
   const [tripTime, setTripTime] = useState(new Date());
@@ -22,10 +26,13 @@ const TripAssignment = ({navigation}) => {
   const [distance, setDistance] = useState('');
   const [fuel, setFuel] = useState('');
   const [routeDetails, setRouteDetails] = useState('');
+  const [estTime, setEstTime] = useState('');
   const [loadDetails, setLoadDetails] = useState('');
   const [destination, setDestination] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [date, setDate] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Trip Name Dropdown
   const [tripNameOpen, setTripNameOpen] = useState(false);
@@ -47,9 +54,7 @@ const TripAssignment = ({navigation}) => {
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const [vehicleValue, setVehicleValue] = useState(null);
   const [vehicleItems, setVehicleItems] = useState([
-    {label: 'TRK-001', value: 'TRK-001'},
-    {label: 'TRK-002', value: 'TRK-002'},
-    {label: 'TRK-003', value: 'TRK-003'},
+ 
   ]);
 
   const [tripDate, setTripDate] = useState('');
@@ -59,29 +64,180 @@ const TripAssignment = ({navigation}) => {
     setShowCalendar(false);
   };
 
-  const handleTimeChange = (event, selectedTime) => {
-    if (selectedTime) {
-      setTripTime(selectedTime);
+  const onChangeDate = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      // Keep the existing time and only update the date portion
+      const newDate = new Date(selectedDate);
+      newDate.setHours(date.getHours());
+      newDate.setMinutes(date.getMinutes());
+      setDate(newDate);
+      // Show time picker after date is selected
+      setShowTimePicker(true);
     }
-    setShowTimePicker(false);
   };
 
-  const handleSubmit = () => {
-    const tripData = {
-      tripName: tripNameValue,
-      tripStatus: tripStatusValue,
-      tripDate,
-      tripTime: tripTime.toLocaleTimeString(),
-      vehicleId: vehicleValue,
-      driverName,
-      destination,
-      distance,
-      fuel,
-      routeDetails,
-      loadDetails,
-    };
-    console.log('Trip Assignment:', tripData);
+  // Time Picker Handler
+  const onChangeTime = (event, selectedDate) => {
+    setShowTimePicker(false);
+    if (selectedDate) {
+      // Keep the existing date and only update the time portion
+      const newDate = new Date(date);
+      newDate.setHours(selectedDate.getHours());
+      newDate.setMinutes(selectedDate.getMinutes());
+      setDate(newDate);
+    }
   };
+
+useEffect(() => {
+    // Fetch vehicle data when component mounts
+    GetVehicle();
+    GetTrip()
+  }, []);
+
+
+    const GetVehicle = async () => {
+      const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
+    
+      try {
+        const response = await GETNETWORK(Url, true);
+        console.log('Vehicle Data:', response.data);
+    
+        const vehicles = response.data?.things || [];
+    
+        const mappedItems = vehicles.map(item => ({
+          label: item.thing_name,
+          value: item.thing_id,
+        }));
+    
+        setVehicleItems(mappedItems);
+      } catch (error) {
+        console.error('Error fetching vehicles:', error);
+        alert('Failed to fetch vehicle data. Please try again.');
+      }
+    };
+
+     const GetTrip = async () => {
+        const Url = `${BASE_URL}trips/trip_master/`;
+    
+        try {
+          const response = await GETNETWORK(Url, true);
+          console.log('Trip Data:', response.data);
+    
+          const trips = response.data|| [];
+    
+          const mappedItems = trips.map(item => ({
+            label: item.trip_name,
+            value: item.trip_id,
+          }));
+          setTripNameItems(mappedItems);
+    
+        } catch (error) {
+          console.error('Error fetching trips:', error);
+          alert('Failed to fetch trip data. Please try again.');
+        }
+      }
+
+ // Update path as needed
+
+const handleSubmit = async () => {
+  if (!tripNameValue || !vehicleValue || !driverName || !date) {
+    Alert.alert('Error', 'Please fill all required fields');
+    return;
+  }
+
+  try {
+    // Format the date for the API
+    const formattedDateTime = moment(date).format('YYYY-MM-DDTHH:mm:ss');
+
+    // Prepare the payload
+    const tripData = {
+      trip_id: tripNameValue,
+      thing_id: vehicleValue,
+      driver: driverName,
+      scheduled_datetime: formattedDateTime,
+      estimated_distance: distance ? parseFloat(distance) : 0,
+      estimated_fuel: fuel ? parseFloat(fuel) : 0,
+      estimated_time: estTime || '00:00:00', // Keep as HH:mm:ss format
+      load_details: loadDetails || '',
+      // trip_status: tripStatusValue || 'Scheduled',
+    };
+
+    console.log('Trip data:', tripData);
+
+    // Make sure BASE_URL doesn't have a trailing slash
+    const apiUrl = `${BASE_URL.replace(/\/$/, '')}/trips/trip_assignment/`;
+
+    // Call your POSTNETWORK function
+    const response = await POSTNETWORK(
+      apiUrl,
+      tripData,
+      true, // enable token
+    );
+
+    // Check if response parsing failed (HTML error page)
+    if (typeof response === 'string' && response.startsWith('<!')) {
+      throw new Error('Server returned an error page');
+    }
+
+    if (!response || response?.error) {
+      throw new Error(response?.msg || 'Failed to assign trip');
+    }
+
+    Alert.alert('Success', response.msg || 'Trip assigned successfully!');
+
+    // Reset form
+    setTripNameValue(null);
+    setVehicleValue(null);
+    setDriverName('');
+    setDistance('');
+    setFuel('');
+    setEstTime('');
+    setLoadDetails('');
+    setDate(new Date());
+    setTripStatusValue(null);
+
+    return response.trip_assignment_id;
+  } catch (error) {
+    console.error('Error assigning trip:', error.message || error);
+    Alert.alert(
+      'Error',
+      error.message || 'Failed to assign trip. Please try again.',
+    );
+    throw error;
+  }
+};
+
+
+const [days, setDays] = useState('');
+const [hours, setHours] = useState('');
+
+
+
+const handleDaysChange = text => {
+  const cleanText = text.replace(/[^0-9]/g, '');
+  setDays(cleanText);
+  calculateTotalTime(cleanText, hours);
+};
+
+const handleHoursChange = text => {
+  const cleanText = text.replace(/[^0-9]/g, '');
+  setHours(cleanText);
+  calculateTotalTime(days, cleanText);
+};
+
+const calculateTotalTime = (daysValue, hoursValue) => {
+  const daysNum = parseInt(daysValue) || 0;
+  const hoursNum = parseInt(hoursValue) || 0;
+
+  // Calculate total hours (1 day = 24 hours)
+  const totalHours = daysNum * 24 + hoursNum;
+
+  // Format as HH:00:00 (you can modify if you need minutes/seconds)
+  const formattedTime = `${String(totalHours).padStart(2, '0')}:00:00`;
+  setEstTime(formattedTime);
+};
+
 
   return (
     <>
@@ -125,65 +281,60 @@ const TripAssignment = ({navigation}) => {
                 }}
               />
             </View>
-            <View
-              style={[styles.inputItem, {zIndex: tripStatusOpen ? 1000 : 1}]}>
-              <Text style={styles.label}>Trip Status</Text>
-              <DropDownPicker
-                open={tripStatusOpen}
-                value={tripStatusValue}
-                items={tripStatusItems}
-                setOpen={setTripStatusOpen}
-                setValue={setTripStatusValue}
-                setItems={setTripStatusItems}
-                placeholder="Select Status"
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
-                textStyle={styles.dropdownText}
-                placeholderStyle={styles.dropdownPlaceholder}
-       searchable={true}
-                modalProps={{
-                  animationType: 'slide',
-                }}
-                modalContentContainerStyle={styles.modalContent}
-                modalTitle="Select Status"
-                modalTitleStyle={styles.modalTitle}
-                onOpen={() => {
-                  setTripNameOpen(false);
-                  setVehicleOpen(false);
-                }}
-              />
-            </View>
           </View>
 
           {/* Row: Date & Time */}
           <View style={styles.row}>
             <View style={styles.inputItem}>
-              <Text style={styles.label}>Scheduled Date</Text>
+              <Text style={styles.label}>Scheduled Date & Time</Text>
               <TouchableOpacity
                 style={styles.dateButton}
-                onPress={() => setShowCalendar(true)}>
+                onPress={() => setShowDatePicker(true)}>
                 <Text style={styles.dateButtonText}>
-                  {tripDate || 'Select Date'}
+                  {moment(date).format('DD MMM YYYY, hh:mm A')}
                 </Text>
               </TouchableOpacity>
-            </View>
 
-            <View style={styles.inputItem}>
-              <Text style={styles.label}>Scheduled Time</Text>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowTimePicker(true)}>
-                <Text style={styles.dateButtonText}>
-                  {tripTime.toLocaleTimeString()}
-                </Text>
-              </TouchableOpacity>
-              {/* {showTimePicker && (
+              {showDatePicker && (
                 <DateTimePicker
-                  mode="time"
-                  value={tripTime}
-                  onChange={handleTimeChange}
+                  testID="datePicker"
+                  value={date}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onChangeDate}
+                  {...(Platform.OS === 'android' && {
+                    positiveButton: {
+                      label: 'OK',
+                      textColor: '#0284c7',
+                    },
+                    negativeButton: {
+                      label: 'Cancel',
+                      textColor: '#ef4444',
+                    },
+                  })}
                 />
-              )} */}
+              )}
+
+              {showTimePicker && (
+                <DateTimePicker
+                  testID="timePicker"
+                  value={date}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onChangeTime}
+                  is24Hour={true}
+                  {...(Platform.OS === 'android' && {
+                    positiveButton: {
+                      label: 'OK',
+                      textColor: '#0284c7',
+                    },
+                    negativeButton: {
+                      label: 'Cancel',
+                      textColor: '#ef4444',
+                    },
+                  })}
+                />
+              )}
             </View>
           </View>
 
@@ -255,16 +406,43 @@ const TripAssignment = ({navigation}) => {
           </View>
 
           {/* Route Details */}
-          <Text style={styles.sectionHeader}>Route Details</Text>
-          <TextInput
-            multiline
-            placeholderTextColor={'gray'}
-            numberOfLines={4}
-            value={routeDetails}
-            onChangeText={setRouteDetails}
-            style={styles.textArea}
-            placeholder="Enter route details"
-          />
+
+          <View style={styles.inputItem}>
+            <Text style={styles.sectionHeader}>Estimated Duration</Text>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: 10,
+              }}>
+              {/* Days Input */}
+              <View style={{flex: 1, marginRight: 10}}>
+                <TextInput
+                  placeholder="0"
+                  placeholderTextColor={'gray'}
+                  value={days}
+                  onChangeText={handleDaysChange}
+                  style={styles.input}
+                  keyboardType="numeric"
+                />
+                <Text style={{textAlign: 'center', color: 'gray'}}>Days</Text>
+              </View>
+
+              {/* Hours Input */}
+              <View style={{flex: 1, marginLeft: 10}}>
+                <TextInput
+                  placeholder="0"
+                  placeholderTextColor={'gray'}
+                  value={hours}
+                  onChangeText={handleHoursChange}
+                  style={styles.input}
+                  keyboardType="numeric"
+                />
+                <Text style={{textAlign: 'center', color: 'gray'}}>Hours</Text>
+              </View>
+            </View>
+          </View>
 
           {/* Load Details */}
           <Text style={styles.sectionHeader}>Load Details</Text>
@@ -276,16 +454,6 @@ const TripAssignment = ({navigation}) => {
             onChangeText={setLoadDetails}
             style={styles.textArea}
             placeholder="Enter load details"
-          />
-
-          {/* Destination */}
-          <Text style={styles.sectionHeader}>Destination</Text>
-          <TextInput
-            style={styles.input}
-            value={destination}
-            placeholderTextColor={'gray'}
-            onChangeText={setDestination}
-            placeholder="Enter destination"
           />
 
           {/* Calendar Modal */}
@@ -393,6 +561,7 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   textArea: {
+    color:'black',
     height: 100,
     borderWidth: 1,
     borderColor: '#d1d5db',
