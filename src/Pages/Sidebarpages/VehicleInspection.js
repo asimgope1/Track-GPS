@@ -19,6 +19,7 @@ import {Calendar} from 'react-native-calendars';
 import { BASE_URL } from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import { useFocusEffect } from '@react-navigation/native';
+import { Loader } from '../../components/Loader';
 
 const DEFAULT_STATUS_OPTIONS = [
   {label: 'OK', value: 'OK', color: '#22c55e'},
@@ -51,6 +52,7 @@ const VehicleInspection = ({
     const [inspectionItems, setInspectionItems] = useState(
       DEFAULT_INSPECTION_ITEMS,
     );
+  const [loading,SetLoading]=useState(false)
 
 
   // Vehicle Dropdown
@@ -173,6 +175,7 @@ useFocusEffect(
 
     // reset openDropdowns and states
     setOpenDropdowns({});
+    setComments('');
     setSelectedDate('');
     setVehicleValue(null);
     setInspectorName('');
@@ -194,6 +197,7 @@ useFocusEffect(
 
 
 const GetVehicle = async () => {
+  SetLoading(true)
   const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
 
   try {
@@ -206,11 +210,12 @@ const GetVehicle = async () => {
       label: item.thing_name,
       value: item.thing_id,
     }));
-
+SetLoading(false)
     setVehicleItems(mappedItems);
   } catch (error) {
     console.error('Error fetching vehicles:', error);
     alert('Failed to fetch vehicle data. Please try again.');
+    SetLoading(false)
   }
 };
 
@@ -236,6 +241,8 @@ const handleSubmit = async () => {
     JSON.stringify(payload, null, 2),
   );
 
+  SetLoading(true)
+
   try {
     const response = await POSTNETWORK(
       `${BASE_URL}maintenance/inspection_checklist/`,
@@ -244,6 +251,7 @@ const handleSubmit = async () => {
     );
 
     console.log('Inspection submission response:', response);
+    SetLoading(false)
 
     if (response && response.success !== false) {
       alert('✅ Inspection submitted successfully.');
@@ -258,9 +266,11 @@ const handleSubmit = async () => {
       setOpenDropdowns({});
     } else {
       alert(response?.message || '⚠️ Failed to submit inspection.');
+      SetLoading(false)
     }
   } catch (error) {
     console.error('Error submitting inspection:', error);
+    SetLoading(false)
     alert('❌ Error submitting inspection. Please try again.');
   }
 };
@@ -495,6 +505,7 @@ const handleSubmit = async () => {
             <Text style={styles.submitButtonText}>Submit Inspection</Text>
           </TouchableOpacity>
         </ScrollView>
+        <Loader visible={loading} />
       </KeyboardAvoidingView>
     </>
   );

@@ -19,6 +19,8 @@ import { BASE_URL } from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import moment from 'moment';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useFocusEffect } from '@react-navigation/native';
+import { Loader } from '../../components/Loader';
 
 const TripAssignment = ({navigation}) => {
   const [tripTime, setTripTime] = useState(new Date());
@@ -33,6 +35,7 @@ const TripAssignment = ({navigation}) => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [date, setDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [Loading,SetLoading]=useState(false)
 
   // Trip Name Dropdown
   const [tripNameOpen, setTripNameOpen] = useState(false);
@@ -56,6 +59,11 @@ const TripAssignment = ({navigation}) => {
   const [vehicleItems, setVehicleItems] = useState([
  
   ]);
+
+
+    const [driverOpen, setDriverOpen] = useState(false);
+    const [driverValue, setDriverValue] = useState(null);
+    const [driverItems, setDriverItems] = useState([]);
 
   const [tripDate, setTripDate] = useState('');
 
@@ -93,10 +101,12 @@ useEffect(() => {
     // Fetch vehicle data when component mounts
     GetVehicle();
     GetTrip()
+    GetDrivers();
   }, []);
 
 
     const GetVehicle = async () => {
+      SetLoading(true)
       const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
     
       try {
@@ -111,13 +121,16 @@ useEffect(() => {
         }));
     
         setVehicleItems(mappedItems);
+        SetLoading(false)
       } catch (error) {
         console.error('Error fetching vehicles:', error);
         alert('Failed to fetch vehicle data. Please try again.');
+        SetLoading(false)
       }
     };
 
      const GetTrip = async () => {
+      SetLoading(true)
         const Url = `${BASE_URL}trips/trip_master/`;
     
         try {
@@ -131,20 +144,23 @@ useEffect(() => {
             value: item.trip_id,
           }));
           setTripNameItems(mappedItems);
+          SetLoading(false)
     
         } catch (error) {
           console.error('Error fetching trips:', error);
           alert('Failed to fetch trip data. Please try again.');
+          SetLoading(true)
         }
       }
 
  // Update path as needed
 
 const handleSubmit = async () => {
-  if (!tripNameValue || !vehicleValue || !driverName || !date) {
-    Alert.alert('Error', 'Please fill all required fields');
-    return;
-  }
+  // if (!tripNameValue || !vehicleValue || !driverName || !date) {
+  //   Alert.alert('Error', 'Please fill all required fields');
+  //   return;
+  // }
+  SetLoading(true)
 
   try {
     // Format the date for the API
@@ -154,7 +170,7 @@ const handleSubmit = async () => {
     const tripData = {
       trip_id: tripNameValue,
       thing_id: vehicleValue,
-      driver: driverName,
+      driver: driverValue,
       scheduled_datetime: formattedDateTime,
       estimated_distance: distance ? parseFloat(distance) : 0,
       estimated_fuel: fuel ? parseFloat(fuel) : 0,
@@ -174,7 +190,7 @@ const handleSubmit = async () => {
       tripData,
       true, // enable token
     );
-
+SetLoading(false)
     // Check if response parsing failed (HTML error page)
     if (typeof response === 'string' && response.startsWith('<!')) {
       throw new Error('Server returned an error page');
@@ -200,6 +216,8 @@ const handleSubmit = async () => {
     return response.trip_assignment_id;
   } catch (error) {
     console.error('Error assigning trip:', error.message || error);
+SetLoading(false);
+
     Alert.alert(
       'Error',
       error.message || 'Failed to assign trip. Please try again.',
@@ -211,6 +229,39 @@ const handleSubmit = async () => {
 
 const [days, setDays] = useState('');
 const [hours, setHours] = useState('');
+
+
+useFocusEffect(
+  React.useCallback(() => {
+    // Reset form when the screen is focused
+    resetForm();
+    return () => {
+      // Cleanup if needed
+    };
+  }, []),
+);
+
+const resetForm = () => {
+  setTripNameValue(null);
+  setVehicleValue(null);
+  setDriverName('');
+  setDistance('');
+  setFuel('');
+  setEstTime('');
+  setLoadDetails('');
+  setDate(new Date());
+  setTripStatusValue(null);
+  setDays('');
+  setHours('');
+  setTripDate('');
+  setShowCalendar(false);
+  setShowDatePicker(false);
+  setShowTimePicker(false);
+  setTripNameItems([]);
+  setVehicleItems([]);
+  setDriverItems([]);
+};
+
 
 
 
@@ -237,6 +288,29 @@ const calculateTotalTime = (daysValue, hoursValue) => {
   const formattedTime = `${String(totalHours).padStart(2, '0')}:00:00`;
   setEstTime(formattedTime);
 };
+
+
+  const GetDrivers = async () => {
+SetLoading(true);
+
+    const Url = `${BASE_URL}trips/driver_master/`;
+    try {
+      const response = await GETNETWORK(Url, true);
+      const drivers = response.data || [];
+      const mappedItems = drivers.map(item => ({
+        label: item.driver_name,
+        value: item.driver_master_id,
+      }));
+      setDriverItems(mappedItems);
+SetLoading(false);
+
+    } catch (error) {
+      console.error('Error fetching drivers:', error);
+      Alert.alert('Error', 'Failed to fetch driver data. Please try again.');
+SetLoading(false);
+
+    }
+  };
 
 
   return (
@@ -369,12 +443,22 @@ const calculateTotalTime = (daysValue, hoursValue) => {
             </View>
             <View style={styles.inputItem}>
               <Text style={styles.label}>Assigned Driver</Text>
-              <TextInput
-                placeholderTextColor={'gray'}
-                style={styles.input}
-                value={driverName}
-                onChangeText={setDriverName}
-                placeholder="Enter Driver Name"
+              <DropDownPicker
+                open={driverOpen}
+                value={driverValue}
+                items={driverItems}
+                setOpen={setDriverOpen}
+                setValue={setDriverValue}
+                setItems={setDriverItems}
+                placeholder="Select Driver"
+                style={styles.dropdown}
+                dropDownContainerStyle={styles.dropdownContainer}
+                textStyle={styles.dropdownText}
+                placeholderStyle={styles.dropdownPlaceholder}
+                searchable={true}
+                onOpen={() => {
+                  setTripNameOpen(false);
+                }}
               />
             </View>
           </View>
@@ -483,6 +567,7 @@ const calculateTotalTime = (daysValue, hoursValue) => {
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
             <Text style={styles.submitButtonText}>Assign Trip</Text>
           </TouchableOpacity>
+          <Loader visible={Loading} />
         </ScrollView>
       </KeyboardAvoidingView>
     </>

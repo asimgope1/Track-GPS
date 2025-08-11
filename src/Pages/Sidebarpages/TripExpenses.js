@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -9,62 +9,126 @@ import {
   Modal,
   TextInput,
   Alert,
+  ActivityIndicator,
+  Image,
 } from 'react-native';
 import Header from '../../components/Header';
 import DropDownPicker from 'react-native-dropdown-picker';
+import {pick} from '@react-native-documents/picker';
+import {Icon} from '@rneui/themed';
+import {BASE_URL} from '../../constants/url';
+import { GETNETWORK } from '../../utils/Network';
+import { getObjByKey } from '../../utils/Storage';
 
 const TripExpenses = ({navigation}) => {
-  const [trips, setTrips] = useState([
-    {
-      id: 1,
-      vehicleNo: 'MH12AB1234',
-      driver: 'Amit Kumar',
-      status: 'Ongoing',
-      expenses: {
-        Fuel: 2500,
-        Toll: 600,
-      },
-    },
-    {
-      id: 2,
-      vehicleNo: 'MH12CD5678',
-      driver: 'Rahul Verma',
-      status: 'Upcoming',
-      expenses: {},
-    },
-    {
-      id: 3,
-      vehicleNo: 'MH14EF9101',
-      driver: 'Ravi Singh',
-      status: 'Completed',
-      expenses: {
-        Fuel: 3000,
-        Food: 1200,
-      },
-    },
-  ]);
+  const [trips, setTrips] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [expenseCategories, setExpenseCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   const [selectedTripId, setSelectedTripId] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [amount, setAmount] = useState('');
+  const [remarks, setRemarks] = useState('');
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [category, setCategory] = useState(null);
-  const [categoryItems, setCategoryItems] = useState([
-    {label: 'Fuel', value: 'Fuel'},
-    {label: 'Toll', value: 'Toll'},
-    {label: 'Food', value: 'Food'},
-    {label: 'Lodging', value: 'Lodging'},
-    {label: 'Repair', value: 'Repair'},
-  ]);
+  const [categoryItems, setCategoryItems] = useState([]);
+  const [attachments, setAttachments] = useState([]);
+  const [token, setToken] = useState(null);
+
+  const handleAttachment = async () => {
+    try {
+      const pickResults = await pick(); // Returns an array of results
+      console.log('Attachment selected:', pickResults);
+
+      if (pickResults && pickResults.length > 0) {
+        const pickResult = pickResults[0]; // Get the first selected file
+        setAttachments([
+          {
+            uri: pickResult.uri,
+            name: pickResult.name,
+            type: pickResult.type,
+          },
+        ]);
+      }
+      console.log('pickResult', pickResults);
+    } catch (error) {
+      console.error('Error picking file:', error);
+      Alert.alert('Error', 'Failed to select file. Please try again.');
+    }
+  };
+
+  const removeAttachment = () => {
+    setAttachments([]);
+  };
+
+  useEffect(() => {
+  const fetchData = async () => {
+    try {
+      
+
+      // Fetch expense categories
+      const categoriesUrl = `${BASE_URL}trips/expense_master/`;
+      const categoriesResponse = await GETNETWORK(categoriesUrl, true);
+
+      if (categoriesResponse?.status === 'success') {
+        const activeCategories = categoriesResponse.data.map(cat => ({
+          label: cat.expense_name,
+          value: cat.expense_master_id,
+        }));
+        setExpenseCategories(categoriesResponse.data);
+        setCategoryItems(activeCategories);
+      } else {
+        console.log(
+          'Failed to fetch expense categories:',
+          categoriesResponse?.message,
+        );
+      }
+
+      // Fetch trips data
+      const tripsUrl = `${BASE_URL}trips/trip_assignment/`;
+      const tripsResponse = await GETNETWORK(tripsUrl, true);
+
+      if (tripsResponse?.status === 'success') {
+        setTrips(tripsResponse.data);
+      } else {
+        console.log('Failed to fetch trips:', tripsResponse?.message);
+      }
+
+      // Fetch expenses data
+      const expensesUrl = `${BASE_URL}trips/trip_expense_entry/`;
+      const expensesResponse = await GETNETWORK(expensesUrl, true);
+
+      if (expensesResponse?.status === 'success') {
+        setExpenses(expensesResponse.data);
+      } else {
+        console.log('Failed to fetch expenses:', expensesResponse?.message);
+      }
+    } catch (err) {
+      console.error('Error in fetchData:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+      setCategoriesLoading(false);
+    }
+  };
+
+
+    fetchData();
+  }, []);
 
   const handleAddExpense = tripId => {
     setSelectedTripId(tripId);
     setCategory(null);
     setAmount('');
+    setRemarks('');
+    setAttachments([]);
     setModalVisible(true);
   };
 
-  const submitExpense = () => {
+  const submitExpense = async () => {
     if (!category || !amount || isNaN(amount)) {
       Alert.alert(
         'Invalid Input',
@@ -72,24 +136,101 @@ const TripExpenses = ({navigation}) => {
       );
       return;
     }
+    if (!token) {
+       const loginRes = await getObjByKey('loginResponse');
+             const token = loginRes?.data?.access_token;
 
-    const updatedTrips = trips.map(trip => {
-      if (trip.id === selectedTripId) {
-        const currentAmount = trip.expenses[category] || 0;
-        return {
-          ...trip,
-          expenses: {
-            ...trip.expenses,
-            [category]: currentAmount + parseFloat(amount),
-          },
+      setToken(token);
+    }
+
+    try {
+      const formdata = new FormData();
+      formdata.append('trip_id', selectedTripId.toString());
+      formdata.append('expense_master_id', category.toString());
+      formdata.append('amount', amount.toString());
+      formdata.append('remarks', remarks || 'No remarks');
+
+      if (attachments.length > 0) {
+        const file = {
+          uri: attachments[0].uri,
+          type: attachments[0].type || 'application/octet-stream',
+          name: attachments[0].name || 'receipt',
         };
+        formdata.append('receipt', file);
       }
-      return trip;
-    });
 
-    setTrips(updatedTrips);
-    setModalVisible(false);
+      const response = await fetch(`${BASE_URL}trips/trip_expense_entry/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formdata,
+      });
+
+      const result = await response.json();
+      console.log(result);
+
+      if (result.status === 'success') {
+        Alert.alert('Success', 'Expense added successfully');
+        // Refresh expenses data
+        const expensesResponse = await fetch(
+          `${BASE_URL}trips/trip_expense_entry/`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        const expensesResult = await expensesResponse.json();
+        if (expensesResult.status === 'success') {
+          setExpenses(expensesResult.data);
+        }
+
+        setModalVisible(false);
+      } else {
+        Alert.alert('Error', result.message || 'Failed to add expense');
+      }
+    } catch (error) {
+      console.error('Error submitting expense:', error);
+      Alert.alert('Error', 'Failed to submit expense. Please try again.');
+    }
   };
+
+  const getExpensesForTrip = tripId => {
+    return expenses.filter(expense => expense.trip_id === tripId);
+  };
+
+  const getStatusStyle = status => {
+    switch (status) {
+      case 'in_progress':
+        return {color: '#2563eb', text: 'Ongoing'};
+      case 'scheduled':
+        return {color: '#d97706', text: 'Scheduled'};
+      case 'completed':
+        return {color: '#059669', text: 'Completed'};
+      case 'cancelled':
+        return {color: '#dc2626', text: 'Cancelled'};
+      default:
+        return {color: '#6b7280', text: status};
+    }
+  };
+
+  if (loading || categoriesLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0284c7" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+      </View>
+    );
+  }
 
   return (
     <>
@@ -101,38 +242,74 @@ const TripExpenses = ({navigation}) => {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Trip Expenses Overview</Text>
 
-        {trips.map(trip => (
-          <View key={trip.id} style={styles.tripCard}>
-            <Text style={styles.tripInfo}>
-              <Text style={styles.bold}>Vehicle:</Text> {trip.vehicleNo}
-            </Text>
-            <Text style={styles.tripInfo}>
-              <Text style={styles.bold}>Driver:</Text> {trip.driver}
-            </Text>
-            <Text style={[styles.tripInfo, styles.status]}>
-              Status: {trip.status}
-            </Text>
+        {trips.length === 0 ? (
+          <Text style={styles.noTripsText}>No trips available</Text>
+        ) : (
+          trips.map(trip => {
+            const statusInfo = getStatusStyle(trip.trip_status);
+            const tripExpenses = getExpensesForTrip(trip.trip_id);
 
-            <View style={styles.expenseList}>
-              {Object.entries(trip.expenses).length > 0 ? (
-                Object.entries(trip.expenses).map(([label, value]) => (
-                  <View key={label} style={styles.expenseItem}>
-                    <Text style={styles.label}>{label}</Text>
-                    <Text style={styles.amount}>₹ {value}</Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.noExpense}>No expenses added yet.</Text>
-              )}
-            </View>
+            return (
+              <View key={trip.trip_assignment_id} style={styles.tripCard}>
+                <Text style={styles.tripInfo}>
+                  <Text style={styles.bold}>Trip:</Text> {trip.trip_name}
+                </Text>
+                <Text style={styles.tripInfo}>
+                  <Text style={styles.bold}>Vehicle:</Text> {trip.thing_name}
+                </Text>
+                <Text style={styles.tripInfo}>
+                  <Text style={styles.bold}>Driver:</Text> {trip.driver}
+                </Text>
+                <Text style={styles.tripInfo}>
+                  <Text style={styles.bold}>Scheduled:</Text>{' '}
+                  {trip.scheduled_datetime}
+                </Text>
+                <Text style={styles.tripInfo}>
+                  <Text style={styles.bold}>Distance:</Text>{' '}
+                  {trip.estimated_distance} km
+                </Text>
+                <Text style={[styles.tripInfo, {color: statusInfo.color}]}>
+                  <Text style={styles.bold}>Status:</Text> {statusInfo.text}
+                </Text>
 
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => handleAddExpense(trip.id)}>
-              <Text style={styles.addButtonText}>Add New Expense</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
+                <View style={styles.expenseList}>
+                  {tripExpenses.length > 0 ? (
+                    tripExpenses.map(expense => (
+                      <View
+                        key={expense.trip_expense_entry_id}
+                        style={styles.expenseItem}>
+                        <View style={styles.expenseRow}>
+                          <Text style={styles.label}>
+                            {expense.expense_name}
+                          </Text>
+                          <Text style={styles.amount}>₹ {expense.amount}</Text>
+                        </View>
+                        {expense.remarks && (
+                          <Text style={styles.remarks}>{expense.remarks}</Text>
+                        )}
+                        {expense.receipt && (
+                          <Text style={styles.receiptText}>
+                            Receipt attached
+                          </Text>
+                        )}
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={styles.noExpense}>No expenses added yet.</Text>
+                  )}
+                </View>
+
+                {trip.trip_status === 'in_progress' && (
+                  <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={() => handleAddExpense(trip.trip_id)}>
+                    <Text style={styles.addButtonText}>Add New Expense</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          })
+        )}
       </ScrollView>
 
       {/* Add Expense Modal */}
@@ -148,27 +325,89 @@ const TripExpenses = ({navigation}) => {
               keyboardShouldPersistTaps="handled">
               <Text style={styles.modalTitle}>Add Expense</Text>
 
-              <View style={styles.dropdownWrapper}>
-                <DropDownPicker
-                  open={categoryOpen}
-                  value={category}
-                  items={categoryItems}
-                  setOpen={setCategoryOpen}
-                  setValue={setCategory}
-                  setItems={setCategoryItems}
-                  placeholder="Select category"
-                  zIndex={3000}
-                  zIndexInverse={1000}
+              {categoryItems.length > 0 ? (
+                <View style={styles.dropdownWrapper}>
+                  <Text style={styles.label}>Category</Text>
+                  <DropDownPicker
+                    open={categoryOpen}
+                    value={category}
+                    items={categoryItems}
+                    setOpen={setCategoryOpen}
+                    setValue={setCategory}
+                    setItems={setCategoryItems}
+                    placeholder="Select category"
+                    zIndex={3000}
+                    zIndexInverse={1000}
+                  />
+                </View>
+              ) : (
+                <Text style={styles.noCategoriesText}>
+                  No expense categories available
+                </Text>
+              )}
+
+              <View style={styles.inputItem}>
+                <Text style={styles.label}>Amount</Text>
+                <TextInput
+                  placeholder="Enter amount"
+                  placeholderTextColor={'#9ca3af'}
+                  keyboardType="numeric"
+                  value={amount}
+                  onChangeText={setAmount}
+                  style={styles.input}
                 />
               </View>
 
-              <TextInput
-                placeholder="Enter amount"
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={setAmount}
-                style={styles.input}
-              />
+              <View style={styles.inputItem}>
+                <Text style={styles.label}>Remarks</Text>
+                <TextInput
+                  placeholder="Remarks (optional)"
+                  placeholderTextColor={'#9ca3af'}
+                  value={remarks}
+                  onChangeText={setRemarks}
+                  style={styles.input}
+                  multiline
+                />
+              </View>
+
+              <View style={{...styles.inputItem, marginBottom: 16}}>
+                <Text style={styles.label}>Attachments</Text>
+                {attachments?.length > 0 ? (
+                  <View style={styles.attachmentPreviewContainer}>
+                    {attachments[0].type?.startsWith('image/') ? (
+                      <Image
+                        source={{uri: attachments[0].uri}}
+                        style={styles.attachmentImage}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <View style={styles.filePreview}>
+                        <Icon
+                          name="insert-drive-file"
+                          size={40}
+                          color="#0284c7"
+                        />
+                        <Text style={styles.fileName} numberOfLines={1}>
+                          {attachments[0].name}
+                        </Text>
+                      </View>
+                    )}
+                    <View style={styles.attachmentActions}>
+                      <TouchableOpacity
+                        style={styles.removeButton}
+                        onPress={removeAttachment}>
+                        <Icon name="close" size={20} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.attachmentButton}
+                    onPress={handleAttachment}>
+                    <Text style={styles.attachmentButtonText}>Choose File</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
 
               <View style={styles.modalActions}>
                 <TouchableOpacity
@@ -178,7 +417,14 @@ const TripExpenses = ({navigation}) => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={submitExpense}
-                  style={[styles.modalButton, {backgroundColor: '#0284c7'}]}>
+                  disabled={categoryItems.length === 0}
+                  style={[
+                    styles.modalButton,
+                    {
+                      backgroundColor:
+                        categoryItems.length === 0 ? '#9ca3af' : '#0284c7',
+                    },
+                  ]}>
                   <Text style={styles.modalButtonText}>Add</Text>
                 </TouchableOpacity>
               </View>
@@ -189,8 +435,6 @@ const TripExpenses = ({navigation}) => {
     </>
   );
 };
-
-export default TripExpenses;
 
 const styles = StyleSheet.create({
   container: {
@@ -220,26 +464,44 @@ const styles = StyleSheet.create({
   bold: {
     fontWeight: '700',
   },
-  status: {
-    fontStyle: 'italic',
-    color: '#2563eb',
-  },
   expenseList: {
     marginTop: 12,
   },
   expenseItem: {
+    marginBottom: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  expenseRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+  },
+  inputItem: {
+    flex: 1,
+    marginBottom: 15,
   },
   label: {
-    fontSize: 15,
+    fontSize: 13,
+    fontWeight: '600',
     color: '#374151',
+    marginBottom: 4,
   },
   amount: {
     fontSize: 15,
     fontWeight: '600',
     color: '#111827',
+  },
+  remarks: {
+    fontSize: 13,
+    color: '#6b7280',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  receiptText: {
+    fontSize: 12,
+    color: '#0284c7',
+    marginTop: 4,
   },
   noExpense: {
     color: '#9ca3af',
@@ -263,10 +525,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.3)',
     padding: 20,
   },
-  modalContent: {
+  modalContentWrapper: {
     backgroundColor: '#fff',
-    padding: 20,
     borderRadius: 8,
+    padding: 10,
+  },
+  modalContent: {
+    padding: 10,
   },
   modalTitle: {
     fontSize: 18,
@@ -279,14 +544,13 @@ const styles = StyleSheet.create({
     borderColor: '#d1d5db',
     borderRadius: 6,
     padding: 12,
-    marginTop: 12,
     fontSize: 16,
     color: '#111827',
   },
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 10,
   },
   modalButton: {
     flex: 1,
@@ -299,18 +563,80 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
-  dropdown: {
-    marginBottom: 10,
-    zIndex: 1000,
-  },
-  modalContentWrapper: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 10,
-  },
-
   dropdownWrapper: {
-    zIndex: 3000, // Ensures dropdown overlays other UI
+    zIndex: 3000,
     marginBottom: 15,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 16,
+  },
+  noTripsText: {
+    textAlign: 'center',
+    color: '#6b7280',
+    fontSize: 16,
+    marginTop: 20,
+  },
+  noCategoriesText: {
+    color: '#dc2626',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  attachmentPreviewContainer: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 6,
+    padding: 10,
+    backgroundColor: '#fff',
+    position: 'relative',
+  },
+  attachmentImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 4,
+  },
+  filePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  fileName: {
+    marginLeft: 10,
+    color: '#374151',
+    flex: 1,
+  },
+  attachmentActions: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+  },
+  removeButton: {
+    padding: 5,
+  },
+  attachmentButton: {
+    height: 45,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 6,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  attachmentButtonText: {
+    color: '#374151',
+    fontWeight: '500',
+  },
 });
+
+export default TripExpenses;

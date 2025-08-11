@@ -18,6 +18,7 @@ import { BASE_URL } from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import { useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
+import { Loader } from '../../components/Loader';
 
 const MaintenanceJobScreen = ({navigation}) => {
   const [projectOpen, setProjectOpen] = useState(false);
@@ -45,6 +46,7 @@ const MaintenanceJobScreen = ({navigation}) => {
   const [parts, setParts] = useState('');
   const [cost, setCost] = useState('');
   const [Km, SetKm] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const [jobStart, setJobStart] = useState('');
   const [jobEnd, setJobEnd] = useState('');
@@ -80,6 +82,9 @@ const MaintenanceJobScreen = ({navigation}) => {
       // clear all the states
       setProjectItems([]);
       setProjectValue(null);
+      setMaintenanceValue(null);
+      setVehicleValue(null);
+      SetKm('');
 
       setIssues('');
       setWork('');
@@ -105,11 +110,13 @@ const MaintenanceJobScreen = ({navigation}) => {
 
 
   const GetVehicle = async () => {
+    setLoading(true)
     const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
   
     try {
       const response = await GETNETWORK(Url, true);
       console.log('Vehicle Data:', response.data);
+      setLoading(false)
   
       const vehicles = response.data?.things || [];
   
@@ -122,12 +129,14 @@ const MaintenanceJobScreen = ({navigation}) => {
     } catch (error) {
       console.error('Error fetching vehicles:', error);
       alert('Failed to fetch vehicle data. Please try again.');
+            setLoading(false);
     }
   };
 
 
 
   const GetMaintenance = () => {
+    setLoading(true)
     const Url = `${BASE_URL}maintenance/maintenance_master/`;
   
     // setLoading(true); // Optional: show a loading indicator
@@ -135,17 +144,18 @@ const MaintenanceJobScreen = ({navigation}) => {
     GETNETWORK(Url, true)
       .then(response => {
         console.log('Maintenance Data:', response.data);
+        setLoading(false)
         const mappedItems = response.data.map(item => ({
           label: item.maintenance_name,
           value: item.maintenance_id,
         }));
         setMaintenanceItems(mappedItems);
         // setMaintenanceList(response.data); // Or handle it according to your stater
-        // setLoading(false);
+        setLoading(false);
       })
       .catch(error => {
         console.error('Error fetching maintenance:', error);
-        // setLoading(false);
+        setLoading(false);
         alert('Failed to fetch maintenance data. Please try again.');
       });
   };
@@ -154,6 +164,7 @@ const MaintenanceJobScreen = ({navigation}) => {
 
 
 const GetJobList = () => {
+  setLoading(true)
   console.log('Fetching job list...');
   const Url = `${BASE_URL}maintenance/maintenance_job_card/`;
 
@@ -178,10 +189,12 @@ const GetJobList = () => {
       }));
 
       setJobList(jobs);
+      setLoading(false)
     })
     .catch(error => {
       console.error('Error fetching job list:', error);
       alert('Failed to fetch job list. Please try again.');
+      setLoading(false)
     });
 };
 
@@ -204,6 +217,7 @@ const handleCreateJob = async () => {
   console.log('Creating job with payload:', payload);
 
   try {
+    setLoading(true)
     const response = await POSTNETWORK(
       `${BASE_URL}maintenance/maintenance_job_card/`,
       payload,
@@ -211,6 +225,7 @@ const handleCreateJob = async () => {
     );
 
     console.log('Job creation response:', response);
+    setLoading(false)
 
     if (response && response.success !== false) {
       const job = {
@@ -244,9 +259,11 @@ const handleCreateJob = async () => {
       alert('Job created successfully.');
     } else {
       alert(response?.message || 'Failed to create job. Please try again.');
+      setLoading(false)
     }
   } catch (error) {
     console.error('Error creating job:', error);
+    setLoading(false)
     alert('Error creating job. Please try again later.');
   }
 };
@@ -272,6 +289,8 @@ console.log('jobdate', jobStart, jobEnd);
             <View style={[styles.column, {zIndex: 3000}]}>
               <Text style={styles.label}>Maintenance Type</Text>
               <DropDownPicker
+                searchable={true}
+                searchablePlaceholder="Search Maintenance Type"
                 open={maintenanceOpen}
                 value={maintenanceValue}
                 items={maintenanceItems}
@@ -293,6 +312,8 @@ console.log('jobdate', jobStart, jobEnd);
             <View style={[styles.column, {zIndex: 4000}]}>
               <Text style={styles.label}>Vehicle</Text>
               <DropDownPicker
+                searchable={true}
+                searchablePlaceholder="Search Vehicle"
                 open={vehicleOpen}
                 value={vehicleValue}
                 items={vehicleItems}
@@ -448,6 +469,7 @@ console.log('jobdate', jobStart, jobEnd);
             </View>
           </ScrollView>
         </ScrollView>
+         <Loader visible={loading} />
       </KeyboardAvoidingView>
 
       {/* Calendar Modals */}

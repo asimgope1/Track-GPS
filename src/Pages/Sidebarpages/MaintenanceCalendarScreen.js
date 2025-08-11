@@ -20,6 +20,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import {BASE_URL} from '../../constants/url';
 import {GETNETWORK} from '../../utils/Network';
 import moment from 'moment';
+import { Loader } from '../../components/Loader';
 
 const {height} = Dimensions.get('window');
 
@@ -272,6 +273,8 @@ useFocusEffect(
             <View style={styles.filterRow}>
               <View style={[styles.flexDropdown, {zIndex: 2000}]}>
                 <DropDownPicker
+                searchable={true}
+                  searchablePlaceholder="Search Vehicle"
                   open={vehicleOpen}
                   value={vehicleValue}
                   items={vehicleItems}
@@ -287,6 +290,8 @@ useFocusEffect(
 
               <View style={[styles.flexDropdown, {zIndex: 1000}]}>
                 <DropDownPicker
+                  searchable={true}
+                  searchablePlaceholder="Search Status"
                   open={statusOpen}
                   value={statusValue}
                   items={statusItems}
@@ -496,6 +501,7 @@ useFocusEffect(
               </View>
             </View>
           </Modal>
+           <Loader visible={loading} />
         </KeyboardAvoidingView>
       )}
     </View>

@@ -47,6 +47,8 @@ const TripStop = ({navigation, route}) => {
   const [selectedStatusDetails, setSelectedStatusDetails] = useState({});
   const [openDropdowns, setOpenDropdowns] = useState({});
    const [attachments, setAttachments] = useState([]);
+   const [fuelConsumed, setFuelConsumed] = useState('');
+   const [remarks, setRemarks] = useState('');
   const zIndexCounter = useRef(1000);
 
   // Initialize
@@ -329,68 +331,72 @@ const TripStop = ({navigation, route}) => {
   };
 
   // Form Submission
-  const handleSubmit = async () => {
-    // if (!startAddress || !startKm || !startLat || !startLng) {
-    //   Alert.alert('Error', 'Please fill all required fields');
-    //   return;
-    // }
+const handleSubmit = async () => {
+  // Basic validation
+ 
 
-    if (Object.keys(inspectionResults).length !== inspectionItems.length) {
-      Alert.alert('Error', 'Please complete all checklist items');
-      return;
-    }
+  setIsSubmitting(true);
 
-    setIsSubmitting(true);
-
+  try {
     const loginRes = await getObjByKey('loginResponse');
     const token = loginRes?.data?.access_token;
 
-    try {
-      const formattedDateTime = moment(startDatetime).format(
-        'YYYY-MM-DDTHH:mm:ss',
-      );
-      const checklistData = inspectionItems.map(item => ({
-        checklist_master_id: item.id,
-        selected_value: inspectionResults[item.id]
-          .toLowerCase()
-          .replace(' ', '_'),
-      }));
+    // Prepare form data
+    const formdata = new FormData();
+    formdata.append('stop_address', location.label || startAddress);
+    formdata.append(
+      'stop_datetime',
+      moment(startDatetime).format('YYYY-MM-DD HH:mm:ss'),
+    );
+    formdata.append('stop_km', startKm);
+    formdata.append('stop_lat', startLat);
+    formdata.append('stop_lng', startLng);
 
-      const tripData = {
-        start_address: startAddress,
-        start_datetime: formattedDateTime,
-        start_km: parseFloat(startKm),
-        start_lat: parseFloat(startLat),
-        start_lng: parseFloat(startLng),
-        checklist: checklistData,
+    // Append optional fields if they exist
+    if (fuelConsumed) formdata.append('fuel_consumed', fuelConsumed);
+    if (remarks) formdata.append('remarks', remarks);
+
+    // Append attachment if exists
+    if (attachments.length > 0) {
+      const file = {
+        uri: attachments[0].uri,
+        name: attachments[0].name,
+        type: attachments[0].type,
       };
-      console.log('tripData', tripData);
-
-      const myHeaders = new Headers();
-      myHeaders.append('Content-Type', 'application/json');
-      myHeaders.append('Authorization', `Bearer ${token}`);
-
-      const response = await fetch(`${BASE_URL}trips/trip_start/`, {
-        method: 'POST',
-        headers: myHeaders,
-        body: JSON.stringify(tripData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.msg || 'Failed to start trip');
-      }
-
-      Alert.alert('Success', 'Trip started successfully!');
-      navigation.goBack();
-    } catch (error) {
-      console.error('Error:', error);
-      Alert.alert('Error', error.message || 'Failed to start trip');
-    } finally {
-      setIsSubmitting(false);
+      formdata.append('uploaded_proof', file);
     }
-  };
+
+    console.log('formdata', formdata);
+
+    const myHeaders = new Headers();
+    myHeaders.append('Authorization', `Bearer ${token}`);
+
+    // Get trip ID from route params or navigation state
+    const tripId = route.params?.tripId || 1; // Default to 1 if not provided
+
+    const response = await fetch(`${BASE_URL}trips/trip_end/${tripId}/`, {
+      method: 'POST',
+      headers: myHeaders,
+      body: formdata,
+      redirect: 'follow',
+    });
+
+    const result = await response.json();
+    console.log('Response:', result);
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Failed to end trip');
+    }
+
+    Alert.alert('Success', 'Trip ended successfully!');
+    navigation.goBack();
+  } catch (error) {
+    console.error('Error:', error);
+    Alert.alert('Error', error.message || 'Failed to end trip');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   console.log('location', location);
 
   return (
@@ -518,6 +524,8 @@ const TripStop = ({navigation, route}) => {
             placeholderTextColor="#999"
             multiline={true}
             numberOfLines={4}
+            value={remarks}
+            onChangeText={setRemarks}
           />
         </View>
         <View style={styles.inputItem}>
@@ -527,6 +535,8 @@ const TripStop = ({navigation, route}) => {
             placeholder="Enter fuel consumed"
             placeholderTextColor="#999"
             keyboardType="numeric"
+            value={fuelConsumed}
+            onChangeText={setFuelConsumed}
           />
         </View>
         {/* Attachment */}
@@ -738,6 +748,50 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  attachmentPreviewContainer: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 6,
+    padding: 10,
+    backgroundColor: '#fff',
+    position: 'relative',
+  },
+  attachmentImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 4,
+  },
+  filePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  fileName: {
+    marginLeft: 10,
+    color: '#374151',
+    flex: 1,
+  },
+  attachmentActions: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+  },
+  removeButton: {
+    padding: 5,
+  },
+  attachmentButton: {
+    height: 45,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 6,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  attachmentButtonText: {
+    color: '#374151',
+    fontWeight: '500',
   },
 });
 

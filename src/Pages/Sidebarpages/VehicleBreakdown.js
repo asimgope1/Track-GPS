@@ -22,6 +22,8 @@ import moment from 'moment';
 import { getObjByKey, storeObjByKey } from '../../utils/Storage';
 import Geolocation from '@react-native-community/geolocation';
 import RNFetchBlob from 'react-native-blob-util';
+import { useFocusEffect } from '@react-navigation/native';
+import { Loader } from '../../components/Loader';
 // import DateTimePicker from '@react-native-community/datetimepicker'; // Uncomment if using
 
 const VehicleBreakdown = ({navigation}) => {
@@ -38,6 +40,10 @@ const VehicleBreakdown = ({navigation}) => {
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState({});
 
+    const [driverOpen, setDriverOpen] = useState(false);
+    const [driverValue, setDriverValue] = useState(null);
+    const [driverItems, setDriverItems] = useState([]);
+
   // Vehicle Dropdown
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const [vehicleValue, setVehicleValue] = useState(null);
@@ -45,6 +51,7 @@ const VehicleBreakdown = ({navigation}) => {
   const [TripOpen, setTripOpen] = useState(false);
   const [TripValue, setTripValue] = useState(null);
   const [TripItems, setTripItems] = useState([]);
+  const [loading,SetLoading]=useState(false)
 
 const handleAttachment = async () => {
   try {
@@ -92,6 +99,23 @@ const GetIncidentId = async () => {
   }
 };
 
+
+  const GetDrivers = async () => {
+    const Url = `${BASE_URL}trips/driver_master/`;
+    try {
+      const response = await GETNETWORK(Url, true);
+      const drivers = response.data || [];
+      const mappedItems = drivers.map(item => ({
+        label: item.driver_name,
+        value: item.driver_master_id,
+      }));
+      setDriverItems(mappedItems);
+    } catch (error) {
+      console.error('Error fetching drivers:', error);
+      Alert.alert('Error', 'Failed to fetch driver data. Please try again.');
+    }
+  };
+
   // Date Picker Handler
   const onChangeDate = (event, selectedDate) => {
     console.log('Selected date:', selectedDate);
@@ -125,6 +149,7 @@ const GetIncidentId = async () => {
   };
 const handleSubmit = async () => {
   console.log('date', date);
+        SetLoading(true);
   try {
     const loginRes = await getObjByKey('loginResponse');
     const token = loginRes?.data?.access_token;
@@ -155,6 +180,7 @@ const handleSubmit = async () => {
       });
     }
     console.log('breakdown', formData)
+    SetLoading(false)
 
     const response = await fetch(`${BASE_URL}maintenance/vehicle_breakdown/`, {
       method: 'POST',
@@ -192,12 +218,23 @@ const handleSubmit = async () => {
     );
   } catch (error) {
     console.error('Submission error:', error);
+    SetLoading(false)
     Alert.alert(
       'Error',
       error.message || 'Failed to submit breakdown. Please try again.',
     );
   }
 };
+
+useFocusEffect(
+  React.useCallback(() => {
+    // Reset form when the screen is focused
+    resetForm();
+    return () => {
+      // Cleanup if needed
+    };
+  }, []),
+);
 
 
 
@@ -217,6 +254,11 @@ const resetForm = () => {
   GetIncidentId();
   GetTrip();
   getCurrentLocation();
+  setTripValue('');
+  setDriverValue('');
+  setVehicleValue('');
+  setAttachments([]);
+
 };
 
 
@@ -228,14 +270,17 @@ const resetForm = () => {
     GetIncidentId();
     GetTrip();
     getCurrentLocation()
+    GetDrivers()
   }, []);
 
 
     const getCurrentLocation = async () => {
+      SetLoading(true)
       return new Promise((resolve, reject) => {
         Geolocation.getCurrentPosition(
           position => {
             const {latitude, longitude} = position.coords;
+            SetLoading(false)
             console.log('Latitude:', latitude);
             console.log('Longitude:', longitude);
             reverseGeocode(latitude, longitude);
@@ -243,6 +288,7 @@ const resetForm = () => {
           },
           error => {
             console.error('Error getting location:', error);
+            SetLoading(false)
             if (error.code === 1) {
               Alert.alert(
                 'Permission Denied',
@@ -278,11 +324,13 @@ const resetForm = () => {
     const reverseGeocode = async (latitude, longitude) => {
       setlatitude(latitude.toString());
       setLongitude(longitude.toString());
+      SetLoading(true)
       try {
         const response = await fetch(
           `https://api.openrouteservice.org/geocode/reverse?api_key=eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImRhZmY2MTE0ZmNhYzRhZjViYTUyZjY0ZWMyMTRlYTI5IiwiaCI6Im11cm11cjY0In0=&point.lon=${longitude}&point.lat=${latitude}`,
         );
         const result = await response.json();
+        SetLoading(false)
 
         const firstFeature = result?.features?.[0];
         if (firstFeature?.properties) {
@@ -301,14 +349,17 @@ const resetForm = () => {
           storeObjByKey('location', locationData);
         } else {
           console.warn('No valid feature found in reverse geocode result');
+          SetLoading(false)
         }
       } catch (error) {
         console.error('Error fetching reverse geocode:', error);
+        SetLoading(false)
       }
 
     };
 
   const GetVehicle = async () => {
+    SetLoading(true)
     const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
 
     try {
@@ -323,14 +374,17 @@ const resetForm = () => {
       }));
 
       setVehicleItems(mappedItems);
+      SetLoading(false)
     } catch (error) {
       console.error('Error fetching vehicles:', error);
+      SetLoading(false)
       alert('Failed to fetch vehicle data. Please try again.');
     }
   };
 
   const GetTrip = async () => {
     const Url = `${BASE_URL}trips/trip_master/`;
+    SetLoading(true)
 
     try {
       const response = await GETNETWORK(Url, true);
@@ -344,13 +398,13 @@ const resetForm = () => {
       }));
 
       setTripItems(mappedItems);
+      SetLoading(false)
     } catch (error) {
       console.error('Error fetching trips:', error);
       alert('Failed to fetch trip data. Please try again.');
     }
   }
 
-  console.log('this is date', date);
 
   return (
     <>
@@ -376,7 +430,7 @@ const resetForm = () => {
               onChangeText={setIncidentId}
             />
           </View>
-          <View style={[styles.inputItem, {zIndex: vehicleOpen ? 1000 : 1}]}>
+          <View style={[styles.inputItem, {zIndex: TripOpen ? 1000 : 1}]}>
             <Text style={styles.label}>Trip ID</Text>
             <DropDownPicker
               open={TripOpen}
@@ -527,17 +581,29 @@ const resetForm = () => {
             />
           </View>
           {/* driver name */}
-          <View style={styles.inputItem}>
-            <Text style={styles.label}>Driver Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholderTextColor={'gray'}
-              placeholder="Enter driver name"
-              value={driverName}
-              onChangeText={setDriverName}
+          {/* <View style={styles.row}> */}
+          <View style={[styles.inputItem, {zIndex: driverOpen ? 1200 : 1}]}>
+            <Text style={styles.label}>Driver</Text>
+            <DropDownPicker
+              open={driverOpen}
+              value={driverValue}
+              items={driverItems}
+              setOpen={setDriverOpen}
+              setValue={setDriverValue}
+              setItems={setDriverItems}
+              placeholder="Select Driver"
+              style={styles.dropdown}
+              dropDownContainerStyle={styles.dropdownContainer}
+              textStyle={styles.dropdownText}
+              placeholderStyle={styles.dropdownPlaceholder}
+              searchable={true}
+              onOpen={() => {
+                setTripNameOpen(false);
+              }}
             />
           </View>
-          </View>
+        </View>
+        {/* </View> */}
 
         {/* Description */}
         <View style={styles.inputItem}>
@@ -594,6 +660,7 @@ const resetForm = () => {
           <Text style={styles.submitButtonText}>Save Report</Text>
         </TouchableOpacity>
       </ScrollView>
+      <Loader visible={loading} />
     </>
   );
 };

@@ -19,6 +19,7 @@ import {Calendar} from 'react-native-calendars';
 import Header from '../../components/Header';
 import {GETNETWORK, POSTNETWORK} from '../../utils/Network';
 import {BASE_URL} from '../../constants/url';
+import { Loader } from '../../components/Loader';
 
 const MaintenanceScheduleScreen = () => {
   const navigation = useNavigation();
@@ -36,6 +37,7 @@ const MaintenanceScheduleScreen = () => {
   const [maintenanceOpen, setMaintenanceOpen] = useState(false);
   const [maintenanceValue, setMaintenanceValue] = useState(null);
   const [maintenanceItems, setMaintenanceItems] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const handleDayPress = day => {
     setSelectedDate(day.dateString);
@@ -72,9 +74,11 @@ const MaintenanceScheduleScreen = () => {
   );
 
   const GetMaintenance = () => {
+    setLoading(true);
     const Url = `${BASE_URL}maintenance/maintenance_master/`;
     GETNETWORK(Url, true)
       .then(response => {
+        setLoading(false);
         console.log('Maintenance Data:', response.data);
         const mappedItems = response.data.map(item => ({
           label: item.maintenance_name,
@@ -84,6 +88,7 @@ const MaintenanceScheduleScreen = () => {
       })
       .catch(error => {
         console.error('Error fetching maintenance:', error);
+        setLoading(false);
         Alert.alert(
           'Error',
           'Failed to fetch maintenance data. Please try again.',
@@ -92,10 +97,12 @@ const MaintenanceScheduleScreen = () => {
   };
 
   const GetVehicle = async () => {
+    setLoading(true);
     const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
     try {
       const response = await GETNETWORK(Url, true);
       console.log('Vehicle Data:', response.data);
+      setLoading(false);
       const vehicles = response.data?.things || [];
       const mappedItems = vehicles.map(item => ({
         label: item.thing_name,
@@ -103,6 +110,7 @@ const MaintenanceScheduleScreen = () => {
       }));
       setVehicleItems(mappedItems);
     } catch (error) {
+      setLoading(false);
       console.error('Error fetching vehicles:', error);
       Alert.alert('Error', 'Failed to fetch vehicle data. Please try again.');
     }
@@ -113,8 +121,10 @@ const MaintenanceScheduleScreen = () => {
       Alert.alert('Error', 'Please fill all required fields');
       return;
     }
+    setLoading(true);
 
     setIsSubmitting(true);
+    
 
     try {
       const maintenanceData = {
@@ -131,6 +141,7 @@ const MaintenanceScheduleScreen = () => {
       );
 
       console.log('API Response:', response);
+      setLoading(false);
       Alert.alert('Success', 'Maintenance scheduled successfully!');
 
       // Reset form
@@ -144,6 +155,8 @@ const MaintenanceScheduleScreen = () => {
       Alert.alert('Error', 'Failed to schedule maintenance. Please try again.');
     } finally {
       setIsSubmitting(false);
+      // Reset the form after submission
+      setLoading(false);
       resetForm()
     }
   };
@@ -267,6 +280,7 @@ const MaintenanceScheduleScreen = () => {
             </View>
           </View>
         </Modal>
+         <Loader visible={loading} />
       </KeyboardAvoidingView>
     </>
   );
