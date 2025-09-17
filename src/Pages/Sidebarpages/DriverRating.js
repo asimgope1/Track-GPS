@@ -174,7 +174,8 @@ const submitRating = async () => {
       checklist_values: checklistValues.filter(
         item => item.value !== null && item.value !== undefined,
       ),
-      comment: comment,
+      remarks: comment,
+      // accident: accident, drop down selction checkbox to be added
     };
 
     console.log('Final payload to be sent:', ratingData);

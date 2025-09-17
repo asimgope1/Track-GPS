@@ -153,6 +153,7 @@ const Login = ({navigation, route}) => {
     fetch(`${BASE_URL}user/auth/`, requestOptions)
       .then(response => response.json())
       .then(result => {
+        console.log('result at login', result);
         storeObjByKey('loginResponse', result);
         Dispatch(checkuserToken());
         setPageLoad(false);

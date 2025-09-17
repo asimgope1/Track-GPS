@@ -49,6 +49,9 @@ import HistoryModal from '../History/HistoryModal';
 import Track from '../Track/Track';
 import {Loader} from '../../components/Loader';
 import moment from 'moment';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getObjByKey } from '../../utils/Storage';
+import Dashboard from './DriverDash';
 
 const WHITE = '#FFFFFF';
 const data1 = [
@@ -329,98 +332,8 @@ const FleetCard = ({
             </ScrollView>
           </View>
         )}
-        {/* 
-{title === 'Total Distance' && (
-  <View style={{ height: HEIGHT * 0.5, width: '100%', flexDirection: 'column' }}>
-    <View style={{ flexDirection: 'row', flex: 1 }}>
-      <View
-        style={{
-          width: 40,
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          paddingVertical: 10,
-        }}>
-        {[100, 75, 50, 25, 0].map((label, index) => (
-          <Text key={index} style={{ color: 'gray', fontSize: 10 }}>
-            {label}%
-          </Text>
-        ))}
-      </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <LineChart
-          height={HEIGHT * 0.25}
-          width={WIDTH * 1.0}
-          areaChart
-          curved
-          data={data1}
-          hideDataPoints
-          spacing={56}
-          color1="#8a56ce"
-          color2="#56acce"
-          startFillColor1="#8a56ce"
-          startFillColor2="#56acce"
-          endFillColor1="#8a56ce"
-          endFillColor2="#56acce"
-          startOpacity={0.9}
-          endOpacity={0.2}
-          initialSpacing={0}
-          noOfSections={4}
-          yAxisColor="transparent"
-          yAxisThickness={0}
-          rulesType="solid"
-          rulesColor="gray"
-          yAxisTextStyle={{ color: 'transparent' }}
-          xAxisColor="lightgray"
-          pointerConfig={{
-            pointerStripUptoDataPoint: true,
-            pointerStripColor: 'lightgray',
-            pointerStripWidth: 2,
-            strokeDashArray: [2, 5],
-            pointerColor: 'lightgray',
-            radius: 4,
-            pointerLabelWidth: 80,
-            pointerLabelHeight: 120,
-            pointerLabelComponent: items => (
-              <View
-                style={{
-                  height: 100,
-                  width: 100,
-                  backgroundColor: '#282C3E',
-                  borderRadius: 4,
-                  justifyContent: 'center',
-                  paddingLeft: 16,
-                }}>
-                <Text style={{ color: 'lightgray', fontSize: 12 }}>{2018}</Text>
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>{items[0].value}</Text>
-                <Text style={{ color: 'lightgray', fontSize: 12, marginTop: 12 }}>{2019}</Text>
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>
-                </Text>
-              </View>
-            ),
-          }}
-        />
-      </ScrollView>
-    </View>
 
-    <View style={{ flexDirection: 'row', marginLeft: 40 }}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {data1.map((_, index) => (
-          <Text
-            key={index}
-            style={{
-              width: 56,
-              textAlign: 'center',
-              fontSize: 10,
-              color: 'gray',
-            }}>
-            {`T${index + 1}`}
-          </Text>
-        ))}
-      </ScrollView>
-    </View>
-  </View>
-)} */}
         {title === 'OverSpeed' && (
           <View style={styles.overSpeedDetails}>
             <View style={styles.detailBox}>
@@ -945,20 +858,6 @@ const FleetSummaryCard = ({
   const [projectedTrackData, setProjectedTrackData] = useState(null);
   const [parked, setParked] = useState(false);
 
-  //  const projectedTrack = async id => {
-  //     try {
-  //       const url = `${BASE_URL}route/assign-route/${id}/`; // Construct the API URL
-  //       const result = await GETNETWORK(url, true); // Use GETNETWORK with token authentication
-  //       console.log(
-  //         result,
-  //         'hhhhhhhhhhhhhhhhhhhhhhhhhhhhwwwwwwwwwwwwwwwwwwwwwlllllllllllllllllllllllllooooooooooooo-----------------------------',
-  //       );
-
-  //       setProjectedTrackData(result); // Update state with the fetched data
-  //     } catch (error) {
-  //       console.error('Error fetching data:', error);
-  //     }
-  //   };
 
   const handlePress = label => {
     setSelectedStatus(label);
@@ -991,14 +890,6 @@ const FleetSummaryCard = ({
   };
 
   const filteredItems = getFilteredItems();
-
-  // const handleCardClick = item => {
-  //   fetchCardData(item.thing_id);
-  //   setSelectedValue(item);
-  //   setLocation(item.Location || []); // assumes item.Location = [lat, long]
-  //   setModalVisible(false);
-  //   setShowModal(true);
-  // };
 
   const handleCardClick = item => {
     console.log('itrmee', item);
@@ -1391,15 +1282,7 @@ const FleetSummaryCard = ({
         </View>
       </Modal>
 
-      {/* <View style={{flex: 1}}>
-          <Track
-            showTrack={showTrack}
-            projectedTrack={projectedTrackData}
-            latitude={Location[0]} // Pass the latitude value
-            longitude={Location[1]} // Pass the longitude value
-            onClose={handleClose} // Handle close functionality
-          />
-        </View> */}
+
       <HistoryModal
         visible={viewHistory}
         onClose={() => setViewHistory(false)}
@@ -1421,6 +1304,9 @@ const FleetDashboard = navigation => {
   const [selectedValue, setSelectedValue] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [pageLoad, setPageLoad] = useState(false);
+  const [userType, setUserType] = useState(null);
+  const [tripNameItems, setTripNameItems] = useState([]);
+
 
   // const [showMap, setShowMap] = useState(false);
   // const [viewHistory, setViewHistory] = useState(false);
@@ -1570,6 +1456,18 @@ const FleetDashboard = navigation => {
     setRefreshing(false);
   };
 
+  const GetUserType = async () => {
+    const loginRes = await getObjByKey('loginResponse');
+    console.log('UserType', loginRes);
+    setUserType(loginRes?.data?.user_type);
+  };
+
+  useEffect(() => {
+    GetUserType();
+  }, []);
+
+
+
   return (
     <Fragment>
       <StatusBar backgroundColor={'#0284c7'} barStyle="dark-content" />
@@ -1582,7 +1480,7 @@ const FleetDashboard = navigation => {
         <KeyboardAvoidingView
           style={{flex: 1}}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <FlatList
+      {userType === 'admin'|| userType === 'manager'?    <FlatList
             ListHeaderComponent={
               <FleetSummaryCard
                 statusMap={statusMap}
@@ -1630,7 +1528,11 @@ const FleetDashboard = navigation => {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
-          />
+          />:<>
+{/* for driver trip card and status card */}
+          <Dashboard/>
+
+          </>}
         </KeyboardAvoidingView>
       </SafeAreaView>
       <Loader visible={pageLoad} />

@@ -24,7 +24,7 @@ import VehicleInspection from '../Pages/Sidebarpages/VehicleInspection';
 import RouteOptimization from '../Pages/Sidebarpages/RouteOptimization';
 import TripExpenses from '../Pages/Sidebarpages/TripExpenses';
 import DriverRating from '../Pages/Sidebarpages/DriverRating';
-import { clearAll } from '../utils/Storage';
+import { clearAll, getObjByKey } from '../utils/Storage';
 import { useDispatch } from 'react-redux';
 import { checkuserToken } from '../redux/actions/auth';
 import MaintenanceJob from '../Pages/Sidebarpages/MaintenanceJob';
@@ -64,9 +64,29 @@ function HomeStack() {
 
 // Custom Drawer Content Component
 const CustomDrawerContent = props => {
-  const [userRole, setUserRole] = React.useState('admin'); // 'admin', 'manager', or 'driver'
-      const Dispatch = useDispatch();
+  // Get the logged-in user role
+  async function getUseType() {
+    try {
+      const loginRes = await getObjByKey('loginResponse');
+      const userType = loginRes?.data?.user_type;
+      return userType || 'admin'; // default to admin if not found
+    } catch (error) {
+      console.error('Error fetching user type:', error);
+      return 'admin';
+    }
+  }
 
+  const [userRole, setUserRole] = React.useState(null); // start null
+
+  React.useEffect(() => {
+    const fetchUserRole = async () => {
+      const role = await getUseType();
+      setUserRole(role);
+    };
+    fetchUserRole();
+  }, []);
+
+  const Dispatch = useDispatch();
   const currentRouteName = props.state.routeNames[props.state.index];
 
   const adminOptions = [
@@ -80,11 +100,7 @@ const CustomDrawerContent = props => {
       icon: 'calendar-today',
       screen: 'MaintenanceCalendar',
     },
-    {
-      label: 'Maintenance Job',
-      icon: 'assignment',
-      screen: 'MaintenanceJob',
-    },
+    {label: 'Maintenance Job', icon: 'assignment', screen: 'MaintenanceJob'},
     {
       label: 'Vehicle Inspection',
       icon: 'car-repair',
@@ -109,7 +125,6 @@ const CustomDrawerContent = props => {
     {label: 'Trip Stop', icon: 'stop', screen: 'TripStop'},
   ];
 
-
   const getOptionsForRole = () => {
     switch (userRole) {
       case 'admin':
@@ -123,30 +138,16 @@ const CustomDrawerContent = props => {
     }
   };
 
+  if (!userRole) return null; // wait until role is loaded
+
   return (
     <DrawerContentScrollView {...props}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Fleet Management</Text>
-        <View style={styles.profileSelector}>
-          {['admin', 'manager', 'driver'].map(role => (
-            <TouchableOpacity
-              key={role}
-              style={[
-                styles.profileButton,
-                userRole === role && styles.activeProfile,
-              ]}
-              onPress={() => setUserRole(role)}>
-              <Text
-                style={[
-                  styles.profileText,
-                  userRole === role && styles.activeProfileText,
-                ]}>
-                {role.charAt(0).toUpperCase() + role.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <Text style={{color: 'white', fontSize: 14, textAlign: 'center'}}>
+          {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+        </Text>
       </View>
 
       {/* Home Drawer Item */}
@@ -209,16 +210,16 @@ const CustomDrawerContent = props => {
           icon={({color, size}) => (
             <Icon name="exit-to-app" color={color} size={size} />
           )}
-          onPress={() => 
-     {
-                               clearAll();
-                               Dispatch(checkuserToken());
-                             }}
+          onPress={() => {
+            clearAll();
+            Dispatch(checkuserToken());
+          }}
         />
       </View>
     </DrawerContentScrollView>
   );
 };
+
 
 
 // Main App Navigator with Drawer
