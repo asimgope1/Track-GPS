@@ -153,11 +153,22 @@ const Login = ({navigation, route}) => {
     fetch(`${BASE_URL}user/auth/`, requestOptions)
       .then(response => response.json())
       .then(result => {
+        if (result.status === 'success') {
         console.log('result at login', result);
         storeObjByKey('loginResponse', result);
         Dispatch(checkuserToken());
         setPageLoad(false);
         console.log(result);
+        }
+        else {
+          setPageLoad(false);
+  Alert.alert(
+            'Login Failed',
+            result.message || 'An error occurred during login. Please try again.',
+
+
+  )
+        }
       })
       .catch(error => {
         setPageLoad(false);

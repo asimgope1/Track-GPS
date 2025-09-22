@@ -28,11 +28,12 @@ const TripStart = ({navigation, route}) => {
   const [startDatetime, setStartDatetime] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState('date');
-  const [startAddress, setStartAddress] = useState('');
+  const [startAddress, setStartAddress] = useState(location?.label || '');
   const [startKm, setStartKm] = useState('');
   const [startLat, setStartLat] = useState('');
   const [startLng, setStartLng] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   // Location state
   const [location, setLocation] = useState({});
@@ -325,21 +326,21 @@ const TripStart = ({navigation, route}) => {
       }));
 
       const tripData = {
-        start_address: startAddress,
+        start_address: location?.label,
         start_datetime: formattedDateTime,
         start_km: parseFloat(startKm),
         start_lat: parseFloat(startLat),
         start_lng: parseFloat(startLng),
         checklist: checklistData,
       };
-      console.log('tripData', tripData);
+      console.log('tripDatastart', tripData);
 
       const myHeaders = new Headers();
       myHeaders.append('Content-Type', 'application/json');
       myHeaders.append('Authorization', `Bearer ${token}`);
 
       const response = await fetch(
-        `${BASE_URL}trips/trip_start/`,
+        `${BASE_URL}trips/trip_start/${route.params?.trip?.trip_assignment_id}/`,
         {
           method: 'POST',
           headers: myHeaders,
@@ -348,13 +349,14 @@ const TripStart = ({navigation, route}) => {
       );
 
       const result = await response.json();
+      console.log('Trip Start Response:', result);
 
       if (!response.ok) {
         throw new Error(result.msg || 'Failed to start trip');
       }
 
       Alert.alert('Success', 'Trip started successfully!');
-      navigation.goBack();
+      // navigation.goBack();
     } catch (error) {
       console.error('Error:', error);
       Alert.alert('Error', error.message || 'Failed to start trip');
@@ -363,6 +365,7 @@ const TripStart = ({navigation, route}) => {
     }
   };
   console.log('location', location);
+  console.log('routres', route.params?.trip?.trip_assignment_id);
 
   return (
     <KeyboardAvoidingView
@@ -429,7 +432,7 @@ const TripStart = ({navigation, route}) => {
               placeholderTextColor={'gray'}
               placeholder="Enter Location"
               value={location.label}
-              onChangeText={text => setStartAddress(text)}
+              onChangeText={text => setStartAddress(location.label)}
             />
             <TouchableOpacity
               style={styles.locationButton}

@@ -19,6 +19,7 @@ import {Icon} from '@rneui/themed';
 import {BASE_URL} from '../../constants/url';
 import { GETNETWORK } from '../../utils/Network';
 import { getObjByKey } from '../../utils/Storage';
+import { Calendar } from 'react-native-calendars';
 
 const TripExpenses = ({navigation}) => {
   const [trips, setTrips] = useState([]);
@@ -37,6 +38,8 @@ const TripExpenses = ({navigation}) => {
   const [categoryItems, setCategoryItems] = useState([]);
   const [attachments, setAttachments] = useState([]);
   const [token, setToken] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD format
+  const [markedDates, setMarkedDates] = useState({});
 
   const handleAttachment = async () => {
     try {
@@ -59,6 +62,19 @@ const TripExpenses = ({navigation}) => {
       Alert.alert('Error', 'Failed to select file. Please try again.');
     }
   };
+
+
+
+  const handleDayPress = day => {
+    const dateString = day.dateString;
+    setSelectedDate(day.dateString);
+    setMarkedDates({
+      [dateString]: {
+        selected: true,
+        selectedColor: '#0284c7',
+      },
+    });
+  }
 
   const removeAttachment = () => {
     setAttachments([]);
@@ -149,6 +165,8 @@ const TripExpenses = ({navigation}) => {
       formdata.append('expense_master_id', category.toString());
       formdata.append('amount', amount.toString());
       formdata.append('remarks', remarks || 'No remarks');
+      formdata.append('expense_date', selectedDate);
+
 
       if (attachments.length > 0) {
         const file = {
@@ -347,6 +365,26 @@ const TripExpenses = ({navigation}) => {
               )}
 
               <View style={styles.inputItem}>
+                <Text style={styles.label}>Date</Text>
+                <Calendar
+                markedDates={markedDates}
+                onDayPress={handleDayPress}
+                theme={{
+                  selectedDayBackgroundColor: '#0284c7',
+                  todayTextColor: '#0284c7',
+                  arrowColor: '#0284c7',
+                }}
+                hideExtraDays={true}
+                firstDay={1}
+                style={styles.calendar}
+           
+
+
+                />
+
+              </View>
+
+              <View style={styles.inputItem}>
                 <Text style={styles.label}>Amount</Text>
                 <TextInput
                   placeholder="Enter amount"
@@ -442,6 +480,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
     flexGrow: 1,
   },
+  
   title: {
     fontSize: 20,
     fontWeight: '700',

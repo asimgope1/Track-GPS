@@ -22,9 +22,15 @@ import {GETNETWORK, POSTNETWORK} from '../../utils/Network';
 import {getObjByKey} from '../../utils/Storage';
 import TripStart from '../Sidebarpages/TripStart';
 import TripStop from '../Sidebarpages/TripStop';
-// import AddExpense from './AddExpense'; // Import the AddExpense component
+import TripExpenses from '../Sidebarpages/TripExpenses';
 
 const Dashboard = ({navigation}) => {
+  const [showTripStartModal, setShowTripStartModal] = useState(false);
+  const [showTripStopModal, setShowTripStopModal] = useState(false);
+  const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+  const [tripToStart, setTripToStart] = useState(null);
+  const [tripToStop, setTripToStop] = useState(null);
+  const [tripForExpense, setTripForExpense] = useState(null);
   const [trips, setTrips] = useState([]);
   const [filteredTrips, setFilteredTrips] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,19 +40,16 @@ const Dashboard = ({navigation}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [pageLoad, setPageLoad] = useState(false);
   const [DriverId, setDriverId] = useState('');
-  const [showTripStartModal, setShowTripStartModal] = useState(false);
-  const [showTripStopModal, setShowTripStopModal] = useState(false);
-  const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
-  const [tripToStart, setTripToStart] = useState(null);
-  const [tripToStop, setTripToStop] = useState(null);
-  const [tripForExpense, setTripForExpense] = useState(null);
 
-  const GetTrip = async id => {
-    const Url = `${BASE_URL}trips/trip_assignment/`;
+  const GetTrip = async (id, status) => {
+    let url = `${BASE_URL}trips/trip_assignment/?driver_master_id=${id}`;
+    if (status !== 'all') {
+      url += `&trip_status=${status}`;
+    }
     setPageLoad(true);
 
     try {
-      const response = await GETNETWORK(Url, true);
+      const response = await GETNETWORK(url, true);
       console.log('Trip Data:', response.data);
 
       const tripsData = response.data || [];
@@ -63,11 +66,12 @@ const Dashboard = ({navigation}) => {
   useEffect(() => {
     const init = async () => {
       const loginRes = await getObjByKey('loginResponse');
+      console.log('login rwsp in driverdash', loginRes);
       const driverId = loginRes?.data?.driver_id;
       setDriverId(driverId);
 
       if (driverId) {
-        await GetTrip(driverId);
+        await GetTrip(driverId, statusFilter);
       }
     };
 
@@ -75,13 +79,18 @@ const Dashboard = ({navigation}) => {
   }, []);
 
   useEffect(() => {
+    if (DriverId) {
+      GetTrip(DriverId, statusFilter);
+    }
+  }, [statusFilter, DriverId]);
+
+  useEffect(() => {
     filterTrips();
-  }, [searchQuery, statusFilter, trips]);
+  }, [searchQuery, trips]);
 
   const filterTrips = () => {
     let filtered = trips;
 
-    // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(
         trip =>
@@ -91,17 +100,12 @@ const Dashboard = ({navigation}) => {
       );
     }
 
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(trip => trip.status === statusFilter);
-    }
-
     setFilteredTrips(filtered);
   };
 
   const onRefresh = () => {
     setRefreshing(true);
-    GetTrip();
+    GetTrip(DriverId, statusFilter);
     setRefreshing(false);
   };
 
@@ -116,7 +120,7 @@ const Dashboard = ({navigation}) => {
     switch (status) {
       case 'scheduled':
         return '#3498db';
-      case 'in-progress':
+      case 'in_progress':
         return '#f39c12';
       case 'completed':
         return '#2ecc71';
@@ -131,7 +135,7 @@ const Dashboard = ({navigation}) => {
     switch (status) {
       case 'scheduled':
         return 'Scheduled';
-      case 'in-progress':
+      case 'in_progress':
         return 'In Progress';
       case 'completed':
         return 'Completed';
@@ -147,21 +151,18 @@ const Dashboard = ({navigation}) => {
     setModalVisible(true);
   };
 
-  // Handle start trip - show the TripStart modal
   const handleStartTrip = trip => {
     setTripToStart(trip);
     setShowTripStartModal(true);
     setModalVisible(false);
   };
 
-  // Handle stop trip - show the TripStop modal
   const handleStopTrip = trip => {
     setTripToStop(trip);
     setShowTripStopModal(true);
     setModalVisible(false);
   };
 
-  // Handle add expense - show the AddExpense modal
   const handleAddExpense = trip => {
     setTripForExpense(trip);
     setShowAddExpenseModal(true);
@@ -178,9 +179,9 @@ const Dashboard = ({navigation}) => {
         <View
           style={[
             styles.statusBadge,
-            {backgroundColor: getStatusColor(trip.status)},
+            {backgroundColor: getStatusColor(trip.trip_status)},
           ]}>
-          <Text style={styles.statusText}>{getStatusText(trip.status)}</Text>
+          <Text style={styles.statusText}>{getStatusText(trip.trip_status)}</Text>
         </View>
       </View>
 
@@ -218,18 +219,24 @@ const Dashboard = ({navigation}) => {
           </View>
         </View>
 
-        {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
-          {/* {trip.status === 'scheduled' && ( */}
-            <TouchableOpacity
-              style={styles.startButton}
-              onPress={() => handleStartTrip(trip)}>
-              <Icon source="play" size={16} color="#fff" />
-              <Text style={styles.buttonText}>Start</Text>
-            </TouchableOpacity>
-          {/* )} */}
-
-          {/* {trip.status === 'in-progress' && ( */}
+          {trip.trip_status === 'scheduled' && (
+            <>
+              <TouchableOpacity
+                style={styles.startButton}
+                onPress={() => handleStartTrip(trip.trip_assignment_id)}>
+                <Icon source="play" size={16} color="#fff" />
+                <Text style={styles.buttonText}>Start</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.stopButton}
+                onPress={() => handleStopTrip(trip)}>
+                <Icon source="stop" size={16} color="#fff" />
+                <Text style={styles.buttonText}>Stop</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          {trip.trip_status === 'in_progress' && (
             <>
               <TouchableOpacity
                 style={styles.stopButton}
@@ -237,105 +244,103 @@ const Dashboard = ({navigation}) => {
                 <Icon source="stop" size={16} color="#fff" />
                 <Text style={styles.buttonText}>Stop</Text>
               </TouchableOpacity>
-
-           
+              <TouchableOpacity
+                style={styles.expenseButton}
+                onPress={() => handleAddExpense(trip)}>
+                <Icon source="cash" size={16} color="#fff" />
+                <Text style={styles.buttonText}>Add Expense</Text>
+              </TouchableOpacity>
             </>
-          {/* )} */}
-
-          {/* {trip.status === 'completed' && ( */}
-            <TouchableOpacity
-              style={styles.expenseButton}
-              onPress={() => handleAddExpense(trip)}>
-              <Icon source="cash" size={16} color="#fff" />
-              <Text style={styles.buttonText}>Add Expense</Text>
-            </TouchableOpacity>
-          {/* )} */}
+          )}
         </View>
       </View>
     </TouchableOpacity>
   );
 
+
   const renderFilterButtons = () => (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.filterContainer}>
-      <TouchableOpacity
+  <ScrollView
+    horizontal
+    showsHorizontalScrollIndicator={false}
+    style={styles.filterContainer}>
+    <TouchableOpacity
+      style={[
+        styles.filterButton,
+        statusFilter === 'all' && styles.activeFilter,
+      ]}
+      onPress={() => setStatusFilter('all')}>
+      <Text
         style={[
-          styles.filterButton,
-          statusFilter === 'all' && styles.activeFilter,
-        ]}
-        onPress={() => setStatusFilter('all')}>
-        <Text
-          style={[
-            styles.filterText,
-            statusFilter === 'all' && styles.activeFilterText,
-          ]}>
-          All
-        </Text>
-      </TouchableOpacity>
+          styles.filterText,
+          statusFilter === 'all' && styles.activeFilterText,
+        ]}>
+        All
+      </Text>
+    </TouchableOpacity>
 
-      <TouchableOpacity
+    <TouchableOpacity
+      style={[
+        styles.filterButton,
+        statusFilter === 'scheduled' && styles.activeFilter,
+      ]}
+      onPress={() => setStatusFilter('scheduled')}>
+      <Text
         style={[
-          styles.filterButton,
-          statusFilter === 'scheduled' && styles.activeFilter,
-        ]}
-        onPress={() => setStatusFilter('scheduled')}>
-        <Text
-          style={[
-            styles.filterText,
-            statusFilter === 'scheduled' && styles.activeFilterText,
-          ]}>
-          Scheduled
-        </Text>
-      </TouchableOpacity>
+          styles.filterText,
+          statusFilter === 'scheduled' && styles.activeFilterText,
+        ]}>
+        Scheduled
+      </Text>
+    </TouchableOpacity>
 
-      <TouchableOpacity
+    <TouchableOpacity
+      style={[
+        styles.filterButton,
+        statusFilter === 'in_progress' && styles.activeFilter,
+      ]}
+      onPress={() => setStatusFilter('in_progress')}>
+      <Text
         style={[
-          styles.filterButton,
-          statusFilter === 'in-progress' && styles.activeFilter,
-        ]}
-        onPress={() => setStatusFilter('in-progress')}>
-        <Text
-          style={[
-            styles.filterText,
-            statusFilter === 'in-progress' && styles.activeFilterText,
-          ]}>
-          In Progress
-        </Text>
-      </TouchableOpacity>
+          styles.filterText,
+          statusFilter === 'in_progress' && styles.activeFilterText,
+        ]}>
+        In Progress
+      </Text>
+    </TouchableOpacity>
 
-      <TouchableOpacity
+    <TouchableOpacity
+      style={[
+        styles.filterButton,
+        statusFilter === 'completed' && styles.activeFilter,
+      ]}
+      onPress={() => setStatusFilter('completed')}>
+      <Text
         style={[
-          styles.filterButton,
-          statusFilter === 'completed' && styles.activeFilter,
-        ]}
-        onPress={() => setStatusFilter('completed')}>
-        <Text
-          style={[
-            styles.filterText,
-            statusFilter === 'completed' && styles.activeFilterText,
-          ]}>
-          Completed
-        </Text>
-      </TouchableOpacity>
+          styles.filterText,
+          statusFilter === 'completed' && styles.activeFilterText,
+        ]}>
+        Completed
+      </Text>
+    </TouchableOpacity>
 
-      <TouchableOpacity
+    <TouchableOpacity
+      style={[
+        styles.filterButton,
+        statusFilter === 'cancelled' && styles.activeFilter,
+      ]}
+      onPress={() => setStatusFilter('cancelled')}>
+      <Text
         style={[
-          styles.filterButton,
-          statusFilter === 'cancelled' && styles.activeFilter,
-        ]}
-        onPress={() => setStatusFilter('cancelled')}>
-        <Text
-          style={[
-            styles.filterText,
-            statusFilter === 'cancelled' && styles.activeFilterText,
-          ]}>
-          Cancelled
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
-  );
+          styles.filterText,
+          statusFilter === 'cancelled' && styles.activeFilterText,
+        ]}>
+        Cancelled
+      </Text>
+    </TouchableOpacity>
+  </ScrollView>
+);
+
+  console.log('data', trips);
 
   return (
     <Fragment>
@@ -387,7 +392,6 @@ const Dashboard = ({navigation}) => {
             )}
           </ScrollView>
 
-          {/* Trip Details Modal */}
           <Modal
             animationType="slide"
             transparent={true}
@@ -417,12 +421,12 @@ const Dashboard = ({navigation}) => {
                                 styles.modalStatus,
                                 {
                                   backgroundColor: getStatusColor(
-                                    selectedTrip.status,
+                                    selectedTrip.trip_status,
                                   ),
                                 },
                               ]}>
                               <Text style={styles.modalStatusText}>
-                                {getStatusText(selectedTrip.status)}
+                                {getStatusText(selectedTrip.trip_status)}
                               </Text>
                             </View>
                           </View>
@@ -468,23 +472,34 @@ const Dashboard = ({navigation}) => {
                             </Text>
                           </View>
 
-                          {/* Action Buttons in Modal */}
                           <View style={styles.modalActionButtons}>
-                            {selectedTrip.status === 'scheduled' && (
-                              <TouchableOpacity
-                                style={styles.startButton}
-                                onPress={() => {
-                                  handleStartTrip(selectedTrip);
-                                  setModalVisible(false);
-                                }}>
-                                <Icon source="play" size={16} color="#fff" />
-                                <Text style={styles.buttonText}>
-                                  Start Trip
-                                </Text>
-                              </TouchableOpacity>
+                            {selectedTrip.trip_status === 'scheduled' && (
+                              <>
+                                <TouchableOpacity
+                                  style={styles.startButton}
+                                  onPress={() => {
+                                    handleStartTrip(selectedTrip);
+                                    setModalVisible(false);
+                                  }}>
+                                  <Icon source="play" size={16} color="#fff" />
+                                  <Text style={styles.buttonText}>
+                                    Start Trip
+                                  </Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={styles.stopButton}
+                                  onPress={() => {
+                                    handleStopTrip(selectedTrip);
+                                    setModalVisible(false);
+                                  }}>
+                                  <Icon source="stop" size={16} color="#fff" />
+                                  <Text style={styles.buttonText}>
+                                    Stop Trip
+                                  </Text>
+                                </TouchableOpacity>
+                              </>
                             )}
-
-                            {selectedTrip.status === 'in-progress' && (
+                            {selectedTrip.trip_status === 'in_progress' && (
                               <>
                                 <TouchableOpacity
                                   style={styles.stopButton}
@@ -497,7 +512,6 @@ const Dashboard = ({navigation}) => {
                                     Stop Trip
                                   </Text>
                                 </TouchableOpacity>
-
                                 <TouchableOpacity
                                   style={styles.expenseButton}
                                   onPress={() => {
@@ -511,20 +525,6 @@ const Dashboard = ({navigation}) => {
                                 </TouchableOpacity>
                               </>
                             )}
-
-                            {selectedTrip.status === 'completed' && (
-                              <TouchableOpacity
-                                style={styles.expenseButton}
-                                onPress={() => {
-                                  handleAddExpense(selectedTrip);
-                                  setModalVisible(false);
-                                }}>
-                                <Icon source="cash" size={16} color="#fff" />
-                                <Text style={styles.buttonText}>
-                                  Add Expense
-                                </Text>
-                              </TouchableOpacity>
-                            )}
                           </View>
                         </View>
                       </>
@@ -535,7 +535,6 @@ const Dashboard = ({navigation}) => {
             </TouchableWithoutFeedback>
           </Modal>
 
-          {/* Trip Start Modal */}
           <Modal
             animationType="slide"
             transparent={false}
@@ -547,13 +546,12 @@ const Dashboard = ({navigation}) => {
                 route={{params: {trip: tripToStart}}}
                 onClose={() => {
                   setShowTripStartModal(false);
-                  GetTrip(DriverId);
+                  GetTrip(DriverId, statusFilter);
                 }}
               />
             )}
           </Modal>
 
-          {/* Trip Stop Modal */}
           <Modal
             animationType="slide"
             transparent={false}
@@ -570,34 +568,29 @@ const Dashboard = ({navigation}) => {
                 }}
                 onClose={() => {
                   setShowTripStopModal(false);
-                  GetTrip(DriverId);
+                  GetTrip(DriverId, statusFilter);
                 }}
               />
             )}
           </Modal>
 
-          {/* Add Expense Modal */}
-          <Modal
-            animationType="slide"
-            transparent={false}
-            visible={showAddExpenseModal}
-            onRequestClose={() => setShowAddExpenseModal(false)}>
-            {/* {tripForExpense && (
-              <AddExpense
-                navigation={navigation}
-                route={{
-                  params: {
-                    tripId: tripForExpense.trip_assignment_id,
-                    trip: tripForExpense,
-                  },
-                }}
-                onClose={() => {
-                  setShowAddExpenseModal(false);
-                  GetTrip(DriverId);
-                }}
-              />
-            )} */}
-          </Modal>
+<Modal
+  animationType="slide"
+  transparent={false}
+  visible={showAddExpenseModal}
+  onRequestClose={() => setShowAddExpenseModal(false)}>
+  {tripForExpense && (
+    <TripExpenses
+      navigation={navigation}
+      onClose={() => {
+        setShowAddExpenseModal(false);
+        GetTrip(DriverId, statusFilter); // Refresh trips data when closing
+      }}
+      // Pass the specific trip data if needed by TripExpenses component
+      tripData={tripForExpense}
+    />
+  )}
+</Modal>
         </KeyboardAvoidingView>
       </SafeAreaView>
       <Loader visible={pageLoad} />
