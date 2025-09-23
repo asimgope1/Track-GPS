@@ -39,6 +39,7 @@ import {encode, decode} from 'base-64';
 import FastImage from 'react-native-fast-image';
 import Toast from 'react-native-toast-message';
 import NetInfo from '@react-native-community/netinfo';
+import PasswordInput from './PasswordInput';
 const Login = ({navigation, route}) => {
   const [loader, setLoader] = useState(false);
   const [email, setEmail] = useState('');
@@ -263,21 +264,9 @@ const Login = ({navigation, route}) => {
                 />
 
                 {/* Password Input */}
-                <TextInput
-                  label="Password"
-                  style={{
-                    width: WIDTH * 0.8,
-                    marginTop: HEIGHT * 0.02,
-                    backgroundColor: 'white',
-                  }}
-                  mode="outlined"
-                  outlineColor={GREEN}
-                  activeOutlineColor={GREEN}
-                  placeholder="Password"
-                  placeholderTextColor={GRAY}
-                  value={password}
-                  onChangeText={text => setPassword(text)}
-                />
+    {/* Password Input */}
+<PasswordInput password={password} setPassword={setPassword} />
+
 
                 {/* Remember Me Switch */}
                 <View

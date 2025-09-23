@@ -21,7 +21,7 @@ import { GETNETWORK } from '../../utils/Network';
 import { getObjByKey } from '../../utils/Storage';
 import { Calendar } from 'react-native-calendars';
 
-const TripExpenses = ({navigation}) => {
+const TripExpenses = ({navigation,onClose}) => {
   const [trips, setTrips] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +60,22 @@ const TripExpenses = ({navigation}) => {
     } catch (error) {
       console.error('Error picking file:', error);
       Alert.alert('Error', 'Failed to select file. Please try again.');
+    }
+  };
+
+  
+  // Safe menu press handler
+  const handleMenuPress = () => {
+    if (onClose) {
+      // If onClose exists, we're in modal mode - close modal
+      onClose();
+    } else if (navigation?.openDrawer) {
+      // If navigation exists and has openDrawer, we're in page mode
+      navigation.openDrawer();
+    } else {
+      // Fallback - just close or handle appropriately
+      console.warn('Navigation not available');
+      if (onClose) onClose();
     }
   };
 
@@ -253,10 +269,7 @@ const TripExpenses = ({navigation}) => {
   return (
     <>
       <StatusBar backgroundColor={'#0284c7'} barStyle="light-content" />
-      <Header
-        title="Trip Expenses"
-        onMenuPress={() => navigation.openDrawer()}
-      />
+      <Header title="Trip Expenses" onMenuPress={handleMenuPress} />
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Trip Expenses Overview</Text>
 

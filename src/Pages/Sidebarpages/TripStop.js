@@ -26,7 +26,7 @@ import {getObjByKey, storeObjByKey} from '../../utils/Storage';
 import { Icon } from '@rneui/themed';
 import { pick } from '@react-native-documents/picker';
 
-const TripStop = ({navigation, route}) => {
+const TripStop = ({navigation, route,onClose}) => {
   // Form state
   const [startDatetime, setStartDatetime] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
@@ -220,6 +220,20 @@ const TripStop = ({navigation, route}) => {
     }
   };
 
+    const handleMenuPress = () => {
+    if (onClose) {
+      // If onClose exists, we're in modal mode - close modal
+      onClose();
+    } else if (navigation?.openDrawer) {
+      // If navigation exists and has openDrawer, we're in page mode
+      navigation.openDrawer();
+    } else {
+      // Fallback - just close or handle appropriately
+      console.warn('Navigation not available');
+      if (onClose) onClose();
+    }
+  };
+
   const handleStatusSelect = useCallback(
     (itemId, value) => {
       const selectedStatus = statusOptions.find(
@@ -403,7 +417,7 @@ const handleSubmit = async () => {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}>
-      <Header title="Trip Stop" onMenuPress={() => navigation.openDrawer()} />
+<Header title="Trip Stop" onMenuPress={handleMenuPress} />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Date & Time Picker */}
         <View style={styles.inputItem}>

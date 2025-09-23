@@ -552,27 +552,27 @@ const Dashboard = ({navigation}) => {
             )}
           </Modal>
 
-          <Modal
-            animationType="slide"
-            transparent={false}
-            visible={showTripStopModal}
-            onRequestClose={() => setShowTripStopModal(false)}>
-            {tripToStop && (
-              <TripStop
-                navigation={navigation}
-                route={{
-                  params: {
-                    tripId: tripToStop.trip_assignment_id,
-                    trip: tripToStop,
-                  },
-                }}
-                onClose={() => {
-                  setShowTripStopModal(false);
-                  GetTrip(DriverId, statusFilter);
-                }}
-              />
-            )}
-          </Modal>
+    <Modal
+  animationType="slide"
+  transparent={false}
+  visible={showTripStopModal}
+  onRequestClose={() => setShowTripStopModal(false)}>
+  {tripToStop && (
+    <TripStop
+      navigation={navigation} // Make sure this is defined
+      route={{
+        params: {
+          tripId: tripToStop.trip_assignment_id,
+          trip: tripToStop,
+        },
+      }}
+      onClose={() => {
+        setShowTripStopModal(false);
+        GetTrip(DriverId, statusFilter);
+      }}
+    />
+  )}
+</Modal>
 
 <Modal
   animationType="slide"
