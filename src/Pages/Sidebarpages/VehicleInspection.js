@@ -12,6 +12,7 @@ import {
   Platform,
   Dimensions,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Header from '../../components/Header';
@@ -20,6 +21,8 @@ import { BASE_URL } from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import { useFocusEffect } from '@react-navigation/native';
 import { Loader } from '../../components/Loader';
+import Toast from 'react-native-toast-message';
+import moment from 'moment';
 
 const DEFAULT_STATUS_OPTIONS = [
   {label: 'OK', value: 'OK', color: '#22c55e'},
@@ -38,40 +41,44 @@ const DEFAULT_INSPECTION_ITEMS = [
   {id: 8, name: 'Emergency Kit'},
 ];
 
-const VehicleInspection = ({
-  navigation,
-
-}) => {
+const VehicleInspection = ({ navigation }) => {
   const [inspectorName, setInspectorName] = useState('');
   const [comments, setComments] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
   const [inspectionResults, setInspectionResults] = useState({});
   const [selectedStatusDetails, setSelectedStatusDetails] = useState({});
-    const [statusOptions, setStatusOptions] = useState(DEFAULT_STATUS_OPTIONS);
-    const [inspectionItems, setInspectionItems] = useState(
-      DEFAULT_INSPECTION_ITEMS,
-    );
-  const [loading,SetLoading]=useState(false)
-
+  const [statusOptions, setStatusOptions] = useState(DEFAULT_STATUS_OPTIONS);
+  const [inspectionItems, setInspectionItems] = useState(DEFAULT_INSPECTION_ITEMS);
+  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Vehicle Dropdown
   const [vehicleOpen, setVehicleOpen] = useState(false);
-  const [vehicleValue, setVehicleValue] = useState('');
-  const [vehicleItems, setVehicleItems] = useState([
-    {label: 'TRK-001', value: 'TRK-001'},
-    {label: 'TRK-002', value: 'TRK-002'},
-    {label: 'TRK-003', value: 'TRK-003'},
-    {label: 'TRK-004', value: 'TRK-004'},
-  ]);
+  const [vehicleValue, setVehicleValue] = useState(null);
+  const [vehicleItems, setVehicleItems] = useState([]);
 
   // Status dropdowns for each item
   const [openDropdowns, setOpenDropdowns] = useState({});
-  const zIndexCounter = useRef(1000); // Base z-index counter
+  const zIndexCounter = useRef(1000);
+
+  // Toast configuration
+  const showToast = (type, title, message) => {
+    Toast.show({
+      type,
+      position: 'top',
+      text1: title,
+      text2: message,
+      visibilityTime: type === 'error' ? 4000 : 3000,
+      autoHide: true,
+      topOffset: StatusBar.currentHeight || 40,
+    });
+  };
 
   const handleDayPress = day => {
     setSelectedDate(day.dateString);
     setShowCalendar(false);
+    showToast('success', 'Date Selected', moment(day.dateString).format('DD MMM YYYY'));
   };
 
   const toggleDropdown = useCallback(itemId => {
@@ -88,7 +95,6 @@ const VehicleInspection = ({
     // Increment z-index when opening a dropdown
     zIndexCounter.current += 10;
   }, []);
-
 
   useEffect(() => {
     fetchChecklistAndStatus();
@@ -124,12 +130,12 @@ const VehicleInspection = ({
 
       setStatusOptions(statusOptionMapped);
       setInspectionItems(inspectionMapped);
+      showToast('success', 'Checklist Loaded', `${inspectionMapped.length} items loaded`);
     } catch (error) {
       console.error('Failed to fetch checklist/status', error);
+      showToast('error', 'Load Failed', 'Failed to fetch inspection checklist');
     }
   };
-
-
 
   const capitalize = str =>
     str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -142,140 +148,163 @@ const VehicleInspection = ({
     return '#94a3b8'; // default gray
   };
 
+  const handleStatusSelect = useCallback(
+    (itemId, value) => {
+      const selectedStatus = statusOptions.find(status => status.value === value);
 
-const handleStatusSelect = useCallback(
-  (itemId, value) => {
-    const selectedStatus = statusOptions.find(status => status.value === value);
+      setInspectionResults(prev => ({
+        ...prev,
+        [itemId]: value,
+      }));
 
-    setInspectionResults(prev => ({
-      ...prev,
-      [itemId]: value,
-    }));
+      setSelectedStatusDetails(prev => ({
+        ...prev,
+        [itemId]: selectedStatus || {},
+      }));
 
-    setSelectedStatusDetails(prev => ({
-      ...prev,
-      [itemId]: selectedStatus || {},
-    }));
+      setOpenDropdowns(prev => ({
+        ...prev,
+        [itemId]: false,
+      }));
 
-    setOpenDropdowns(prev => ({
-      ...prev,
-      [itemId]: false,
-    }));
-  },
-  [statusOptions],
-);
+      showToast('success', 'Status Updated', `${selectedStatus?.label} selected`);
+    },
+    [statusOptions],
+  );
 
-useFocusEffect(
-  useCallback(() => {
-    // Reset z-index counter when component is focused
-    zIndexCounter.current = 1000;
-
-    // fetch vehicle data when component is focused
-    GetVehicle();
-
-    // reset openDropdowns and states
-    setOpenDropdowns({});
-    setComments('');
+  const resetForm = () => {
     setSelectedDate('');
     setVehicleValue(null);
     setInspectorName('');
+    setComments('');
     setInspectionResults({});
     setSelectedStatusDetails({});
+    setOpenDropdowns({});
     setVehicleOpen(false);
-    setVehicleItems([]);
-
-
-
-    return () => {
-
-      // Reset z-index counter when component is unfocused
-      zIndexCounter.current = 1000;
-    };
-  }, []),
-);
-
-
-
-const GetVehicle = async () => {
-  SetLoading(true)
-  const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
-
-  try {
-    const response = await GETNETWORK(Url, true);
-    console.log('Vehicle Data:', response.data);
-
-    const vehicles = response.data?.things || [];
-
-    const mappedItems = vehicles.map(item => ({
-      label: item.thing_name,
-      value: item.thing_id,
-    }));
-SetLoading(false)
-    setVehicleItems(mappedItems);
-  } catch (error) {
-    console.error('Error fetching vehicles:', error);
-    alert('Failed to fetch vehicle data. Please try again.');
-    SetLoading(false)
-  }
-};
-
-
-
-
-const handleSubmit = async () => {
-  const payload = {
-    thing_id: vehicleValue, // vehicle ID
-    creation_date: selectedDate, // format: 'YYYY-MM-DD'
-    inpector_name: inspectorName,
-    comments: comments?.trim() || '',
-    details: Object.entries(inspectionResults).map(
-      ([checklistId, selectedValue]) => ({
-        checklist_master_id: parseInt(checklistId),
-        selected_value: selectedValue,
-      }),
-    ),
+    showToast('info', 'Form Reset', 'All fields have been cleared');
   };
 
-  console.log(
-    'Inspection Checklist Payload:',
-    JSON.stringify(payload, null, 2),
+  useFocusEffect(
+    useCallback(() => {
+      // Reset z-index counter when component is focused
+      zIndexCounter.current = 1000;
+
+      // fetch vehicle data when component is focused
+      GetVehicle();
+
+      // reset form
+      resetForm();
+
+      return () => {
+        // Reset z-index counter when component is unfocused
+        zIndexCounter.current = 1000;
+      };
+    }, []),
   );
 
-  SetLoading(true)
+  const GetVehicle = async () => {
+    if (loading) return;
+    
+    setLoading(true);
+    const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
 
-  try {
-    const response = await POSTNETWORK(
-      `${BASE_URL}maintenance/inspection_checklist/`,
-      payload,
-      true, // include auth token
-    );
+    try {
+      const response = await GETNETWORK(Url, true);
+      console.log('Vehicle Data:', response.data);
 
-    console.log('Inspection submission response:', response);
-    SetLoading(false)
+      const vehicles = response.data?.things || [];
 
-    if (response && response.success !== false) {
-      alert('✅ Inspection submitted successfully.');
+      const mappedItems = vehicles.map(item => ({
+        label: item.thing_name,
+        value: item.thing_id,
+      }));
 
-      // Clear all states after submission
-      setSelectedDate('');
-      setVehicleValue(null);
-      setInspectorName('');
-      setComments('');
-      setInspectionResults({});
-      setSelectedStatusDetails({});
-      setOpenDropdowns({});
-    } else {
-      alert(response?.message || '⚠️ Failed to submit inspection.');
-      SetLoading(false)
+      setVehicleItems(mappedItems);
+      showToast('success', 'Vehicles Loaded', `${vehicles.length} vehicles loaded`);
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
+      showToast('error', 'Load Failed', 'Failed to fetch vehicle data');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Error submitting inspection:', error);
-    SetLoading(false)
-    alert('❌ Error submitting inspection. Please try again.');
-  }
-};
+  };
 
+  const validateForm = () => {
+    if (!selectedDate) {
+      showToast('error', 'Validation Error', 'Please select inspection date');
+      return false;
+    }
+    
+    if (!vehicleValue) {
+      showToast('error', 'Validation Error', 'Please select a vehicle');
+      return false;
+    }
+    
+    if (!inspectorName?.trim()) {
+      showToast('error', 'Validation Error', 'Please enter inspector name');
+      return false;
+    }
 
+    // Check if all inspection items have status selected
+    const incompleteItems = inspectionItems.filter(item => !inspectionResults[item.id]);
+    if (incompleteItems.length > 0) {
+      showToast('error', 'Validation Error', `Please select status for all ${incompleteItems.length} items`);
+      return false;
+    }
+
+    // Check if selected date is not in the future
+    if (moment(selectedDate).isAfter(moment(), 'day')) {
+      showToast('error', 'Validation Error', 'Cannot schedule inspection for future dates');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    setLoading(true);
+
+    const payload = {
+      thing_id: vehicleValue,
+      creation_date: selectedDate,
+      inpector_name: inspectorName.trim(),
+      comments: comments?.trim() || '',
+      details: Object.entries(inspectionResults).map(
+        ([checklistId, selectedValue]) => ({
+          checklist_master_id: parseInt(checklistId),
+          selected_value: selectedValue,
+        }),
+      ),
+    };
+
+    console.log('Inspection Checklist Payload:', JSON.stringify(payload, null, 2));
+
+    try {
+      const response = await POSTNETWORK(
+        `${BASE_URL}maintenance/inspection_checklist/`,
+        payload,
+        true,
+      );
+
+      console.log('Inspection submission response:', response);
+
+      if (response && response.success !== false) {
+        showToast('success', 'Success', 'Vehicle inspection submitted successfully!');
+        resetForm();
+      } else {
+        throw new Error(response?.message || 'Failed to submit inspection');
+      }
+    } catch (error) {
+      console.error('Error submitting inspection:', error);
+      showToast('error', 'Submission Failed', error.message || 'Failed to submit inspection');
+    } finally {
+      setIsSubmitting(false);
+      setLoading(false);
+    }
+  };
 
   const renderItem = ({item}) => {
     const selectedStatus = inspectionResults[item.id];
@@ -284,13 +313,6 @@ const handleSubmit = async () => {
     );
     const isOpen = openDropdowns[item.id] || false;
     const zIndex = isOpen ? zIndexCounter.current : 1;
-
-    console.log(
-      'selectedStatusObj:',
-      selectedStatusObj,
-      'selectedStatus',
-      selectedStatus,
-    );
 
     return (
       <View style={[styles.tableRow, {zIndex}]}>
@@ -349,6 +371,7 @@ const handleSubmit = async () => {
               fontWeight: '600',
             })}
             searchable={true}
+            searchablePlaceholder="Search status..."
             showTickIcon={false}
             listMode="MODAL"
             modalProps={{
@@ -365,11 +388,19 @@ const handleSubmit = async () => {
               />
             )}
             zIndex={isOpen ? zIndex + 3 : 1}
+            scrollViewProps={{
+              nestedScrollEnabled: true,
+            }}
+            maxHeight={200}
+            autoScroll={true}
           />
         </View>
       </View>
     );
   };
+
+  const completedItemsCount = Object.keys(inspectionResults).length;
+  const totalItemsCount = inspectionItems.length;
 
   return (
     <>
@@ -380,19 +411,42 @@ const handleSubmit = async () => {
       />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+        >
+          {/* Progress Indicator */}
+          <View style={styles.progressContainer}>
+            <Text style={styles.progressText}>
+              Inspection Progress: {completedItemsCount}/{totalItemsCount} items
+            </Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  {width: `${(completedItemsCount / totalItemsCount) * 100}%`}
+                ]} 
+              />
+            </View>
+          </View>
+
           {/* Input Section */}
           <View style={styles.inputRow}>
             <View style={styles.inputItem}>
-              <Text style={styles.label}>Date</Text>
+              <Text style={styles.label}>Date *</Text>
               <TouchableOpacity
                 style={styles.dateButton}
                 onPress={() => setShowCalendar(true)}>
-                <Text style={styles.dateButtonText}>
-                  {selectedDate || 'Select Date'}
+                <Text style={[
+                  styles.dateButtonText,
+                  !selectedDate && styles.placeholderText
+                ]}>
+                  {selectedDate ? moment(selectedDate).format('DD MMM YYYY') : 'Select Date'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -402,7 +456,7 @@ const handleSubmit = async () => {
                 styles.inputItem,
                 {zIndex: vehicleOpen ? zIndexCounter.current + 100 : 1},
               ]}>
-              <Text style={styles.label}>Vehicle</Text>
+              <Text style={styles.label}>Vehicle *</Text>
               <DropDownPicker
                 open={vehicleOpen}
                 value={vehicleValue}
@@ -419,6 +473,7 @@ const handleSubmit = async () => {
                 setItems={setVehicleItems}
                 placeholder="Select Vehicle"
                 searchable={true}
+                searchablePlaceholder="Search vehicle..."
                 style={styles.dropdown}
                 dropDownContainerStyle={[
                   styles.dropdownContainer,
@@ -433,34 +488,46 @@ const handleSubmit = async () => {
                 modalTitle="Select Vehicle"
                 modalTitleStyle={styles.modalTitle}
                 zIndex={vehicleOpen ? zIndexCounter.current + 102 : 1}
+                scrollViewProps={{
+                  nestedScrollEnabled: true,
+                }}
+                maxHeight={200}
+                autoScroll={true}
               />
             </View>
           </View>
 
           <View style={styles.inputItem}>
-            <Text style={styles.label}>Inspector</Text>
+            <Text style={styles.label}>Inspector Name *</Text>
             <TextInput
               style={styles.input}
               placeholderTextColor={'#9ca3af'}
-              placeholder="Inspector Name"
+              placeholder="Enter inspector name"
               value={inspectorName}
               onChangeText={setInspectorName}
+              maxLength={100}
             />
           </View>
 
           {/* comment input */}
-          <View style={{...styles.inputItem}}>
+          <View style={styles.inputItem}>
             <Text style={styles.label}>Comments</Text>
-            <TextInput
-              style={styles.input}
-              placeholderTextColor={'#9ca3af'}
-              placeholder="Enter any comments"
-              multiline={true}
-              numberOfLines={4}
-              textAlignVertical="top"
-              value={comments}
-              onChangeText={setComments}
-            />
+            <View style={styles.commentsContainer}>
+              <TextInput
+                style={[styles.input, styles.multilineInput]}
+                placeholderTextColor={'#9ca3af'}
+                placeholder="Enter any comments (optional)"
+                multiline={true}
+                numberOfLines={4}
+                textAlignVertical="top"
+                value={comments}
+                onChangeText={setComments}
+                maxLength={500}
+              />
+              <Text style={styles.charCount}>
+                {comments.length}/500
+              </Text>
+            </View>
           </View>
 
           {/* Calendar Modal */}
@@ -470,27 +537,52 @@ const handleSubmit = async () => {
             animationType="slide">
             <View style={styles.modalContainer}>
               <View style={styles.calendarContainer}>
+                <Text style={styles.calendarTitle}>Select Inspection Date</Text>
                 <Calendar
                   onDayPress={handleDayPress}
                   markedDates={{
-                    [selectedDate]: {selected: true, selectedColor: '#0284c7'},
+                    [selectedDate]: {
+                      selected: true, 
+                      selectedColor: '#0284c7',
+                      selectedTextColor: '#fff'
+                    },
                   }}
+                  maxDate={moment().format('YYYY-MM-DD')}
                   theme={{
                     todayTextColor: '#0284c7',
                     arrowColor: '#0284c7',
+                    selectedDayBackgroundColor: '#0284c7',
+                    selectedDayTextColor: '#fff',
                   }}
                 />
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setShowCalendar(false)}>
-                  <Text style={styles.closeButtonText}>Close</Text>
-                </TouchableOpacity>
+                <View style={styles.calendarButtons}>
+                  <TouchableOpacity
+                    style={[styles.calendarButton, styles.closeCalendarButton]}
+                    onPress={() => {
+                      setShowCalendar(false);
+                      showToast('info', 'Calendar Closed', 'Date selection cancelled');
+                    }}
+                  >
+                    <Text style={styles.closeCalendarButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.calendarButton, styles.confirmCalendarButton]}
+                    onPress={() => setShowCalendar(false)}
+                  >
+                    <Text style={styles.confirmCalendarButtonText}>Confirm</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </Modal>
 
           {/* Checklist Section */}
-          <Text style={styles.sectionHeader}>Checklist</Text>
+          <View style={styles.sectionHeaderContainer}>
+            <Text style={styles.sectionHeader}>Inspection Checklist</Text>
+            <Text style={styles.sectionSubHeader}>
+              {completedItemsCount}/{totalItemsCount} completed
+            </Text>
+          </View>
 
           <View style={styles.tableContainer}>
             <FlatList
@@ -501,12 +593,80 @@ const handleSubmit = async () => {
             />
           </View>
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Submit Inspection</Text>
-          </TouchableOpacity>
+          {/* Status Legend */}
+          <View style={styles.legendContainer}>
+            <Text style={styles.legendTitle}>Status Legend:</Text>
+            {statusOptions.map(status => (
+              <View key={status.value} style={styles.legendItem}>
+                <View 
+                  style={[
+                    styles.legendCircle, 
+                    {backgroundColor: status.color}
+                  ]} 
+                />
+                <Text style={styles.legendLabel}>{status.label}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={[styles.button, styles.resetButton]}
+              onPress={resetForm}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.resetButtonText}>Reset</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[
+                styles.button, 
+                styles.submitButton, 
+                isSubmitting && styles.disabledButton
+              ]}
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.submitButtonText}>
+                  Submit Inspection ({completedItemsCount}/{totalItemsCount})
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Inspection Summary */}
+          {(selectedDate || vehicleValue || inspectorName) && (
+            <View style={styles.summaryContainer}>
+              <Text style={styles.summaryTitle}>Inspection Summary</Text>
+              {selectedDate && (
+                <Text style={styles.summaryText}>
+                  📅 Date: {moment(selectedDate).format('DD MMM YYYY')}
+                </Text>
+              )}
+              {vehicleValue && (
+                <Text style={styles.summaryText}>
+                  🚗 Vehicle: {vehicleItems.find(v => v.value === vehicleValue)?.label}
+                </Text>
+              )}
+              {inspectorName && (
+                <Text style={styles.summaryText}>
+                  👤 Inspector: {inspectorName}
+                </Text>
+              )}
+              <Text style={styles.summaryText}>
+                ✅ Completed: {completedItemsCount}/{totalItemsCount} items
+              </Text>
+            </View>
+          )}
         </ScrollView>
         <Loader visible={loading} />
       </KeyboardAvoidingView>
+
+      <Toast />
     </>
   );
 };
@@ -519,6 +679,31 @@ const styles = StyleSheet.create({
   scrollContainer: {
     padding: 16,
     paddingBottom: 30,
+  },
+  progressContainer: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#0284c7',
+  },
+  progressText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: '#e5e7eb',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#0284c7',
+    borderRadius: 3,
   },
   inputRow: {
     flexDirection: 'row',
@@ -539,21 +724,40 @@ const styles = StyleSheet.create({
   input: {
     color: '#111827',
     height: 45,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#d1d5db',
     borderRadius: 6,
     paddingHorizontal: 10,
     backgroundColor: '#fff',
+    fontSize: 14,
+  },
+  multilineInput: {
+    height: 100,
+    textAlignVertical: 'top',
+    paddingTop: 10,
+    paddingBottom: 25,
+  },
+  commentsContainer: {
+    position: 'relative',
+  },
+  charCount: {
+    position: 'absolute',
+    bottom: 8,
+    right: 12,
+    fontSize: 12,
+    color: '#6b7280',
   },
   dropdown: {
     backgroundColor: '#fff',
     borderColor: '#d1d5db',
+    borderWidth: 1.5,
     borderRadius: 6,
     height: 45,
   },
   dropdownContainer: {
     backgroundColor: '#fff',
     borderColor: '#d1d5db',
+    borderWidth: 1.5,
     marginTop: 2,
   },
   dropdownText: {
@@ -573,26 +777,41 @@ const styles = StyleSheet.create({
   dateButton: {
     height: 45,
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#d1d5db',
     borderRadius: 6,
     backgroundColor: '#fff',
+    paddingHorizontal: 10,
   },
   dateButtonText: {
     color: '#374151',
     textAlign: 'center',
+    fontSize: 14,
+  },
+  placeholderText: {
+    color: '#9ca3af',
+  },
+  sectionHeaderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    marginTop: 10,
   },
   sectionHeader: {
     fontSize: 18,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 12,
-    marginTop: 10,
+  },
+  sectionSubHeader: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '600',
   },
   tableContainer: {
     backgroundColor: '#fff',
     borderRadius: 6,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e5e7eb',
     paddingBottom: 10,
     marginBottom: 10,
@@ -612,6 +831,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 14,
     color: '#111827',
+    fontWeight: '500',
   },
   selectedStatusText: {
     marginTop: 4,
@@ -624,15 +844,11 @@ const styles = StyleSheet.create({
   statusDropdown: {
     backgroundColor: '#fff',
     borderColor: '#d1d5db',
+    borderWidth: 1.5,
     borderRadius: 6,
     height: 40,
     minHeight: 40,
     paddingHorizontal: 10,
-  },
-  statusDropdownList: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
-    marginTop: 2,
   },
   statusDropdownText: {
     fontSize: 13,
@@ -654,6 +870,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     gap: 16,
     flexWrap: 'wrap',
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+  },
+  legendTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginRight: 8,
   },
   legendItem: {
     flexDirection: 'row',
@@ -677,32 +904,99 @@ const styles = StyleSheet.create({
   calendarContainer: {
     backgroundColor: '#fff',
     margin: 20,
-    borderRadius: 10,
-    padding: 10,
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  closeButton: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: '#0284c7',
-    borderRadius: 5,
+  calendarTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#0284c7',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  calendarButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  calendarButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
   },
-  closeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  closeCalendarButton: {
+    backgroundColor: '#6b7280',
   },
-  submitButton: {
+  confirmCalendarButton: {
     backgroundColor: '#0284c7',
+  },
+  closeCalendarButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  confirmCalendarButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  button: {
+    flex: 1,
     paddingVertical: 14,
     borderRadius: 6,
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 10,
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  resetButton: {
+    backgroundColor: '#6b7280',
+  },
+  submitButton: {
+    backgroundColor: '#0284c7',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  resetButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   submitButtonText: {
     color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  summaryContainer: {
+    backgroundColor: '#f0f9ff',
+    borderLeftWidth: 4,
+    borderLeftColor: '#0284c7',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  summaryTitle: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#0284c7',
+    marginBottom: 8,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: '#374151',
+    marginBottom: 4,
   },
 });
 

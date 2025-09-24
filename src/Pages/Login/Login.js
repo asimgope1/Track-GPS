@@ -133,10 +133,32 @@ const Login = ({navigation, route}) => {
     return () => unsubscribe(); // Cleanup on component unmount
   }, []);
 
-  const handleLogin = () => {
-    console.log('Credentials:', email, password);
-    setPageLoad(true);
+const handleLogin = async () => {
+  // Basic validation
+  if (!email.trim() || !password.trim()) {
+    Alert.alert(
+      'Validation Error',
+      'Please enter both email and password.',
+      [{ text: 'OK' }]
+    );
+    return;
+  }
 
+  // Email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    Alert.alert(
+      'Validation Error',
+      'Please enter a valid email address.',
+      [{ text: 'OK' }]
+    );
+    return;
+  }
+
+  console.log('Credentials:', email, password);
+  setPageLoad(true);
+
+  try {
     // Encode password and email
     const pass = encode(password);
     const obj = encode(`${email}:${pass}`);
@@ -149,33 +171,68 @@ const Login = ({navigation, route}) => {
       method: 'POST',
       headers: myHeaders,
       redirect: 'follow',
+      timeout: 30000, // 30 seconds timeout
     };
 
-    fetch(`${BASE_URL}user/auth/`, requestOptions)
-      .then(response => response.json())
-      .then(result => {
-        if (result.status === 'success') {
-        console.log('result at login', result);
-        storeObjByKey('loginResponse', result);
-        Dispatch(checkuserToken());
-        setPageLoad(false);
-        console.log(result);
-        }
-        else {
-          setPageLoad(false);
-  Alert.alert(
-            'Login Failed',
-            result.message || 'An error occurred during login. Please try again.',
+    const response = await fetch(`${BASE_URL}user/auth/`, requestOptions);
+    
+    // Check if response is OK
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-
-  )
-        }
-      })
-      .catch(error => {
-        setPageLoad(false);
-        console.error(error);
-      });
-  };
+    const result = await response.json();
+    
+    if (result.status === 'success') {
+      console.log('result at login', result);
+      
+      // Success Alert
+      Alert.alert(
+        'Login Successful',
+        'You have successfully logged in!',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              storeObjByKey('loginResponse', result);
+              Dispatch(checkuserToken());
+              setPageLoad(false);
+            }
+          }
+        ]
+      );
+      
+    } else {
+      // API returned error
+      setPageLoad(false);
+      Alert.alert(
+        'Login Failed',
+        result.message || 'An error occurred during login. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  } catch (error) {
+    setPageLoad(false);
+    console.error('Login error:', error);
+    
+    let errorMessage = 'An unexpected error occurred. Please try again.';
+    
+    // Handle specific error types
+    if (error.name === 'TypeError' && error.message.includes('Network request failed')) {
+      errorMessage = 'Network error. Please check your internet connection.';
+    } else if (error.name === 'TimeoutError') {
+      errorMessage = 'Request timeout. Please try again.';
+    } else if (error.message.includes('HTTP error')) {
+      errorMessage = `Server error (${error.message.split('status: ')[1]}). Please try again later.`;
+    }
+    
+    Alert.alert(
+      'Login Error',
+      errorMessage,
+      [{ text: 'OK' }]
+    );
+  }
+};
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {

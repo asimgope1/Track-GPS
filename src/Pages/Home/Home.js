@@ -40,10 +40,6 @@ import {
   USAGE,
   ZONE,
 } from '../../constants/imagepath';
-// import {RFValue} from 'react-native-responsive-fontsize';
-import Header from '../../components/Header';
-import {BRAND} from '../../constants/color';
-import {styles} from './HomeStyles';
 import {Image} from 'react-native';
 import HistoryModal from '../History/HistoryModal';
 import Track from '../Track/Track';
@@ -52,6 +48,9 @@ import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getObjByKey } from '../../utils/Storage';
 import Dashboard from './DriverDash';
+import Toast from 'react-native-toast-message';
+import { styles } from './HomeStyles';
+import Header from '../../components/Header';
 
 const WHITE = '#FFFFFF';
 const data1 = [
@@ -67,6 +66,9 @@ const driverData = [
   {name: 'Rihana', alertCount: 9, lastAlert: '2025-05-04 3:45 PM'},
   {name: 'Dibya', alertCount: 6, lastAlert: '2025-05-03 6:20 AM'},
 ];
+
+// ... (FleetCard component remains the same)
+
 
 const FleetCard = ({
   title,
@@ -851,31 +853,25 @@ const FleetSummaryCard = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  // const [selectedValue, setSelectedValue] = useState(null);
   const [viewHistory, setViewHistory] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [Location, setLocation] = useState([]);
   const [projectedTrackData, setProjectedTrackData] = useState(null);
   const [parked, setParked] = useState(false);
 
-
   const handlePress = label => {
     setSelectedStatus(label);
     if (label === 'Total') {
-      // Show all data when 'Total' is clicked
-      // setSelectedValue(null); // Clear selected item if any
-      setLocation([]); // Clear location if any
-      setModalVisible(true); // Open the modal
+      setLocation([]);
+      setModalVisible(true);
     } else {
       setModalVisible(true);
     }
   };
 
-  // Modify `getFilteredItems` function to show all data for "Total"
   const getFilteredItems = () => {
     const now = new Date();
     if (selectedStatus === 'Total') {
-      // Return all items when Total is selected
       return thingData;
     } else {
       return thingData.filter(item => {
@@ -895,12 +891,18 @@ const FleetSummaryCard = ({
     console.log('itrmee', item);
     if (selectedStatus !== 'Total') {
       fetchCardData(item.thing_id);
-      // setSelectedValue(selectedValue);
-      setLocation(item?.derived_live_config?.location || []); // assumes item.Location = [lat, long]
+      setLocation(item?.derived_live_config?.location || []);
       setModalVisible(false);
       setShowModal(true);
-    } else {
-      // Do nothing if 'Total' is clicked, because we want to show all items in the modal
+      
+      // Show success toast when card is clicked
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: 'Vehicle Selected',
+        text2: `${item.thing_name} details loaded successfully`,
+        visibilityTime: 3000,
+      });
     }
   };
 
@@ -940,15 +942,34 @@ const FleetSummaryCard = ({
     console.log('Date range selected:', startDate, endDate);
   };
 
-  console.log('selectedValueselectedValue', selectedValue);
+  const handleTrackPress = () => {
+    if (Array.isArray(Location) && Location[0] !== undefined && Location[1] !== undefined) {
+      setShowMap(true);
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: 'Tracking Started',
+        text2: 'Vehicle tracking initialized',
+        visibilityTime: 3000,
+      });
+    } else {
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Tracking Failed',
+        text2: 'Location data is not available',
+        visibilityTime: 4000,
+      });
+    }
+  };
 
   return (
     <>
       <View style={styles.summaryCard}>
         <View
           style={{
-            backgroundColor: '#F5F5F5', // Light background
-            color: '#ffffff', // White text
+            backgroundColor: '#F5F5F5',
+            color: '#ffffff',
             fontWeight: 'bold',
             paddingVertical: 8,
             textAlign: 'center',
@@ -1112,20 +1133,22 @@ const FleetSummaryCard = ({
         <View style={{flex: 1}}>
           <Track
             showTrack={showMap}
-            projectedTrack={[projectedTrackData]} // if needed
+            projectedTrack={[projectedTrackData]}
             latitude={Location[0]}
             longitude={Location[1]}
-            onClose={() => setShowMap(false)}
+            onClose={() => {
+              setShowMap(false);
+              Toast.show({
+                type: 'info',
+                position: 'top',
+                text1: 'Tracking Stopped',
+                text2: 'Vehicle tracking has been closed',
+                visibilityTime: 3000,
+              });
+            }}
           />
         </View>
-      ) : (
-        showMap &&
-        Alert.alert(
-          'Invalid Location',
-          'Location data is not available. Cannot track.',
-          [{text: 'OK'}],
-        )
-      )}
+      ) : null}
 
       {/* Detail Modal */}
       <Modal
@@ -1164,7 +1187,16 @@ const FleetSummaryCard = ({
                 Vehicle Details
               </Text>
               <View style={{flexDirection: 'row'}}>
-                <TouchableOpacity onPress={() => setViewHistory(true)}>
+                <TouchableOpacity onPress={() => {
+                  setViewHistory(true);
+                  Toast.show({
+                    type: 'success',
+                    position: 'top',
+                    text1: 'History View',
+                    text2: 'Opening vehicle history',
+                    visibilityTime: 3000,
+                  });
+                }}>
                   <Text
                     style={{
                       marginHorizontal: 5,
@@ -1174,11 +1206,7 @@ const FleetSummaryCard = ({
                     History
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={
-                    () => setShowMap(true)
-                    // console.log('track', Location)
-                  }>
+                <TouchableOpacity onPress={handleTrackPress}>
                   <Text
                     style={{
                       marginHorizontal: 5,
@@ -1188,7 +1216,16 @@ const FleetSummaryCard = ({
                     Track
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setShowModal(false)}>
+                <TouchableOpacity onPress={() => {
+                  setShowModal(false);
+                  Toast.show({
+                    type: 'info',
+                    position: 'top',
+                    text1: 'Modal Closed',
+                    text2: 'Vehicle details closed',
+                    visibilityTime: 2000,
+                  });
+                }}>
                   <Text
                     style={{
                       marginHorizontal: 5,
@@ -1282,13 +1319,21 @@ const FleetSummaryCard = ({
         </View>
       </Modal>
 
-
       <HistoryModal
         visible={viewHistory}
-        onClose={() => setViewHistory(false)}
+        onClose={() => {
+          setViewHistory(false);
+          Toast.show({
+            type: 'info',
+            position: 'top',
+            text1: 'History Closed',
+            text2: 'Vehicle history view closed',
+            visibilityTime: 2000,
+          });
+        }}
         onDateSelect={handleDateSelect}
         vehicleData={thingData}
-        log={[selectedValue]} // Replace with actual log data if needed
+        log={[selectedValue]}
       />
     </>
   );
@@ -1307,9 +1352,17 @@ const FleetDashboard = navigation => {
   const [userType, setUserType] = useState(null);
   const [tripNameItems, setTripNameItems] = useState([]);
 
-
-  // const [showMap, setShowMap] = useState(false);
-  // const [viewHistory, setViewHistory] = useState(false);
+  const showToast = (type, title, message) => {
+    Toast.show({
+      type: type,
+      position: 'top',
+      text1: title,
+      text2: message,
+      visibilityTime: type === 'error' ? 5000 : 3000,
+      autoHide: true,
+      topOffset: StatusBar.currentHeight || 40,
+    });
+  };
 
   const onDateSelect = (type, date, title) => {
     setDateRanges(prev => ({
@@ -1339,10 +1392,8 @@ const FleetDashboard = navigation => {
     const type = filterStates.openModalFor;
     onDateSelect(type, day.dateString, title);
 
-    // Close the modal
     setFilterStates(prev => ({
       ...prev,
-      // isFilterVisible: '',
       openModalFor: '',
     }));
   };
@@ -1351,7 +1402,6 @@ const FleetDashboard = navigation => {
     setFilterStates(prev => ({
       ...prev,
       openModalFor: type,
-      // isFilterVisible: title,
     }));
   };
 
@@ -1367,7 +1417,7 @@ const FleetDashboard = navigation => {
 
         const fullThingData = response.data.things.map(item => ({
           ...item,
-          updated_on: new Date(item.updated_on), // parse for comparison
+          updated_on: new Date(item.updated_on),
         }));
         console.log('Full Things Data:-------', fullThingData);
 
@@ -1379,7 +1429,7 @@ const FleetDashboard = navigation => {
         };
 
         fullThingData.forEach(item => {
-          const timeDiff = (currentTime - item.updated_on) / (1000 * 60); // in minutes
+          const timeDiff = (currentTime - item.updated_on) / (1000 * 60);
           if (timeDiff <= 2) statusCounts.Running += 1;
           else if (timeDiff <= 5) statusCounts.Stopped += 1;
           else statusCounts.Unreachable += 1;
@@ -1405,12 +1455,18 @@ const FleetDashboard = navigation => {
         ];
 
         setFleetData(transformedData);
-        setThingData(fullThingData); // 🔁 Save full object here
+        setThingData(fullThingData);
+        
+        // Show success toast
+        showToast('success', 'Data Loaded', 'Fleet data updated successfully');
+      } else {
+        showToast('error', 'Data Error', 'No vehicle data found');
       }
     } catch (error) {
       console.error('Fetch error:', error);
+      showToast('error', 'Network Error', 'Failed to load fleet data');
     } finally {
-      setPageLoad(false); // Hide loader at the end
+      setPageLoad(false);
     }
   }, []);
 
@@ -1428,15 +1484,18 @@ const FleetDashboard = navigation => {
           setFleetData(gpsList);
         }
 
-        // Find the selected data from thingData
         const data = thingData.find(item => item.thing_id === thingId);
         if (data) {
           setSelectedValue(data);
-          setShowModal(true); // Show vehicle modal
+          setShowModal(true);
           console.log('Selected Data:?????????????????????????', data);
+          showToast('success', 'Vehicle Loaded', `${data.thing_name} details loaded`);
+        } else {
+          showToast('error', 'Vehicle Error', 'Vehicle data not found');
         }
       } catch (error) {
         console.error('Fetch error:', error);
+        showToast('error', 'Load Error', 'Failed to load vehicle details');
       } finally {
         setPageLoad(false);
       }
@@ -1452,90 +1511,96 @@ const FleetDashboard = navigation => {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    showToast('info', 'Refreshing', 'Updating fleet data...');
     await fetchDerivedData();
     setRefreshing(false);
+    showToast('success', 'Refreshed', 'Fleet data updated');
   };
 
   const GetUserType = async () => {
-    const loginRes = await getObjByKey('loginResponse');
-    console.log('UserType', loginRes);
-    setUserType(loginRes?.data?.user_type);
+    try {
+      const loginRes = await getObjByKey('loginResponse');
+      console.log('UserType', loginRes);
+      setUserType(loginRes?.data?.user_type);
+      showToast('success', 'Session Loaded', 'User session initialized');
+    } catch (error) {
+      console.error('User type error:', error);
+      showToast('error', 'Session Error', 'Failed to load user session');
+    }
   };
 
   useEffect(() => {
     GetUserType();
   }, []);
 
-
-
   return (
     <Fragment>
       <StatusBar backgroundColor={'#0284c7'} barStyle="dark-content" />
       <SafeAreaView style={styles.safeareacontainer}>
-        <Header onMenuPress={()=>{
-          console.log('here i want drawer navigation open', navigation);
-          navigation.navigation.openDrawer();
-        }} title="Dashboard" />
+        <Header 
+          onMenuPress={() => {
+            console.log('here i want drawer navigation open', navigation);
+            navigation.navigation.openDrawer();
+            showToast('info', 'Navigation', 'Drawer opened');
+          }} 
+          title="Dashboard" 
+        />
 
         <KeyboardAvoidingView
           style={{flex: 1}}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      {userType === 'admin'|| userType === 'manager'?    <FlatList
-            ListHeaderComponent={
-              <FleetSummaryCard
-                statusMap={statusMap}
-                total={total}
-                thingData={thingData}
-                selectedValue={selectedValue}
-                // fetchCardData={(thingId) => {
-                //   const data = thingData.find(item => item.thing_id === thingId);
-                //   setSelectedValue(data);
-                //   setShowModal(true); // show vehicle modal
-                // }}
-                fetchCardData={fetchCardData}
-              />
-            }
-            data={fleetData}
-            renderItem={({item}) => (
-              <FleetCard
-                title={item.title}
-                icon={item.icon}
-                fromDate={dateRanges[item.title]?.from}
-                toDate={dateRanges[item.title]?.to}
-                selectedDateType={filterStates.openModalFor}
-                isFilterVisible={filterStates.isFilterVisible === item.title}
-                openCalendarFor={openCalendarFor}
-                toggleFilterModal={toggleFilterModal}
-                handleDateSelect={day => handleDateSelect(day, item.title)}
-                isFromModalVisible={
-                  filterStates.openModalFor === 'start' &&
-                  filterStates.isFilterVisible === item.title
-                }
-                isToModalVisible={
-                  filterStates.openModalFor === 'end' &&
-                  filterStates.isFilterVisible === item.title
-                }
-                setFromModalVisible={val =>
-                  openCalendarFor(val ? 'start' : '', item.title)
-                }
-                setToModalVisible={val =>
-                  openCalendarFor(val ? 'end' : '', item.title)
-                }
-              />
-            )}
-            keyExtractor={item => item.title}
-            contentContainerStyle={styles.listContainer}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-          />:<>
-{/* for driver trip card and status card */}
-          <Dashboard/>
-
-          </>}
+          {userType === 'admin' || userType === 'manager' ? (
+            <FlatList
+              ListHeaderComponent={
+                <FleetSummaryCard
+                  statusMap={statusMap}
+                  total={total}
+                  thingData={thingData}
+                  selectedValue={selectedValue}
+                  fetchCardData={fetchCardData}
+                />
+              }
+              data={fleetData}
+              renderItem={({item}) => (
+                <FleetCard
+                  title={item.title}
+                  icon={item.icon}
+                  fromDate={dateRanges[item.title]?.from}
+                  toDate={dateRanges[item.title]?.to}
+                  selectedDateType={filterStates.openModalFor}
+                  isFilterVisible={filterStates.isFilterVisible === item.title}
+                  openCalendarFor={openCalendarFor}
+                  toggleFilterModal={toggleFilterModal}
+                  handleDateSelect={day => handleDateSelect(day, item.title)}
+                  isFromModalVisible={
+                    filterStates.openModalFor === 'start' &&
+                    filterStates.isFilterVisible === item.title
+                  }
+                  isToModalVisible={
+                    filterStates.openModalFor === 'end' &&
+                    filterStates.isFilterVisible === item.title
+                  }
+                  setFromModalVisible={val =>
+                    openCalendarFor(val ? 'start' : '', item.title)
+                  }
+                  setToModalVisible={val =>
+                    openCalendarFor(val ? 'end' : '', item.title)
+                  }
+                />
+              )}
+              keyExtractor={item => item.title}
+              contentContainerStyle={styles.listContainer}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+            />
+          ) : (
+            <Dashboard />
+          )}
         </KeyboardAvoidingView>
       </SafeAreaView>
       <Loader visible={pageLoad} />
+      <Toast />
     </Fragment>
   );
 };

@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import {BASE_URL} from '../../constants/url';
 import {GETNETWORK} from '../../utils/Network';
 import moment from 'moment';
 import { Loader } from '../../components/Loader';
+import Toast from 'react-native-toast-message';
 
 const {height} = Dimensions.get('window');
 
@@ -29,9 +30,7 @@ const MaintenanceCalendarScreen = () => {
   const [loading, setLoading] = useState(false);
   const [markedDates, setMarkedDates] = useState({});
   const [appointments, setAppointments] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(
-    moment().format('YYYY-MM-DD'),
-  );
+  const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -42,36 +41,56 @@ const MaintenanceCalendarScreen = () => {
   const [statusOpen, setStatusOpen] = useState(false);
   const [vehicleValue, setVehicleValue] = useState(null);
   const [statusValue, setStatusValue] = useState(null);
+  const [setStatusItems] = useState([]);
   const [vehicleItems, setVehicleItems] = useState([]);
-  const [statusItems,
-  setStatusItems] = useState([
+  const [statusItems] = useState([
     {label: 'Scheduled', value: 'scheduled'},
     {label: 'Completed', value: 'completed'},
     {label: 'All', value: 'all'},
   ]);
 
+  const zIndexCounter = useRef(1000);
 
-  const resetForm = () => {
-    setSelectedDate(moment().format('YYYY-MM-DD')); // Reset to today's date
-    setVehicleValue(null); // Clear vehicle filter
-    setStatusValue(null); // Clear status filter
-    setVehicleOpen(false); // Close vehicle dropdown if open
-    setStatusOpen(false); // Close status dropdown if open
-    // Re-fetch data for the current month
-    const fromDate = moment().startOf('month').format('YYYY-MM-DD');
-    const toDate = moment().endOf('month').format('YYYY-MM-DD');
-    fetchMaintenanceData(fromDate, toDate);
+  // Toast configuration
+  const showToast = (type, title, message) => {
+    Toast.show({
+      type,
+      position: 'top',
+      text1: title,
+      text2: message,
+      visibilityTime: type === 'error' ? 4000 : 3000,
+      autoHide: true,
+      topOffset: StatusBar.currentHeight || 40,
+    });
   };
+
+  // Optimized dropdown handlers
+  const handleVehicleDropdownOpen = (open) => {
+    setVehicleOpen(open);
+    if (open) setStatusOpen(false);
+  };
+
+  const handleStatusDropdownOpen = (open) => {
+    setStatusOpen(open);
+    if (open) setVehicleOpen(false);
+  };
+
   // Fetch maintenance data from API
   const fetchMaintenanceData = async (fromDate, toDate) => {
+    if (loading) return;
+    
     try {
       setLoading(true);
       const url = `${BASE_URL}maintenance/calendar_view/?from_date=${fromDate}&to_date=${toDate}`;
       const response = await GETNETWORK(url, true);
 
-      // Process the response data
+      if (!response) {
+        throw new Error('No response from server');
+      }
+
       const marked = {};
       const allAppointments = [];
+      const vehicleMap = new Map();
 
       // Process scheduled maintenance
       response.maintenance_scheduled?.forEach(item => {
@@ -81,6 +100,10 @@ const MaintenanceCalendarScreen = () => {
           dotColor: '#0284c7',
           selectedColor: '#bae6fd',
         };
+
+        if (item.thing_id && item.thing_name) {
+          vehicleMap.set(item.thing_id, item.thing_name);
+        }
 
         allAppointments.push({
           id: item.id,
@@ -105,6 +128,10 @@ const MaintenanceCalendarScreen = () => {
           selectedColor: '#bae6fd',
         };
 
+        if (item.thing_id && item.thing_name) {
+          vehicleMap.set(item.thing_id, item.thing_name);
+        }
+
         allAppointments.push({
           id: item.id,
           date: date,
@@ -124,28 +151,25 @@ const MaintenanceCalendarScreen = () => {
       setAppointments(allAppointments);
 
       // Update vehicle dropdown items
-      const uniqueVehicles = [
-        ...new Set(allAppointments.map(item => item.vehicleId)),
-      ];
-      setVehicleItems(
-        uniqueVehicles.map(v => ({
-          label: v,
-          value: v,
-        })),
-      );
+      const uniqueVehicles = Array.from(vehicleMap.entries()).map(([value, label]) => ({
+        label: label || value,
+        value: value,
+      }));
 
-      // Filter appointments for the selected date
+      setVehicleItems(uniqueVehicles);
       filterAppointments(selectedDate, vehicleValue, statusValue);
+      
+      showToast('success', 'Data Loaded', `Loaded ${allAppointments.length} maintenance records`);
     } catch (error) {
       console.error('Error fetching maintenance data:', error);
-      Alert.alert('Error', 'Failed to fetch maintenance data');
+      showToast('error', 'Load Failed', 'Failed to fetch maintenance data');
     } finally {
       setLoading(false);
     }
   };
 
   // Filter appointments based on selected date and filters
-  const filterAppointments = (date, vehicleFilter, statusFilter) => {
+  const filterAppointments = useCallback((date, vehicleFilter, statusFilter) => {
     let result = appointments.filter(app => app.date === date);
 
     if (vehicleFilter) {
@@ -157,43 +181,32 @@ const MaintenanceCalendarScreen = () => {
     }
 
     setFilteredAppointments(result);
-  };
+  }, [appointments]);
 
   // Load data when component mounts
-useEffect(() => {
-  const fromDate = moment().startOf('month').format('YYYY-MM-DD');
-  const toDate = moment().endOf('month').format('YYYY-MM-DD');
-  fetchMaintenanceData(fromDate, toDate);
-}, []);
-useFocusEffect(
-  useCallback(() => {
-    resetForm();
-    return () => {
-      // Cleanup if needed
-    };
-  }, []),
-);
+  useEffect(() => {
+    const fromDate = moment().startOf('month').format('YYYY-MM-DD');
+    const toDate = moment().endOf('month').format('YYYY-MM-DD');
+    fetchMaintenanceData(fromDate, toDate);
+  }, []);
+
   // Apply filters when any filter value changes
   useEffect(() => {
     filterAppointments(selectedDate, vehicleValue, statusValue);
-  }, [vehicleValue, statusValue, appointments, selectedDate]);
+  }, [vehicleValue, statusValue, appointments, selectedDate, filterAppointments]);
 
   // Handle day selection in calendar
   const onDayPress = day => {
-    console.log('day.dateString', day.dateString);
     setSelectedDate(day.dateString);
     filterAppointments(day.dateString, vehicleValue, statusValue);
+    showToast('info', 'Date Selected', moment(day.dateString).format('DD MMM YYYY'));
   };
-
-
 
   const handleMonthChange = month => {
     const newMonth = moment(month.dateString).format('YYYY-MM');
     setCurrentMonth(newMonth);
 
-    const fromDate = moment(month.dateString)
-      .startOf('month')
-      .format('YYYY-MM-DD');
+    const fromDate = moment(month.dateString).startOf('month').format('YYYY-MM-DD');
     const toDate = moment(month.dateString).endOf('month').format('YYYY-MM-DD');
 
     fetchMaintenanceData(fromDate, toDate);
@@ -210,17 +223,42 @@ useFocusEffect(
     setVehicleValue(null);
     setStatusValue(null);
     filterAppointments(selectedDate, null, null);
+    showToast('info', 'Filters Cleared', 'All filters have been reset');
   };
+
+  const resetForm = () => {
+    setSelectedDate(moment().format('YYYY-MM-DD'));
+    setVehicleValue(null);
+    setStatusValue(null);
+    setVehicleOpen(false);
+    setStatusOpen(false);
+    
+    const fromDate = moment().startOf('month').format('YYYY-MM-DD');
+    const toDate = moment().endOf('month').format('YYYY-MM-DD');
+    fetchMaintenanceData(fromDate, toDate);
+    
+    showToast('info', 'Form Reset', 'Calendar view has been reset');
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      resetForm();
+      return () => {
+        setVehicleOpen(false);
+        setStatusOpen(false);
+      };
+    }, []),
+  );
 
   // Get card background color based on status
   const getCardColor = status => {
     switch (status) {
       case 'completed':
-        return '#dcfce7'; // green-100
+        return '#dcfce7';
       case 'scheduled':
-        return '#e0f2fe'; // blue-100
+        return '#e0f2fe';
       default:
-        return '#e0f2fe'; // default blue
+        return '#e0f2fe';
     }
   };
 
@@ -228,13 +266,46 @@ useFocusEffect(
   const getBorderColor = status => {
     switch (status) {
       case 'completed':
-        return '#10b981'; // green-500
+        return '#10b981';
       case 'scheduled':
-        return '#0284c7'; // blue-600
+        return '#0284c7';
       default:
-        return '#0284c7'; // default blue
+        return '#0284c7';
     }
   };
+
+  const renderAppointmentItem = ({item}) => (
+    <TouchableOpacity
+      style={[
+        styles.card,
+        {
+          backgroundColor: getCardColor(item.status),
+          borderLeftColor: getBorderColor(item.status),
+        },
+      ]}
+      onPress={() => handleAppointmentPress(item)}>
+      <Text style={styles.cardTitle}>
+        {item.time} - {item.vehicleName || item.vehicleId}
+      </Text>
+      <Text style={styles.cardSub}>
+        Maintenance: {item.maintenanceName}
+      </Text>
+      <Text
+        style={[
+          styles.cardStatus,
+          {
+            color: item.status === 'completed' ? '#10b981' : '#0284c7',
+          },
+        ]}>
+        Status: {item.status.toUpperCase()}
+      </Text>
+      {item.remarks && (
+        <Text style={styles.cardSub} numberOfLines={1}>
+          Remarks: {item.remarks}
+        </Text>
+      )}
+    </TouchableOpacity>
+  );
 
   return (
     <View style={{flex: 1}}>
@@ -255,7 +326,10 @@ useFocusEffect(
           keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled">
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            
+            {/* Add Schedule Button */}
             <TouchableOpacity
               style={styles.addButton}
               onPress={() => navigation.navigate('MaintenanceSchedule')}>
@@ -264,53 +338,57 @@ useFocusEffect(
 
             {/* Filter Section */}
             <View style={styles.filterWrapper}>
-              <Text style={styles.filterTitle}>Filters:</Text>
+              <Text style={styles.filterTitle}>Filters</Text>
               <TouchableOpacity onPress={clearAllFilters}>
                 <Text style={styles.clearButtonText}>Clear All</Text>
               </TouchableOpacity>
             </View>
 
+            {/* Filter Dropdowns */}
             <View style={styles.filterRow}>
-              <View style={[styles.flexDropdown, {zIndex: 2000}]}>
+              <View style={[styles.flexDropdown, {zIndex: vehicleOpen ? zIndexCounter.current + 1 : 1}]}>
                 <DropDownPicker
-                searchable={true}
+                  searchable={true}
                   searchablePlaceholder="Search Vehicle"
                   open={vehicleOpen}
                   value={vehicleValue}
                   items={vehicleItems}
-                  setOpen={setVehicleOpen}
+                  setOpen={handleVehicleDropdownOpen}
                   setValue={setVehicleValue}
                   setItems={setVehicleItems}
-                  placeholder="Vehicle"
+                  placeholder="Select Vehicle"
                   style={styles.dropdown}
                   dropDownContainerStyle={styles.dropdownContainer}
+                  textStyle={styles.dropdownText}
+                  placeholderStyle={styles.dropdownPlaceholder}
                   listMode="SCROLLVIEW"
+                  scrollViewProps={{nestedScrollEnabled: true}}
                 />
               </View>
 
-              <View style={[styles.flexDropdown, {zIndex: 1000}]}>
+              <View style={[styles.flexDropdown, {zIndex: statusOpen ? zIndexCounter.current + 1 : 1}]}>
                 <DropDownPicker
                   searchable={true}
                   searchablePlaceholder="Search Status"
                   open={statusOpen}
                   value={statusValue}
                   items={statusItems}
-                  setOpen={setStatusOpen}
+                  setOpen={handleStatusDropdownOpen}
                   setValue={setStatusValue}
                   setItems={setStatusItems}
-                  placeholder="Status"
+                  placeholder="Select Status"
                   style={styles.dropdown}
                   dropDownContainerStyle={styles.dropdownContainer}
+                  textStyle={styles.dropdownText}
+                  placeholderStyle={styles.dropdownPlaceholder}
                   listMode="SCROLLVIEW"
+                  scrollViewProps={{nestedScrollEnabled: true}}
                 />
               </View>
-
-
-
             </View>
 
+            {/* Calendar */}
             <Calendar
-            
               markedDates={{
                 ...markedDates,
                 [selectedDate]: {
@@ -321,24 +399,8 @@ useFocusEffect(
               }}
               onDayPress={onDayPress}
               onMonthChange={handleMonthChange}
-              onVisibleMonthsChange={months => {
-                const month = months[0];
-                const newMonth = moment(month.dateString).format('YYYY-MM');
-                if (newMonth !== currentMonth) {
-                  setCurrentMonth(newMonth);
-                  const fromDate = moment(month.dateString)
-                    .startOf('month')
-                    .format('YYYY-MM-DD');
-                  const toDate = moment(month.dateString)
-                    .endOf('month')
-                    .format('YYYY-MM-DD');
-                  fetchMaintenanceData(fromDate, toDate);
-                }
-              }}
-              // for old month also
               hideExtraDays={true}
               firstDay={1}
-
               current={currentMonth}
               theme={{
                 selectedDayBackgroundColor: '#0ea5e9',
@@ -347,6 +409,7 @@ useFocusEffect(
               }}
             />
 
+            {/* Appointments List */}
             {filteredAppointments.length > 0 ? (
               <View style={styles.listContainer}>
                 <Text style={styles.sectionTitle}>
@@ -356,52 +419,18 @@ useFocusEffect(
                   <FlatList
                     data={filteredAppointments}
                     keyExtractor={item => item.id.toString()}
-                    renderItem={({item}) => (
-                      <TouchableOpacity
-                        style={[
-                          styles.card,
-                          {
-                            backgroundColor: getCardColor(item.status),
-                            borderLeftColor: getBorderColor(item.status),
-                          },
-                        ]}
-                        onPress={() => handleAppointmentPress(item)}>
-                        <Text style={styles.cardTitle}>
-                          {item.time} - {item.vehicleName || item.vehicleId}
-                        </Text>
-                        <Text style={styles.cardSub}>
-                          Maintenance: {item.maintenanceName}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.cardStatus,
-                            {
-                              color:
-                                item.status === 'completed'
-                                  ? '#10b981'
-                                  : '#0284c7',
-                            },
-                          ]}>
-                          Status: {item.status.toUpperCase()}
-                        </Text>
-                        {item.remarks && (
-                          <Text style={styles.cardSub} numberOfLines={1}>
-                            Remarks: {item.remarks}
-                          </Text>
-                        )}
-                      </TouchableOpacity>
-                    )}
+                    renderItem={renderAppointmentItem}
                     scrollEnabled={true}
                     nestedScrollEnabled={true}
-                    contentContainerStyle={{paddingBottom: 20}}
+                    contentContainerStyle={styles.flatListContent}
+                    showsVerticalScrollIndicator={false}
                   />
                 </View>
               </View>
             ) : (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyText}>
-                  {appointments.filter(a => a.date === selectedDate).length ===
-                  0
+                  {appointments.filter(a => a.date === selectedDate).length === 0
                     ? 'No appointments on selected date'
                     : 'No appointments match current filters'}
                 </Text>
@@ -426,8 +455,7 @@ useFocusEffect(
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Vehicle:</Text>
                       <Text style={styles.detailValue}>
-                        {selectedAppointment.vehicleName ||
-                          selectedAppointment.vehicleId}
+                        {selectedAppointment.vehicleName || selectedAppointment.vehicleId}
                       </Text>
                     </View>
                     <View style={styles.detailRow}>
@@ -441,12 +469,9 @@ useFocusEffect(
                       <Text
                         style={[
                           styles.detailValue,
+                          styles.statusText,
                           {
-                            color:
-                              selectedAppointment.status === 'completed'
-                                ? '#10b981'
-                                : '#0284c7',
-                            fontWeight: 'bold',
+                            color: selectedAppointment.status === 'completed' ? '#10b981' : '#0284c7',
                           },
                         ]}>
                         {selectedAppointment.status.toUpperCase()}
@@ -455,9 +480,7 @@ useFocusEffect(
                     {selectedAppointment.remarks && (
                       <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>
-                          {selectedAppointment.status === 'completed'
-                            ? 'Work Performed:'
-                            : 'Remarks:'}
+                          {selectedAppointment.status === 'completed' ? 'Work Performed:' : 'Remarks:'}
                         </Text>
                         <Text style={[styles.detailValue, styles.remarksText]}>
                           {selectedAppointment.remarks}
@@ -504,9 +527,10 @@ useFocusEffect(
               </View>
             </View>
           </Modal>
-           <Loader visible={loading} />
+          <Loader visible={loading} />
         </KeyboardAvoidingView>
       )}
+      <Toast />
     </View>
   );
 };
@@ -514,12 +538,14 @@ useFocusEffect(
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f9fafb',
     padding: 10,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f9fafb',
   },
   scrollContainer: {
     paddingBottom: 20,
@@ -532,26 +558,35 @@ const styles = StyleSheet.create({
   listContent: {
     flex: 1,
   },
+  flatListContent: {
+    paddingBottom: 20,
+  },
   card: {
     padding: 12,
     borderRadius: 8,
     marginBottom: 10,
     borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   cardTitle: {
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 16,
     color: '#0c4a6e',
+    marginBottom: 4,
   },
   cardSub: {
     fontSize: 14,
     color: '#334155',
-    marginTop: 4,
+    marginBottom: 4,
   },
   cardStatus: {
     fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 4,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   addButton: {
     backgroundColor: '#0284c7',
@@ -560,11 +595,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignSelf: 'flex-end',
     marginBottom: 16,
-    marginRight: 10,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: {width: 0, height: 2},
-    elevation: 2,
+    elevation: 3,
   },
   addButtonText: {
     color: '#fff',
@@ -575,12 +609,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 5,
+    marginBottom: 12,
   },
   filterTitle: {
-    fontWeight: 'bold',
-    color: '#334155',
+    fontWeight: '600',
+    color: '#374151',
     fontSize: 16,
   },
   clearButtonText: {
@@ -590,26 +623,38 @@ const styles = StyleSheet.create({
   },
   filterRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 16,
+    gap: 12,
   },
   flexDropdown: {
-    width: '48%',
-    marginBottom: 10,
+    flex: 1,
   },
   dropdown: {
-    borderColor: '#94a3b8',
     backgroundColor: '#fff',
-    minHeight: 40,
+    borderColor: '#d1d5db',
+    borderWidth: 1.5,
+    borderRadius: 8,
+    minHeight: 48,
   },
   dropdownContainer: {
-    borderColor: '#94a3b8',
+    backgroundColor: '#fff',
+    borderColor: '#d1d5db',
+    borderWidth: 1.5,
+    borderRadius: 8,
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: '#111827',
+  },
+  dropdownPlaceholder: {
+    color: '#9ca3af',
+    fontSize: 14,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontWeight: '600',
+    marginBottom: 12,
     color: '#0284c7',
   },
   emptyState: {
@@ -632,12 +677,13 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#fff',
     width: '90%',
+    maxWidth: 400,
     padding: 20,
     borderRadius: 12,
     elevation: 5,
   },
   modalTitle: {
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 20,
     marginBottom: 20,
     color: '#0284c7',
@@ -646,17 +692,21 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: 'row',
     marginBottom: 12,
+    alignItems: 'flex-start',
   },
   detailLabel: {
-    fontWeight: 'bold',
+    fontWeight: '600',
     width: 120,
-    color: '#334155',
-    fontSize: 16,
+    color: '#374151',
+    fontSize: 14,
   },
   detailValue: {
     flex: 1,
     color: '#475569',
-    fontSize: 16,
+    fontSize: 14,
+  },
+  statusText: {
+    fontWeight: '600',
   },
   remarksText: {
     fontStyle: 'italic',
@@ -664,13 +714,13 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     marginTop: 25,
+    gap: 12,
   },
   closeButton: {
     backgroundColor: '#0284c7',
     padding: 12,
     borderRadius: 8,
     flex: 1,
-    marginHorizontal: 5,
   },
   closeText: {
     color: '#fff',
@@ -683,7 +733,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     flex: 1,
-    marginHorizontal: 5,
   },
   editText: {
     color: '#fff',
