@@ -41,18 +41,99 @@ const MaintenanceCalendarScreen = () => {
   const [statusOpen, setStatusOpen] = useState(false);
   const [vehicleValue, setVehicleValue] = useState(null);
   const [statusValue, setStatusValue] = useState(null);
-  const [setStatusItems] = useState([]);
   const [vehicleItems, setVehicleItems] = useState([]);
-  const [statusItems] = useState([
+  const [statusItems, setStatusItems] = useState([
     {label: 'Scheduled', value: 'scheduled'},
+    {label: 'Scheduled Overdue', value: 'scheduled_overdue'},
     {label: 'Completed', value: 'completed'},
     {label: 'All', value: 'all'},
   ]);
 
   const zIndexCounter = useRef(1000);
+  const isMounted = useRef(true);
+
+  // Function to determine appointment status (including overdue logic)
+  const getAppointmentStatus = (appointment) => {
+    if (appointment.status === 'completed') {
+      return 'completed';
+    }
+    
+    // For scheduled appointments, check if they are overdue
+    if (appointment.status === 'scheduled') {
+      const appointmentDate = moment(appointment.date);
+      const today = moment().startOf('day');
+      
+      // If appointment date is before today, it's overdue
+      if (appointmentDate.isBefore(today)) {
+        return 'scheduled_overdue';
+      }
+    }
+    
+    return appointment.status;
+  };
+
+  // Function to check if a date has overdue appointments
+  const hasOverdueAppointments = (date, appointmentsData) => {
+    return appointmentsData.some(app => {
+      const appointmentStatus = getAppointmentStatus(app);
+      return app.date === date && appointmentStatus === 'scheduled_overdue';
+    });
+  };
+
+  // Validation functions
+  const validateDate = (date) => {
+    if (!date) return false;
+    return moment(date, 'YYYY-MM-DD', true).isValid();
+  };
+
+  const validateMonth = (month) => {
+    if (!month) return false;
+    return moment(month, 'YYYY-MM', true).isValid();
+  };
+
+  const validateApiResponse = (response) => {
+    if (!response) {
+      throw new Error('Invalid API response: Response is null or undefined');
+    }
+
+    if (typeof response !== 'object') {
+      throw new Error('Invalid API response: Expected object');
+    }
+
+    // Validate maintenance_scheduled array
+    if (response.maintenance_scheduled && !Array.isArray(response.maintenance_scheduled)) {
+      throw new Error('Invalid API response: maintenance_scheduled should be an array');
+    }
+
+    // Validate maintenance_completed array
+    if (response.maintenance_completed && !Array.isArray(response.maintenance_completed)) {
+      throw new Error('Invalid API response: maintenance_completed should be an array');
+    }
+
+    return true;
+  };
+
+  const validateAppointmentData = (appointment) => {
+    const requiredFields = ['id', 'date', 'status'];
+    const missingFields = requiredFields.filter(field => !appointment[field]);
+    
+    if (missingFields.length > 0) {
+      console.warn('Invalid appointment data - missing fields:', missingFields, appointment);
+      return false;
+    }
+
+    if (!validateDate(appointment.date)) {
+      console.warn('Invalid appointment date:', appointment.date);
+      return false;
+    }
+
+    return true;
+  };
 
   // Toast configuration
   const showToast = (type, title, message) => {
+    if (!isMounted.current) return;
+    
     Toast.show({
       type,
       position: 'top',
@@ -64,170 +145,333 @@ const MaintenanceCalendarScreen = () => {
     });
   };
 
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    if (isMounted.current) {
+      setLoading(false);
+      setVehicleOpen(false);
+      setStatusOpen(false);
+      setModalVisible(false);
+    }
+  }, []);
+
+  // Clear all state function
+  const clearAllState = useCallback(() => {
+    if (!isMounted.current) return;
+
+    setMarkedDates({});
+    setAppointments([]);
+    setSelectedDate(moment().format('YYYY-MM-DD'));
+    setFilteredAppointments([]);
+    setSelectedAppointment(null);
+    setModalVisible(false);
+    setCurrentMonth(moment().format('YYYY-MM'));
+    setVehicleValue(null);
+    setStatusValue(null);
+    setVehicleOpen(false);
+    setStatusOpen(false);
+    setVehicleItems([]);
+  }, []);
+
   // Optimized dropdown handlers
   const handleVehicleDropdownOpen = (open) => {
+    if (!isMounted.current) return;
     setVehicleOpen(open);
     if (open) setStatusOpen(false);
   };
 
   const handleStatusDropdownOpen = (open) => {
+    if (!isMounted.current) return;
     setStatusOpen(open);
     if (open) setVehicleOpen(false);
   };
 
-  // Fetch maintenance data from API
-  const fetchMaintenanceData = async (fromDate, toDate) => {
-    if (loading) return;
-    
-    try {
-      setLoading(true);
-      const url = `${BASE_URL}maintenance/calendar_view/?from_date=${fromDate}&to_date=${toDate}`;
-      const response = await GETNETWORK(url, true);
+  // Filter appointments function with validation
+  const filterAppointments = useCallback((date, vehicleFilter, statusFilter, appointmentsData) => {
+    if (!isMounted.current) return;
 
-      if (!response) {
-        throw new Error('No response from server');
-      }
-
-      const marked = {};
-      const allAppointments = [];
-      const vehicleMap = new Map();
-
-      // Process scheduled maintenance
-      response.maintenance_scheduled?.forEach(item => {
-        const date = moment(item.scheduled_date).format('YYYY-MM-DD');
-        marked[date] = {
-          marked: true,
-          dotColor: '#0284c7',
-          selectedColor: '#bae6fd',
-        };
-
-        if (item.thing_id && item.thing_name) {
-          vehicleMap.set(item.thing_id, item.thing_name);
-        }
-
-        allAppointments.push({
-          id: item.id,
-          date: date,
-          time: moment(item.created_on).format('hh:mm A'),
-          vehicleId: item.thing_id,
-          vehicleName: item.thing_name,
-          maintenanceName: item.maintenance_name,
-          remarks: item.remarks,
-          status: 'scheduled',
-          type: item.scheduled_type,
-          createdBy: item.created_by,
-        });
-      });
-
-      // Process completed maintenance
-      response.maintenance_completed?.forEach(item => {
-        const date = moment(item.reported_on).format('YYYY-MM-DD');
-        marked[date] = {
-          marked: true,
-          dotColor: '#10b981',
-          selectedColor: '#bae6fd',
-        };
-
-        if (item.thing_id && item.thing_name) {
-          vehicleMap.set(item.thing_id, item.thing_name);
-        }
-
-        allAppointments.push({
-          id: item.id,
-          date: date,
-          time: moment(item.reported_on).format('hh:mm A'),
-          vehicleId: item.thing_id,
-          vehicleName: item.thing_name,
-          maintenanceName: item.maintenance_name,
-          remarks: item.work_performed,
-          status: 'completed',
-          jobStatus: item.job_status,
-          partsReplaced: item.parts_replaced,
-          estimatedCost: item.estimated_cost,
-        });
-      });
-
-      setMarkedDates(marked);
-      setAppointments(allAppointments);
-
-      // Update vehicle dropdown items
-      const uniqueVehicles = Array.from(vehicleMap.entries()).map(([value, label]) => ({
-        label: label || value,
-        value: value,
-      }));
-
-      setVehicleItems(uniqueVehicles);
-      filterAppointments(selectedDate, vehicleValue, statusValue);
-      
-      showToast('success', 'Data Loaded', `Loaded ${allAppointments.length} maintenance records`);
-    } catch (error) {
-      console.error('Error fetching maintenance data:', error);
-      showToast('error', 'Load Failed', 'Failed to fetch maintenance data');
-    } finally {
-      setLoading(false);
+    // Validate date
+    if (!validateDate(date)) {
+      console.warn('Invalid date provided for filtering:', date);
+      setFilteredAppointments([]);
+      return;
     }
-  };
 
-  // Filter appointments based on selected date and filters
-  const filterAppointments = useCallback((date, vehicleFilter, statusFilter) => {
-    let result = appointments.filter(app => app.date === date);
+    const dataToFilter = appointmentsData || appointments;
+    
+    if (!Array.isArray(dataToFilter)) {
+      console.warn('Invalid appointments data for filtering');
+      setFilteredAppointments([]);
+      return;
+    }
+
+    let result = dataToFilter.filter(app => {
+      // Validate each appointment before filtering
+      if (!validateAppointmentData(app)) return false;
+      
+      const appointmentStatus = getAppointmentStatus(app);
+      return app.date === date;
+    });
 
     if (vehicleFilter) {
       result = result.filter(app => app.vehicleId === vehicleFilter);
     }
 
     if (statusFilter && statusFilter !== 'all') {
-      result = result.filter(app => app.status === statusFilter);
+      result = result.filter(app => {
+        const appointmentStatus = getAppointmentStatus(app);
+        return appointmentStatus === statusFilter;
+      });
     }
 
     setFilteredAppointments(result);
   }, [appointments]);
 
+  // Fetch maintenance data from API with enhanced validation
+  const fetchMaintenanceData = async (fromDate, toDate) => {
+    if (loading || !isMounted.current) return;
+    
+    // Validate dates
+    if (!validateDate(fromDate) || !validateDate(toDate)) {
+      showToast('error', 'Invalid Date', 'Please provide valid dates');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const url = `${BASE_URL}maintenance/calendar_view/?from_date=${fromDate}&to_date=${toDate}`;
+      const response = await GETNETWORK(url, true);
+
+      // Validate API response
+      validateApiResponse(response);
+
+      const marked = {};
+      const allAppointments = [];
+      const vehicleMap = new Map();
+
+      // Process scheduled maintenance with validation
+      if (Array.isArray(response.maintenance_scheduled)) {
+        response.maintenance_scheduled.forEach(item => {
+          try {
+            if (!item || typeof item !== 'object') {
+              console.warn('Invalid scheduled maintenance item:', item);
+              return;
+            }
+
+            const date = moment(item.scheduled_date).isValid() 
+              ? moment(item.scheduled_date).format('YYYY-MM-DD')
+              : null;
+
+            if (!date) {
+              console.warn('Invalid scheduled date for item:', item);
+              return;
+            }
+
+            // Determine dot color based on overdue status
+            const appointmentDate = moment(date);
+            const today = moment().startOf('day');
+            const isOverdue = appointmentDate.isBefore(today);
+            
+            marked[date] = {
+              marked: true,
+              dotColor: isOverdue ? '#ef4444' : '#0284c7', // Red for overdue, blue for scheduled
+              selectedColor: '#bae6fd',
+            };
+
+            if (item.thing_id) {
+              vehicleMap.set(item.thing_id, item.thing_name || `Vehicle ${item.thing_id}`);
+            }
+
+            const appointment = {
+              id: item.id || `scheduled-${Date.now()}-${Math.random()}`,
+              date: date,
+              time: moment(item.created_on).isValid() 
+                ? moment(item.created_on).format('hh:mm A')
+                : 'Unknown Time',
+              vehicleId: item.thing_id,
+              vehicleName: item.thing_name || `Vehicle ${item.thing_id}`,
+              maintenanceName: item.maintenance_name || 'Unknown Maintenance',
+              remarks: item.remarks || '',
+              status: 'scheduled', // Base status, will be determined by getAppointmentStatus
+              type: item.scheduled_type,
+              createdBy: item.created_by,
+              isOverdue: isOverdue, // Store overdue flag for easy access
+            };
+
+            if (validateAppointmentData(appointment)) {
+              allAppointments.push(appointment);
+            }
+          } catch (error) {
+            console.warn('Error processing scheduled maintenance item:', error, item);
+          }
+        });
+      }
+
+      // Process completed maintenance with validation
+      if (Array.isArray(response.maintenance_completed)) {
+        response.maintenance_completed.forEach(item => {
+          try {
+            if (!item || typeof item !== 'object') {
+              console.warn('Invalid completed maintenance item:', item);
+              return;
+            }
+
+            const date = moment(item.reported_on).isValid()
+              ? moment(item.reported_on).format('YYYY-MM-DD')
+              : null;
+
+            if (!date) {
+              console.warn('Invalid reported date for item:', item);
+              return;
+            }
+
+            marked[date] = {
+              marked: true,
+              dotColor: '#10b981',
+              selectedColor: '#bae6fd',
+            };
+
+            if (item.thing_id) {
+              vehicleMap.set(item.thing_id, item.thing_name || `Vehicle ${item.thing_id}`);
+            }
+
+            const appointment = {
+              id: item.id || `completed-${Date.now()}-${Math.random()}`,
+              date: date,
+              time: moment(item.reported_on).isValid()
+                ? moment(item.reported_on).format('hh:mm A')
+                : 'Unknown Time',
+              vehicleId: item.thing_id,
+              vehicleName: item.thing_name || `Vehicle ${item.thing_id}`,
+              maintenanceName: item.maintenance_name || 'Unknown Maintenance',
+              remarks: item.work_performed || '',
+              status: 'completed',
+              jobStatus: item.job_status,
+              partsReplaced: item.parts_replaced,
+              estimatedCost: item.estimated_cost,
+              isOverdue: false, // Completed appointments are never overdue
+            };
+
+            if (validateAppointmentData(appointment)) {
+              allAppointments.push(appointment);
+            }
+          } catch (error) {
+            console.warn('Error processing completed maintenance item:', error, item);
+          }
+        });
+      }
+
+      if (isMounted.current) {
+        setMarkedDates(marked);
+        setAppointments(allAppointments);
+
+        // Update vehicle dropdown items
+        const uniqueVehicles = Array.from(vehicleMap.entries()).map(([value, label]) => ({
+          label: label,
+          value: value,
+        }));
+
+        setVehicleItems(uniqueVehicles);
+        
+        // Filter appointments with the new data
+        filterAppointments(selectedDate, vehicleValue, statusValue, allAppointments);
+        
+        showToast('success', 'Data Loaded', `Loaded ${allAppointments.length} maintenance records`);
+      }
+    } catch (error) {
+      console.error('Error fetching maintenance data:', error);
+      if (isMounted.current) {
+        showToast('error', 'Load Failed', error.message || 'Failed to fetch maintenance data');
+      }
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
+    }
+  };
+
   // Load data when component mounts
   useEffect(() => {
+    isMounted.current = true;
+    
     const fromDate = moment().startOf('month').format('YYYY-MM-DD');
     const toDate = moment().endOf('month').format('YYYY-MM-DD');
-    fetchMaintenanceData(fromDate, toDate);
+    
+    if (validateDate(fromDate) && validateDate(toDate)) {
+      fetchMaintenanceData(fromDate, toDate);
+    }
+
+    return () => {
+      isMounted.current = false;
+      cleanup();
+    };
   }, []);
 
-  // Apply filters when any filter value changes
+  // Apply filters when any filter value or selected date changes
   useEffect(() => {
-    filterAppointments(selectedDate, vehicleValue, statusValue);
-  }, [vehicleValue, statusValue, appointments, selectedDate, filterAppointments]);
+    if (appointments.length > 0 && validateDate(selectedDate)) {
+      filterAppointments(selectedDate, vehicleValue, statusValue);
+    }
+  }, [vehicleValue, statusValue, selectedDate, appointments.length, filterAppointments]);
 
-  // Handle day selection in calendar
+  // Handle day selection in calendar with validation
   const onDayPress = day => {
+    if (!day || !day.dateString || !validateDate(day.dateString)) {
+      showToast('error', 'Invalid Date', 'Please select a valid date');
+      return;
+    }
+
     setSelectedDate(day.dateString);
-    filterAppointments(day.dateString, vehicleValue, statusValue);
     showToast('info', 'Date Selected', moment(day.dateString).format('DD MMM YYYY'));
   };
 
   const handleMonthChange = month => {
+    if (!month || !month.dateString || !validateDate(month.dateString)) {
+      showToast('error', 'Invalid Month', 'Please select a valid month');
+      return;
+    }
+
     const newMonth = moment(month.dateString).format('YYYY-MM');
+    if (!validateMonth(newMonth)) {
+      showToast('error', 'Invalid Month', 'Invalid month format');
+      return;
+    }
+
     setCurrentMonth(newMonth);
 
     const fromDate = moment(month.dateString).startOf('month').format('YYYY-MM-DD');
     const toDate = moment(month.dateString).endOf('month').format('YYYY-MM-DD');
 
-    fetchMaintenanceData(fromDate, toDate);
+    if (validateDate(fromDate) && validateDate(toDate)) {
+      fetchMaintenanceData(fromDate, toDate);
+    }
   };
 
-  // Handle appointment press to show details
+  // Handle appointment press to show details with validation
   const handleAppointmentPress = appointment => {
+    if (!appointment || !validateAppointmentData(appointment)) {
+      showToast('error', 'Invalid Appointment', 'Cannot view invalid appointment details');
+      return;
+    }
+
     setSelectedAppointment(appointment);
     setModalVisible(true);
   };
 
   // Clear all filters
   const clearAllFilters = () => {
+    if (!isMounted.current) return;
+    
     setVehicleValue(null);
     setStatusValue(null);
-    filterAppointments(selectedDate, null, null);
     showToast('info', 'Filters Cleared', 'All filters have been reset');
   };
 
   const resetForm = () => {
-    setSelectedDate(moment().format('YYYY-MM-DD'));
+    if (!isMounted.current) return;
+
+    const today = moment().format('YYYY-MM-DD');
+    setSelectedDate(today);
     setVehicleValue(null);
     setStatusValue(null);
     setVehicleOpen(false);
@@ -235,20 +479,42 @@ const MaintenanceCalendarScreen = () => {
     
     const fromDate = moment().startOf('month').format('YYYY-MM-DD');
     const toDate = moment().endOf('month').format('YYYY-MM-DD');
-    fetchMaintenanceData(fromDate, toDate);
+    
+    if (validateDate(fromDate) && validateDate(toDate)) {
+      fetchMaintenanceData(fromDate, toDate);
+    }
     
     showToast('info', 'Form Reset', 'Calendar view has been reset');
   };
 
+  // Navigation effect - clear state when navigating away
   useFocusEffect(
     useCallback(() => {
+      isMounted.current = true;
       resetForm();
+
       return () => {
-        setVehicleOpen(false);
-        setStatusOpen(false);
+        // Clear state when screen loses focus
+        cleanup();
       };
     }, []),
   );
+
+  // Handle navigation state changes
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      cleanup();
+    });
+
+    const unsubscribeFocus = navigation.addListener('focus', () => {
+      isMounted.current = true;
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeFocus();
+    };
+  }, [navigation, cleanup]);
 
   // Get card background color based on status
   const getCardColor = status => {
@@ -257,6 +523,8 @@ const MaintenanceCalendarScreen = () => {
         return '#dcfce7';
       case 'scheduled':
         return '#e0f2fe';
+      case 'scheduled_overdue':
+        return '#fee2e2';
       default:
         return '#e0f2fe';
     }
@@ -269,43 +537,86 @@ const MaintenanceCalendarScreen = () => {
         return '#10b981';
       case 'scheduled':
         return '#0284c7';
+      case 'scheduled_overdue':
+        return '#ef4444';
       default:
         return '#0284c7';
     }
   };
 
-  const renderAppointmentItem = ({item}) => (
-    <TouchableOpacity
-      style={[
-        styles.card,
-        {
-          backgroundColor: getCardColor(item.status),
-          borderLeftColor: getBorderColor(item.status),
-        },
-      ]}
-      onPress={() => handleAppointmentPress(item)}>
-      <Text style={styles.cardTitle}>
-        {item.time} - {item.vehicleName || item.vehicleId}
-      </Text>
-      <Text style={styles.cardSub}>
-        Maintenance: {item.maintenanceName}
-      </Text>
-      <Text
+  // Get status text color based on status
+  const getStatusColor = status => {
+    switch (status) {
+      case 'completed':
+        return '#10b981';
+      case 'scheduled':
+        return '#0284c7';
+      case 'scheduled_overdue':
+        return '#ef4444';
+      default:
+        return '#0284c7';
+    }
+  };
+
+  // Get status display text
+  const getStatusText = status => {
+    switch (status) {
+      case 'completed':
+        return 'COMPLETED';
+      case 'scheduled':
+        return 'SCHEDULED';
+      case 'scheduled_overdue':
+        return 'SCHEDULED OVERDUE';
+      default:
+        return status.toUpperCase();
+    }
+  };
+
+  const renderAppointmentItem = ({item}) => {
+    if (!validateAppointmentData(item)) {
+      return null; // Don't render invalid appointments
+    }
+
+    const appointmentStatus = getAppointmentStatus(item);
+
+    return (
+      <TouchableOpacity
         style={[
-          styles.cardStatus,
+          styles.card,
           {
-            color: item.status === 'completed' ? '#10b981' : '#0284c7',
+            backgroundColor: getCardColor(appointmentStatus),
+            borderLeftColor: getBorderColor(appointmentStatus),
           },
-        ]}>
-        Status: {item.status.toUpperCase()}
-      </Text>
-      {item.remarks && (
-        <Text style={styles.cardSub} numberOfLines={1}>
-          Remarks: {item.remarks}
+        ]}
+        onPress={() => handleAppointmentPress(item)}>
+        <Text style={styles.cardTitle}>
+          {item.time} - {item.vehicleName}
         </Text>
-      )}
-    </TouchableOpacity>
-  );
+        <Text style={styles.cardSub}>
+          Maintenance: {item.maintenanceName}
+        </Text>
+        <Text
+          style={[
+            styles.cardStatus,
+            {
+              color: getStatusColor(appointmentStatus),
+            },
+          ]}>
+          Status: {getStatusText(appointmentStatus)}
+        </Text>
+        {item.remarks && (
+          <Text style={styles.cardSub} numberOfLines={1}>
+            Remarks: {item.remarks}
+          </Text>
+        )}
+        {appointmentStatus === 'scheduled_overdue' && (
+          <Text style={[styles.cardSub, {color: '#ef4444', fontStyle: 'italic'}]}>
+            ⚠️ This maintenance was due on {moment(item.date).format('DD MMM YYYY')}
+          </Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={{flex: 1}}>
@@ -409,6 +720,22 @@ const MaintenanceCalendarScreen = () => {
               }}
             />
 
+            {/* Legend for calendar dots */}
+            <View style={styles.legendContainer}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, {backgroundColor: '#0284c7'}]} />
+                <Text style={styles.legendText}>Scheduled</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, {backgroundColor: '#ef4444'}]} />
+                <Text style={styles.legendText}>Overdue</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, {backgroundColor: '#10b981'}]} />
+                <Text style={styles.legendText}>Completed</Text>
+              </View>
+            </View>
+
             {/* Appointments List */}
             {filteredAppointments.length > 0 ? (
               <View style={styles.listContainer}>
@@ -443,7 +770,7 @@ const MaintenanceCalendarScreen = () => {
             <View style={styles.modalContainer}>
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>Appointment Details</Text>
-                {selectedAppointment && (
+                {selectedAppointment && validateAppointmentData(selectedAppointment) ? (
                   <>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Date:</Text>
@@ -455,7 +782,7 @@ const MaintenanceCalendarScreen = () => {
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Vehicle:</Text>
                       <Text style={styles.detailValue}>
-                        {selectedAppointment.vehicleName || selectedAppointment.vehicleId}
+                        {selectedAppointment.vehicleName}
                       </Text>
                     </View>
                     <View style={styles.detailRow}>
@@ -471,10 +798,11 @@ const MaintenanceCalendarScreen = () => {
                           styles.detailValue,
                           styles.statusText,
                           {
-                            color: selectedAppointment.status === 'completed' ? '#10b981' : '#0284c7',
+                            color: getStatusColor(getAppointmentStatus(selectedAppointment)),
+                            fontWeight: 'bold',
                           },
                         ]}>
-                        {selectedAppointment.status.toUpperCase()}
+                        {getStatusText(getAppointmentStatus(selectedAppointment))}
                       </Text>
                     </View>
                     {selectedAppointment.remarks && (
@@ -503,7 +831,16 @@ const MaintenanceCalendarScreen = () => {
                         </Text>
                       </View>
                     )}
+                    {getAppointmentStatus(selectedAppointment) === 'scheduled_overdue' && (
+                      <View style={styles.overdueWarning}>
+                        <Text style={styles.overdueWarningText}>
+                          ⚠️ This maintenance is overdue. It was scheduled for {moment(selectedAppointment.date).format('DD MMM YYYY')}
+                        </Text>
+                      </View>
+                    )}
                   </>
+                ) : (
+                  <Text style={styles.errorText}>Invalid appointment data</Text>
                 )}
                 <View style={styles.modalButtons}>
                   <TouchableOpacity
@@ -711,6 +1048,12 @@ const styles = StyleSheet.create({
   remarksText: {
     fontStyle: 'italic',
   },
+  errorText: {
+    color: '#ef4444',
+    textAlign: 'center',
+    fontSize: 16,
+    marginVertical: 20,
+  },
   modalButtons: {
     flexDirection: 'row',
     marginTop: 25,
@@ -739,6 +1082,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
     fontSize: 16,
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 15,
+    paddingVertical: 10,
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#374151',
+  },
+  overdueWarning: {
+    backgroundColor: '#fef2f2',
+    padding: 10,
+    borderRadius: 6,
+    marginTop: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ef4444',
+  },
+  overdueWarningText: {
+    color: '#ef4444',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

@@ -141,6 +141,7 @@ const DriverRating = ({navigation}) => {
       const response = await GETNETWORK(Url, true);
       const checklist = response.data || [];
       setChecklistItems(checklist);
+      console.log('checlist',checklist)
       showToast('success', 'Checklist Loaded', `${checklist.length} checklist items loaded`);
     } catch (error) {
       console.error('Error fetching checklist:', error);
@@ -187,19 +188,22 @@ const DriverRating = ({navigation}) => {
     setLoading(true);
     try {
       const checklistValues = checklistItems
-        .map(item => {
-          const ratingValue = ratings[item.driver_checklist_master_id];
-          
-          if (ratingValue === undefined || ratingValue === null || ratingValue === '') {
-            return null;
-          }
-
-          return {
-            checklist_master_id: item.driver_checklist_master_id,
-            value: item.checklist_type === 'rate' ? ratingValue * 2 : ratingValue,
-          };
-        })
-        .filter(item => item !== null);
+      .map(item => {
+        const ratingValue = ratings[item.driver_checklist_master_id];
+        if (ratingValue === undefined || ratingValue === null || ratingValue === '') {
+          return null;
+        }
+    
+        return {
+          checklist_master_id: item.driver_checklist_master_id,
+          value:
+            item.checklist_type === 'rate'
+              ? ratingValue * 2
+              : ratingValue, // keep "yes"/"no" for question
+        };
+      })
+      .filter(item => item !== null);
+    
 
       if (checklistValues.length === 0) {
         showToast('error', 'Required', 'Please provide valid ratings for checklist items');
@@ -217,6 +221,7 @@ const DriverRating = ({navigation}) => {
 
       const Url = `${BASE_URL}trips/driver_rating/`;
       const response = await POSTNETWORK(Url, ratingData, true);
+      console.log('response',response)
 
       if (response.status === 'success') {
         const driverName = driverItems.find(item => item.value === driverValue)?.label || 'Driver';
@@ -260,26 +265,37 @@ const DriverRating = ({navigation}) => {
     }));
   };
 
-  const renderChecklistItem = ({item, index}) => {
+  const renderChecklistItem = ({ item, index }) => {
     const selectedValue = ratings[item.driver_checklist_master_id];
     const isRateType = item.checklist_type === 'rate';
-    const options = isRateType ? ratingOptions : yesNoOptions;
+    const isQuestionType = item.checklist_type === 'question';
+    const options = isRateType ? ratingOptions : isQuestionType ? yesNoOptions : [];
     const selectedOption = options.find(opt => opt.value === selectedValue);
     const isOpen = openDropdowns[item.driver_checklist_master_id] || false;
     const zIndex = isOpen ? zIndexCounter.current + index : 1;
-
+  
+    // Debugging log to verify state
+    console.log(`Checklist Item: ${item.checklist_name}, isOpen: ${isOpen}, selectedValue: ${selectedValue}`);
+  
     return (
-      <View style={[styles.tableRow, {zIndex}]} key={item.driver_checklist_master_id}>
+      <View style={[styles.tableRow, { zIndex }]} key={item.driver_checklist_master_id}>
         <View style={styles.itemNameContainer}>
           <Text style={styles.itemName}>{item.checklist_name}</Text>
-          {selectedValue && !isRateType && (
-            <Text style={[styles.selectedStatusText, {color: selectedOption?.color}]}>
-              {selectedOption?.label}
-            </Text>
+          {/* Show selectedStatusText only when dropdown is closed and a value is selected */}
+          {selectedValue && isQuestionType && !isOpen && (
+            <TouchableOpacity
+              onPress={() => handleChecklistDropdownOpen(item.driver_checklist_master_id, true)}
+              style={styles.selectedStatusContainer}
+            >
+              <Text style={[styles.selectedStatusText, { color: selectedOption?.color || '#374151' }]}>
+                {selectedOption?.label || 'N/A'}
+              </Text>
+            </TouchableOpacity>
           )}
         </View>
-
+  
         {isRateType ? (
+          // ⭐ Star Rating for "rate"
           <View style={styles.starRatingContainer}>
             <StarRating
               rating={selectedValue || 0}
@@ -288,7 +304,7 @@ const DriverRating = ({navigation}) => {
               starSize={28}
               color="#facc15"
               emptyColor="#e5e7eb"
-              starStyle={{marginHorizontal: 1}}
+              starStyle={{ marginHorizontal: 1 }}
             />
             {selectedValue && (
               <Text style={styles.starRatingText}>
@@ -296,52 +312,40 @@ const DriverRating = ({navigation}) => {
               </Text>
             )}
           </View>
-        ) : (
-          <View style={[styles.statusDropdownContainer, {zIndex: isOpen ? zIndex + 1 : 1}]}>
+        ) : isQuestionType && (isOpen || !selectedValue) ? (
+          // ✅ Yes/No dropdown for "question" (shown only when open or no selection)
+          <View style={[styles.statusDropdownContainer, { zIndex: isOpen ? zIndex + 1 : 1 }]}>
             <DropDownPicker
               open={isOpen}
               value={selectedValue}
-              items={options}
+              items={yesNoOptions}
               setOpen={(open) => handleChecklistDropdownOpen(item.driver_checklist_master_id, open)}
-              setValue={(value) => handleRatingSelect(item.driver_checklist_master_id, value)}
+              setValue={(callback) => {
+                const newValue = callback(selectedValue);
+                handleRatingSelect(item.driver_checklist_master_id, newValue);
+              }}
               setItems={() => {}}
-              placeholder="Select Option"
-              style={[
-                styles.statusDropdown,
-                selectedOption && {backgroundColor: selectedOption.color + '20'},
-              ]}
+              placeholder="Select Yes/No"
+              style={[styles.statusDropdown, selectedOption && !isOpen && { backgroundColor: selectedOption.color + '20' }]}
               textStyle={styles.statusDropdownText}
               placeholderStyle={styles.statusDropdownPlaceholder}
-              labelStyle={selectedOption && {color: selectedOption.color}}
-              listItemLabelStyle={(item) => ({
-                color: item.color,
+              labelStyle={selectedOption && { color: selectedOption.color }}
+              listItemLabelStyle={(opt) => ({
+                color: opt.color,
                 fontWeight: '600',
               })}
-              searchable={false}
               showTickIcon={true}
-              listMode="SCROLLVIEW"
-              scrollViewProps={{
-                nestedScrollEnabled: true,
-              }}
-              modalProps={{
-                animationType: 'fade',
-              }}
+              listMode="MODAL"
               dropDownDirection="BOTTOM"
               maxHeight={200}
               autoScroll={true}
-              ArrowDownIconComponent={() => (
-                <View style={[
-                  styles.statusIndicator,
-                  selectedOption && {backgroundColor: selectedOption.color},
-                ]} />
-              )}
-              zIndex={isOpen ? zIndex + 3 : 1}
             />
           </View>
-        )}
+        ) : null}
       </View>
     );
   };
+  
 
   return (
     <>
@@ -378,7 +382,7 @@ const DriverRating = ({navigation}) => {
                 placeholderStyle={styles.dropdownPlaceholder}
                 searchable={true}
                 searchPlaceholder="Search trips..."
-                listMode="SCROLLVIEW"
+                  listMode="MODAL"
                 scrollViewProps={{
                   nestedScrollEnabled: true,
                 }}
@@ -403,7 +407,7 @@ const DriverRating = ({navigation}) => {
                 placeholderStyle={styles.dropdownPlaceholder}
                 searchable={true}
                 searchPlaceholder="Search drivers..."
-                listMode="SCROLLVIEW"
+                listMode="MODAL"
                 scrollViewProps={{
                   nestedScrollEnabled: true,
                 }}

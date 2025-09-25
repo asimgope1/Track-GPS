@@ -19,6 +19,13 @@ const Track = ({
 
   const mapRef = useRef();
 
+  console.log('track page',  showTrack,
+    latitude,
+    longitude,
+    visible,
+    onClose,
+    projectedTrack,)
+
   // Log the data for debugging purposes
 
   // Extract source and destination coordinates from the first item of the data array
@@ -43,17 +50,17 @@ const Track = ({
     (projectedTrack?.data && projectedTrack?.data[0]?.via_points) || [];
 
   // Filter out undefined coordinates from showTrack
-  const filteredShowTrack =
-    showTrack?.filter(
-      item => item?.latitude !== undefined && item?.longitude !== undefined,
-    ) || [];
+  // const filteredShowTrack =
+  //   showTrack?.filter(
+  //     item => item?.latitude !== undefined && item?.longitude !== undefined,
+  //   ) || [];
 
-  //  const filteredShowTrack = Array.isArray(showTrack)
-  //    ? showTrack.filter(
-  //        item =>
-  //          item?.latitude !== undefined && item?.longitude !== undefined,
-  //      )
-  //    : [];
+   const filteredShowTrack = Array.isArray(showTrack)
+     ? showTrack.filter(
+         item =>
+           item?.latitude !== undefined && item?.longitude !== undefined,
+       )
+     : [];
 
   const region = {
     latitude: latitude || 28.6139, // Default to New Delhi

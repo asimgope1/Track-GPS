@@ -13,6 +13,7 @@ import {
   Dimensions,
   Modal,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Header from '../../components/Header';
@@ -52,6 +53,7 @@ const VehicleInspection = ({ navigation }) => {
   const [inspectionItems, setInspectionItems] = useState(DEFAULT_INSPECTION_ITEMS);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
   // Vehicle Dropdown
   const [vehicleOpen, setVehicleOpen] = useState(false);
@@ -76,8 +78,21 @@ const VehicleInspection = ({ navigation }) => {
   };
 
   const handleDayPress = day => {
+    const selectedMoment = moment(day.dateString);
+    const today = moment().startOf('day');
+    
+    // Allow today and future dates only
+    if (selectedMoment.isBefore(today)) {
+      showToast('error', 'Invalid Date', 'Cannot select past dates. Please choose today or a future date.');
+      return;
+    }
+
     setSelectedDate(day.dateString);
     setShowCalendar(false);
+    
+    // Clear date error if any
+    setFormErrors(prev => ({...prev, date: null}));
+    
     showToast('success', 'Date Selected', moment(day.dateString).format('DD MMM YYYY'));
   };
 
@@ -103,6 +118,7 @@ const VehicleInspection = ({ navigation }) => {
   const fetchChecklistAndStatus = async () => {
     const Url = `${BASE_URL}maintenance/checklist/`;
     try {
+      setLoading(true);
       const response = await GETNETWORK(Url, true);
       console.log('checklist Data:', response.data);
 
@@ -134,6 +150,8 @@ const VehicleInspection = ({ navigation }) => {
     } catch (error) {
       console.error('Failed to fetch checklist/status', error);
       showToast('error', 'Load Failed', 'Failed to fetch inspection checklist');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -167,6 +185,9 @@ const VehicleInspection = ({ navigation }) => {
         [itemId]: false,
       }));
 
+      // Clear error for this item if any
+      setFormErrors(prev => ({...prev, [itemId]: null}));
+
       showToast('success', 'Status Updated', `${selectedStatus?.label} selected`);
     },
     [statusOptions],
@@ -181,6 +202,7 @@ const VehicleInspection = ({ navigation }) => {
     setSelectedStatusDetails({});
     setOpenDropdowns({});
     setVehicleOpen(false);
+    setFormErrors({});
     showToast('info', 'Form Reset', 'All fields have been cleared');
   };
 
@@ -230,39 +252,44 @@ const VehicleInspection = ({ navigation }) => {
   };
 
   const validateForm = () => {
+    const errors = {};
+
+    // Date validation - must be today or future
     if (!selectedDate) {
-      showToast('error', 'Validation Error', 'Please select inspection date');
-      return false;
+      errors.date = 'Please select inspection date';
+    } else if (moment(selectedDate).isBefore(moment(), 'day')) {
+      errors.date = 'Cannot select past dates. Please choose today or a future date.';
     }
     
+    // Vehicle validation
     if (!vehicleValue) {
-      showToast('error', 'Validation Error', 'Please select a vehicle');
-      return false;
+      errors.vehicle = 'Please select a vehicle';
     }
     
+    // Inspector name validation
     if (!inspectorName?.trim()) {
-      showToast('error', 'Validation Error', 'Please enter inspector name');
-      return false;
+      errors.inspectorName = 'Please enter inspector name';
+    } else if (inspectorName.trim().length < 2) {
+      errors.inspectorName = 'Inspector name must be at least 2 characters long';
     }
 
-    // Check if all inspection items have status selected
+    // Inspection items validation
     const incompleteItems = inspectionItems.filter(item => !inspectionResults[item.id]);
     if (incompleteItems.length > 0) {
-      showToast('error', 'Validation Error', `Please select status for all ${incompleteItems.length} items`);
-      return false;
+      incompleteItems.forEach(item => {
+        errors[item.id] = 'Please select status';
+      });
     }
 
-    // Check if selected date is not in the future
-    if (moment(selectedDate).isAfter(moment(), 'day')) {
-      showToast('error', 'Validation Error', 'Cannot schedule inspection for future dates');
-      return false;
-    }
-
-    return true;
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      showToast('error', 'Validation Error', 'Please fix all errors before submitting');
+      return;
+    }
 
     setIsSubmitting(true);
     setLoading(true);
@@ -292,14 +319,60 @@ const VehicleInspection = ({ navigation }) => {
       console.log('Inspection submission response:', response);
 
       if (response && response.success !== false) {
-        showToast('success', 'Success', 'Vehicle inspection submitted successfully!');
-        resetForm();
+        // Show success alert with options
+        Alert.alert(
+          'Success!',
+          'Vehicle inspection submitted successfully!',
+          [
+            {
+              text: 'Submit Another',
+              onPress: () => {
+                resetForm();
+                showToast('success', 'Ready', 'You can now submit another inspection');
+              },
+            },
+            {
+              text: 'View Inspections',
+              onPress: () => {
+                // Navigate to inspections list if available, or go back
+                navigation.goBack();
+              },
+            },
+          ],
+          { cancelable: false }
+        );
+        
+        showToast('success', 'Submission Successful', 'Inspection data saved successfully');
       } else {
         throw new Error(response?.message || 'Failed to submit inspection');
       }
     } catch (error) {
       console.error('Error submitting inspection:', error);
-      showToast('error', 'Submission Failed', error.message || 'Failed to submit inspection');
+      
+      // Enhanced error handling
+      let errorMessage = 'Failed to submit inspection. Please try again.';
+      
+      if (error.response) {
+        // Server responded with error status
+        if (error.response.status === 400) {
+          errorMessage = 'Invalid data submitted. Please check your inputs.';
+        } else if (error.response.status === 401) {
+          errorMessage = 'Authentication failed. Please login again.';
+        } else if (error.response.status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+      } else if (error.request) {
+        // Network error
+        errorMessage = 'Network error. Please check your internet connection.';
+      }
+      
+      Alert.alert(
+        'Submission Failed',
+        errorMessage,
+        [{ text: 'OK', style: 'default' }]
+      );
+      
+      showToast('error', 'Submission Failed', errorMessage);
     } finally {
       setIsSubmitting(false);
       setLoading(false);
@@ -313,9 +386,10 @@ const VehicleInspection = ({ navigation }) => {
     );
     const isOpen = openDropdowns[item.id] || false;
     const zIndex = isOpen ? zIndexCounter.current : 1;
+    const hasError = formErrors[item.id];
 
     return (
-      <View style={[styles.tableRow, {zIndex}]}>
+      <View style={[styles.tableRow, {zIndex}, hasError && styles.errorRow]}>
         <View style={styles.itemNameContainer}>
           <Text style={styles.itemName}>{item.name}</Text>
           {selectedStatus && (
@@ -326,6 +400,9 @@ const VehicleInspection = ({ navigation }) => {
               ]}>
               {selectedStatusObj?.label}
             </Text>
+          )}
+          {hasError && (
+            <Text style={styles.errorText}>{formErrors[item.id]}</Text>
           )}
         </View>
 
@@ -362,6 +439,7 @@ const VehicleInspection = ({ navigation }) => {
               selectedStatusObj && {
                 backgroundColor: selectedStatusObj.color + '20',
               },
+              hasError && styles.errorInput,
             ]}
             textStyle={styles.statusDropdownText}
             placeholderStyle={styles.statusDropdownPlaceholder}
@@ -440,7 +518,10 @@ const VehicleInspection = ({ navigation }) => {
             <View style={styles.inputItem}>
               <Text style={styles.label}>Date *</Text>
               <TouchableOpacity
-                style={styles.dateButton}
+                style={[
+                  styles.dateButton,
+                  formErrors.date && styles.errorInput
+                ]}
                 onPress={() => setShowCalendar(true)}>
                 <Text style={[
                   styles.dateButtonText,
@@ -449,6 +530,9 @@ const VehicleInspection = ({ navigation }) => {
                   {selectedDate ? moment(selectedDate).format('DD MMM YYYY') : 'Select Date'}
                 </Text>
               </TouchableOpacity>
+              {formErrors.date && (
+                <Text style={styles.errorText}>{formErrors.date}</Text>
+              )}
             </View>
 
             <View
@@ -468,13 +552,21 @@ const VehicleInspection = ({ navigation }) => {
                     setOpenDropdowns({});
                     zIndexCounter.current += 200;
                   }
+                  // Clear error when dropdown is opened
+                  if (formErrors.vehicle) {
+                    setFormErrors(prev => ({...prev, vehicle: null}));
+                  }
                 }}
                 setValue={setVehicleValue}
                 setItems={setVehicleItems}
                 placeholder="Select Vehicle"
+                  listMode="MODAL"
                 searchable={true}
                 searchablePlaceholder="Search vehicle..."
-                style={styles.dropdown}
+                style={[
+                  styles.dropdown,
+                  formErrors.vehicle && styles.errorInput
+                ]}
                 dropDownContainerStyle={[
                   styles.dropdownContainer,
                   {zIndex: vehicleOpen ? zIndexCounter.current + 101 : 1},
@@ -494,19 +586,34 @@ const VehicleInspection = ({ navigation }) => {
                 maxHeight={200}
                 autoScroll={true}
               />
+              {formErrors.vehicle && (
+                <Text style={styles.errorText}>{formErrors.vehicle}</Text>
+              )}
             </View>
           </View>
 
           <View style={styles.inputItem}>
             <Text style={styles.label}>Inspector Name *</Text>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                formErrors.inspectorName && styles.errorInput
+              ]}
               placeholderTextColor={'#9ca3af'}
               placeholder="Enter inspector name"
               value={inspectorName}
-              onChangeText={setInspectorName}
+              onChangeText={(text) => {
+                setInspectorName(text);
+                // Clear error when user starts typing
+                if (formErrors.inspectorName) {
+                  setFormErrors(prev => ({...prev, inspectorName: null}));
+                }
+              }}
               maxLength={100}
             />
+            {formErrors.inspectorName && (
+              <Text style={styles.errorText}>{formErrors.inspectorName}</Text>
+            )}
           </View>
 
           {/* comment input */}
@@ -547,13 +654,16 @@ const VehicleInspection = ({ navigation }) => {
                       selectedTextColor: '#fff'
                     },
                   }}
-                  maxDate={moment().format('YYYY-MM-DD')}
+                  minDate={moment().format('YYYY-MM-DD')} // Only allow today and future dates
                   theme={{
                     todayTextColor: '#0284c7',
                     arrowColor: '#0284c7',
                     selectedDayBackgroundColor: '#0284c7',
                     selectedDayTextColor: '#fff',
+                    textDisabledColor: '#d1d5db', // Gray out past dates
                   }}
+                  // Disable past dates
+                  disableAllTouchEventsForDisabledDays={true}
                 />
                 <View style={styles.calendarButtons}>
                   <TouchableOpacity
@@ -997,6 +1107,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#374151',
     marginBottom: 4,
+  },
+  // Error styles
+  errorInput: {
+    borderColor: '#ef4444',
+  },
+  errorRow: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#ef4444',
+    backgroundColor: '#fef2f2',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '500',
   },
 });
 

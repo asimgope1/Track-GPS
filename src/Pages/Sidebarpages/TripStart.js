@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useRef} from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,27 +13,36 @@ import {
   TouchableWithoutFeedback,
   FlatList,
   Dimensions,
+  ActivityIndicator,
+  Image,
+  StatusBar,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Geolocation from '@react-native-community/geolocation';
 import moment from 'moment';
+import Toast from 'react-native-toast-message';
 import Header from '../../components/Header';
 import { GETNETWORK } from '../../utils/Network';
 import { BASE_URL } from '../../constants/url';
 import { getObjByKey, storeObjByKey } from '../../utils/Storage';
+import { Icon } from '@rneui/themed';
+import { pick } from '@react-native-documents/picker';
 
-const TripStart = ({navigation, route,onClose}) => {
+const TripStart = ({ navigation, route, onClose }) => {
   // Form state
   const [startDatetime, setStartDatetime] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState('date');
-  const [startAddress, setStartAddress] = useState(location?.label || '');
+  const [startAddress, setStartAddress] = useState('');
   const [startKm, setStartKm] = useState('');
   const [startLat, setStartLat] = useState('');
   const [startLng, setStartLng] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
+  const [attachments, setAttachments] = useState([]);
 
   // Location state
   const [location, setLocation] = useState({});
@@ -45,6 +54,19 @@ const TripStart = ({navigation, route,onClose}) => {
   const [selectedStatusDetails, setSelectedStatusDetails] = useState({});
   const [openDropdowns, setOpenDropdowns] = useState({});
   const zIndexCounter = useRef(1000);
+
+  // Toast configuration
+  const showToast = (type, title, message) => {
+    Toast.show({
+      type,
+      position: 'top',
+      text1: title,
+      text2: message,
+      visibilityTime: type === 'error' ? 4000 : 3000,
+      autoHide: true,
+      topOffset: StatusBar.currentHeight || 40,
+    });
+  };
 
   // Initialize
   useEffect(() => {
@@ -66,164 +88,147 @@ const TripStart = ({navigation, route,onClose}) => {
       }
     } else {
       setPickerMode('date');
+      setFormErrors(prev => ({ ...prev, date: null }));
+      showToast('success', 'Date Selected', moment(currentDate).format('DD MMM YYYY, hh:mm A'));
     }
   };
 
   const showDatePicker = () => {
+    if (moment(startDatetime).isAfter(moment(), 'minute')) {
+      showToast('error', 'Invalid Date', 'Cannot select future dates');
+      return;
+    }
     setPickerMode('date');
     setShowPicker(true);
   };
 
   // Location Handlers
   const getCurrentLocation = async () => {
-    return new Promise((resolve, reject) => {
-      Geolocation.getCurrentPosition(
-        position => {
-          const {latitude, longitude} = position.coords;
-          reverseGeocode(latitude, longitude);
-          resolve({latitude, longitude});
-        },
-        error => {
-          console.error('Error getting location:', error);
-          if (error.code === 1) {
-            Alert.alert(
-              'Permission Denied',
-              'Location permission is required to access your location.',
-            );
-          } else if (error.code === 2) {
-            Alert.alert(
-              'Position Unavailable',
-              'Could not determine your location. Please try again.',
-            );
-          } else if (error.code === 3) {
-            Alert.alert(
-              'Request Timed Out',
-              'Location request timed out. Please try again.',
-            );
-          } else {
-            Alert.alert(
-              'Unknown Error',
-              'An unexpected error occurred. Please try again later.',
-            );
-          }
-          reject(error);
-        },
-        {
-          enableHighAccuracy: false,
-          timeout: 15000,
-          maximumAge: 10000,
-        },
-      );
-    });
-  };
-
-
-
-  
-  // Safe menu press handler
-  const handleMenuPress = () => {
-    if (onClose) {
-      // If onClose exists, we're in modal mode - close modal
-      onClose();
-    } else if (navigation?.openDrawer) {
-      // If navigation exists and has openDrawer, we're in page mode
-      navigation.openDrawer();
-    } else {
-      // Fallback - just close or handle appropriately
-      console.warn('Navigation not available');
-      if (onClose) onClose();
+    setLoading(true);
+    try {
+      const position = await new Promise((resolve, reject) => {
+        Geolocation.getCurrentPosition(
+          position => resolve(position),
+          error => reject(error),
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
+        );
+      });
+      const { latitude, longitude } = position.coords;
+      await reverseGeocode(latitude, longitude);
+      setStartLat(latitude.toString());
+      setStartLng(longitude.toString());
+      setFormErrors(prev => ({ ...prev, latitude: null, longitude: null }));
+      showToast('success', 'Location Fetched', 'Current location retrieved successfully');
+    } catch (error) {
+      console.error('Error getting location:', error);
+      let message = 'An unexpected error occurred. Please try again.';
+      if (error.code === 1) message = 'Location permission is required.';
+      else if (error.code === 2) message = 'Could not determine your location.';
+      else if (error.code === 3) message = 'Location request timed out.';
+      showToast('error', 'Location Error', message);
+    } finally {
+      setLoading(false);
     }
   };
 
-    const reverseGeocode = async (latitude, longitude) => {
-    console.log('Reverse geocoding for:', latitude, longitude);
-    setStartLat(latitude.toString());
-    setStartLng(longitude.toString());
-        try {
-          const response = await fetch(
-            `https://api.openrouteservice.org/geocode/reverse?api_key=eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImRhZmY2MTE0ZmNhYzRhZjViYTUyZjY0ZWMyMTRlYTI5IiwiaCI6Im11cm11cjY0In0=&point.lon=${longitude}&point.lat=${latitude}`,
-          );
-          const result = await response.json();
-  
-          const firstFeature = result?.features?.[0];
-          if (firstFeature?.properties) {
-            const {street, label} = firstFeature.properties;
-  
-            console.log('Street:', street);
-            console.log('Label:', label);
-  
-            // Store minimal data
-            const locationData = {
-              street,
-              label,
-            };
-            setLocation(locationData);
-  
-            storeObjByKey('location', locationData);
-          } else {
-            console.warn('No valid feature found in reverse geocode result');
-          }
-        } catch (error) {
-          console.error('Error fetching reverse geocode:', error);
+  const reverseGeocode = async (latitude, longitude) => {
+    try {
+      const response = await fetch(
+        `https://api.openrouteservice.org/geocode/reverse?api_key=eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImRhZmY2MTE0ZmNhYzRhZjViYTUyZjY0ZWMyMTRlYTI5IiwiaCI6Im11cm11cjY0In0=&point.lon=${longitude}&point.lat=${latitude}`
+      );
+      const result = await response.json();
+      const firstFeature = result?.features?.[0];
+      if (firstFeature?.properties) {
+        const { street, label } = firstFeature.properties;
+        const locationData = { street, label };
+        setLocation(locationData);
+        setStartAddress(label);
+        storeObjByKey('location', locationData);
+        showToast('success', 'Address Fetched', label);
+      } else {
+        showToast('error', 'Geocode Error', 'No valid address found');
+      }
+    } catch (error) {
+      console.error('Error fetching reverse geocode:', error);
+      showToast('error', 'Geocode Error', 'Failed to fetch address');
+    }
+  };
+
+  // Attachment Handlers
+  const handleAttachment = async () => {
+    try {
+      const pickResults = await pick();
+      if (pickResults && pickResults.length > 0) {
+        const pickResult = pickResults[0];
+        if (pickResult.size && pickResult.size > 10 * 1024 * 1024) {
+          showToast('error', 'File Too Large', 'Please select a file smaller than 10MB');
+          return;
         }
-  
-      };
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+        if (!allowedTypes.includes(pickResult.type)) {
+          showToast('error', 'Invalid File Type', 'Please select JPEG, PNG, or PDF files only');
+          return;
+        }
+        setAttachments([{
+          uri: pickResult.uri,
+          name: pickResult.name,
+          type: pickResult.type,
+        }]);
+        showToast('success', 'File Selected', 'Attachment added successfully');
+      }
+    } catch (error) {
+      console.error('Error picking file:', error);
+      showToast('error', 'File Selection Failed', 'Failed to select file. Please try again.');
+    }
+  };
+
+  const removeAttachment = () => {
+    setAttachments([]);
+    showToast('info', 'Attachment Removed', 'File has been removed');
+  };
 
   // Checklist Handlers
   const fetchChecklistAndStatus = async () => {
+    setLoading(true);
     try {
-      const response = await GETNETWORK(
-        `${BASE_URL}maintenance/checklist/`,
-        true,
-      );
+      const response = await GETNETWORK(`${BASE_URL}maintenance/checklist/`, true);
       const data = response?.data || [];
-
-      // Extract statusOptions
-      const rawStatus = data.flatMap(item =>
-        item.checklist_value.map(cv => cv.key),
-      );
-      const uniqueStatus = [
-        ...new Set(rawStatus.map(key => key.toLowerCase())),
-      ];
-
+      const rawStatus = data.flatMap(item => item.checklist_value.map(cv => cv.key));
+      const uniqueStatus = [...new Set(rawStatus.map(key => key.toLowerCase()))];
       const statusOptionMapped = uniqueStatus.map(key => ({
         label: capitalize(key),
         value: key,
         color: getStatusColor(key),
       }));
-
-      // Extract inspection items
       const inspectionMapped = data.map(item => ({
         id: item.id,
         name: item.checklist_name,
       }));
-
       setStatusOptions(statusOptionMapped);
       setInspectionItems(inspectionMapped);
+      showToast('success', 'Checklist Loaded', `${inspectionMapped.length} items loaded`);
     } catch (error) {
       console.error('Failed to fetch checklist/status', error);
+      setError('Failed to load checklist data');
+      showToast('error', 'Load Failed', 'Failed to fetch checklist data');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleStatusSelect = useCallback(
     (itemId, value) => {
-      const selectedStatus = statusOptions.find(
-        status => status.value === value,
-      );
-      setInspectionResults(prev => ({...prev, [itemId]: value}));
-      setSelectedStatusDetails(prev => ({
-        ...prev,
-        [itemId]: selectedStatus || {},
-      }));
-      setOpenDropdowns(prev => ({...prev, [itemId]: false}));
+      const selectedStatus = statusOptions.find(status => status.value === value);
+      setInspectionResults(prev => ({ ...prev, [itemId]: value }));
+      setSelectedStatusDetails(prev => ({ ...prev, [itemId]: selectedStatus || {} }));
+      setOpenDropdowns(prev => ({ ...prev, [itemId]: false }));
+      setFormErrors(prev => ({ ...prev, checklist: null }));
     },
-    [statusOptions],
+    [statusOptions]
   );
 
   // Helper functions
-  const capitalize = str =>
-    str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-
+  const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   const getStatusColor = key => {
     const lower = key.toLowerCase();
     if (lower === 'ok') return '#22c55e';
@@ -232,81 +237,142 @@ const TripStart = ({navigation, route,onClose}) => {
     return '#94a3b8';
   };
 
+  // Form Validation
+  const validateForm = () => {
+    const errors = {};
+    if (!startAddress) errors.address = 'Please enter or fetch a location';
+    if (!startKm || isNaN(startKm) || parseFloat(startKm) <= 0) errors.startKm = 'Please enter a valid odometer reading';
+    if (!startLat) errors.latitude = 'Please fetch location to set latitude';
+    if (!startLng) errors.longitude = 'Please fetch location to set longitude';
+    if (Object.keys(inspectionResults).length !== inspectionItems.length) {
+      errors.checklist = 'Please complete all checklist items';
+    }
+    if (moment(startDatetime).isAfter(moment(), 'minute')) {
+      errors.date = 'Cannot select future dates';
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Form Submission
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      showToast('error', 'Validation Error', 'Please fix all errors before submitting');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const loginRes = await getObjByKey('loginResponse');
+      const token = loginRes?.data?.access_token;
+      if (!token) throw new Error('Authentication token not available');
+
+      const formdata = new FormData();
+      formdata.append('start_address', startAddress);
+      formdata.append('start_datetime', moment(startDatetime).format('YYYY-MM-DDTHH:mm:ss'));
+      formdata.append('start_km', parseFloat(startKm));
+      formdata.append('start_lat', parseFloat(startLat));
+      formdata.append('start_lng', parseFloat(startLng));
+      formdata.append('checklist', JSON.stringify(
+        inspectionItems.map(item => ({
+          checklist_master_id: item.id,
+          selected_value: inspectionResults[item.id].toLowerCase().replace(' ', '_'),
+        }))
+      ));
+
+      if (attachments.length > 0) {
+        formdata.append('uploaded_proof', {
+          uri: attachments[0].uri,
+          name: attachments[0].name,
+          type: attachments[0].type,
+        });
+      }
+
+      const response = await fetch(
+        `${BASE_URL}trips/trip_start/${route.params?.trip?.trip_assignment_id}/`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formdata,
+        }
+      );
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.msg || 'Failed to start trip');
+
+      Alert.alert('Success', 'Trip started successfully!', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+      showToast('success', 'Trip Started', 'Trip started successfully');
+    } catch (error) {
+      console.error('Error:', error);
+      let errorMessage = 'Failed to start trip. Please try again.';
+      if (error.message.includes('Network request failed')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else if (error.message.includes('401')) {
+        errorMessage = 'Authentication failed. Please login again.';
+      }
+      showToast('error', 'Submission Failed', errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Safe menu press handler
+  const handleMenuPress = () => {
+    if (onClose) {
+      onClose();
+    } else if (navigation?.openDrawer) {
+      navigation.openDrawer();
+    } else {
+      console.warn('Navigation not available');
+      if (onClose) onClose();
+    }
+  };
+
   // Render Checklist Item
-  const renderItem = ({item}) => {
+  const renderItem = ({ item }) => {
     const selectedStatus = inspectionResults[item.id];
-    const selectedStatusObj = statusOptions.find(
-      opt => opt.value === selectedStatus,
-    );
+    const selectedStatusObj = statusOptions.find(opt => opt.value === selectedStatus);
     const isOpen = openDropdowns[item.id] || false;
-    const zIndex = isOpen ? zIndexCounter.current : 1;
+    const zIndex = isOpen ? zIndexCounter.current++ : 1;
 
     return (
-      <View style={[styles.tableRow, {zIndex}]}>
+      <View style={[styles.tableRow, { zIndex }]}>
         <View style={styles.itemNameContainer}>
           <Text style={styles.itemName}>{item.name}</Text>
           {selectedStatus && (
-            <Text
-              style={[
-                styles.selectedStatusText,
-                {color: selectedStatusObj?.color},
-              ]}>
+            <Text style={[styles.selectedStatusText, { color: selectedStatusObj?.color }]}>
               {selectedStatusObj?.label}
             </Text>
           )}
         </View>
-
-        <View
-          style={[
-            styles.statusDropdownContainer,
-            {zIndex: isOpen ? zIndex + 1 : 1},
-          ]}>
+        <View style={[styles.statusDropdownContainer, { zIndex: isOpen ? zIndex + 1 : 1 }]}>
           <DropDownPicker
             open={isOpen}
             value={selectedStatus}
             items={statusOptions}
             setOpen={callback => {
-              const value =
-                typeof callback === 'function'
-                  ? callback(openDropdowns[item.id])
-                  : callback;
-              setOpenDropdowns(prev => ({...prev, [item.id]: value}));
+              const value = typeof callback === 'function' ? callback(openDropdowns[item.id]) : callback;
+              setOpenDropdowns(prev => ({ ...prev, [item.id]: value }));
             }}
             setValue={callback => {
-              const selectedValue =
-                typeof callback === 'function'
-                  ? callback(selectedStatus)
-                  : callback;
+              const selectedValue = typeof callback === 'function' ? callback(selectedStatus) : callback;
               handleStatusSelect(item.id, selectedValue);
             }}
             setItems={() => {}}
             placeholder="Select Status"
-            style={[
-              styles.statusDropdown,
-              selectedStatusObj && {
-                backgroundColor: selectedStatusObj.color + '20',
-              },
-            ]}
+            style={[styles.statusDropdown, selectedStatusObj && { backgroundColor: selectedStatusObj.color + '20' }]}
             textStyle={styles.statusDropdownText}
             placeholderStyle={styles.statusDropdownPlaceholder}
-            labelStyle={selectedStatusObj && {color: selectedStatusObj.color}}
-            listItemLabelStyle={item => ({
-              color: item.color,
-              fontWeight: '600',
-            })}
+            labelStyle={selectedStatusObj && { color: selectedStatusObj.color }}
+            listItemLabelStyle={item => ({ color: item.color, fontWeight: '600' })}
             searchable={true}
             showTickIcon={false}
             listMode="MODAL"
-            modalProps={{animationType: 'fade'}}
+            modalProps={{ animationType: 'fade' }}
             ArrowDownIconComponent={() => (
-              <View
-                style={[
-                  styles.statusIndicator,
-                  selectedStatusObj && {
-                    backgroundColor: selectedStatusObj.color,
-                  },
-                ]}
-              />
+              <View style={[styles.statusIndicator, selectedStatusObj && { backgroundColor: selectedStatusObj.color }]} />
             )}
             zIndex={isOpen ? zIndex + 3 : 1}
           />
@@ -315,217 +381,217 @@ const TripStart = ({navigation, route,onClose}) => {
     );
   };
 
-  // Form Submission
-  const handleSubmit = async () => {
-    // if (!startAddress || !startKm || !startLat || !startLng) {
-    //   Alert.alert('Error', 'Please fill all required fields');
-    //   return;
-    // }
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0284c7" />
+        <Text style={styles.loadingText}>Loading trip start data...</Text>
+      </View>
+    );
+  }
 
-    if (Object.keys(inspectionResults).length !== inspectionItems.length) {
-      Alert.alert('Error', 'Please complete all checklist items');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    const loginRes = await getObjByKey('loginResponse');
-        const token = loginRes?.data?.access_token;
-
-    try {
-      const formattedDateTime = moment(startDatetime).format(
-        'YYYY-MM-DDTHH:mm:ss',
-      );
-      const checklistData = inspectionItems.map(item => ({
-        checklist_master_id: item.id,
-        selected_value: inspectionResults[item.id]
-          .toLowerCase()
-          .replace(' ', '_'),
-      }));
-
-      const tripData = {
-        start_address: location?.label,
-        start_datetime: formattedDateTime,
-        start_km: parseFloat(startKm),
-        start_lat: parseFloat(startLat),
-        start_lng: parseFloat(startLng),
-        checklist: checklistData,
-      };
-      console.log('tripDatastart', tripData);
-
-      const myHeaders = new Headers();
-      myHeaders.append('Content-Type', 'application/json');
-      myHeaders.append('Authorization', `Bearer ${token}`);
-
-      const response = await fetch(
-        `${BASE_URL}trips/trip_start/${route.params?.trip?.trip_assignment_id}/`,
-        {
-          method: 'POST',
-          headers: myHeaders,
-          body: JSON.stringify(tripData),
-        },
-      );
-
-      const result = await response.json();
-      console.log('Trip Start Response:', result);
-
-      if (!response.ok) {
-        throw new Error(result.msg || 'Failed to start trip');
-      }
-
-      Alert.alert('Success', 'Trip started successfully!');
-      // navigation.goBack();
-    } catch (error) {
-      console.error('Error:', error);
-      Alert.alert('Error', error.message || 'Failed to start trip');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  console.log('location', location);
-  console.log('routres', route.params?.trip?.trip_assignment_id);
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Icon name="error-outline" size={48} color="#dc2626" />
+        <Text style={styles.errorText}>Error loading data</Text>
+        <Text style={styles.errorSubText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchChecklistAndStatus}>
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
-      <Header title="Trip Start" onMenuPress={handleMenuPress} />
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Date & Time Picker */}
-        <View style={styles.inputItem}>
-          <Text style={styles.label}>Date & Time *</Text>
-          <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>
-            <Text style={styles.dateButtonText}>
-              {moment(startDatetime).format('DD MMM YYYY, hh:mm A')}
-            </Text>
-          </TouchableOpacity>
-
-          {Platform.OS === 'android' && showPicker && (
-            <DateTimePicker
-              value={startDatetime}
-              mode={pickerMode}
-              display="default"
-              onChange={onChangeDateTime}
-              is24Hour={true}
-              positiveButton={{label: 'OK', textColor: '#0284c7'}}
-              negativeButton={{label: 'Cancel', textColor: '#ef4444'}}
-            />
-          )}
-
-          {Platform.OS === 'ios' && (
-            <Modal
-              visible={showPicker}
-              transparent={true}
-              animationType="slide">
-              <TouchableWithoutFeedback onPress={() => setShowPicker(false)}>
-                <View style={styles.iosOverlay} />
-              </TouchableWithoutFeedback>
-              <View style={styles.iosPickerContainer}>
-                <DateTimePicker
-                  value={startDatetime}
-                  mode={pickerMode}
-                  display="spinner"
-                  onChange={onChangeDateTime}
-                  is24Hour={true}
-                />
-                <TouchableOpacity
-                  style={styles.iosDoneButton}
-                  onPress={() => {
-                    setShowPicker(false);
-                    if (pickerMode === 'time') setPickerMode('date');
-                  }}>
-                  <Text style={styles.iosDoneButtonText}>Done</Text>
-                </TouchableOpacity>
-              </View>
-            </Modal>
-          )}
-        </View>
-
-        {/* Location */}
-        <View style={styles.inputItem}>
-          <Text style={styles.label}>Location *</Text>
-          <View style={styles.inputRow}>
-            <TextInput
-              style={[styles.input, {flex: 1}]}
-              placeholderTextColor={'gray'}
-              placeholder="Enter Location"
-              value={location.label}
-              onChangeText={text => setStartAddress(location.label)}
-            />
-            <TouchableOpacity
-              style={styles.locationButton}
-              onPress={getCurrentLocation}>
-              <Text style={styles.locationButtonText}>Get Current</Text>
+    <>
+      <StatusBar backgroundColor="#0284c7" barStyle="light-content" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <Header title="Trip Start" onMenuPress={handleMenuPress} />
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {/* Date & Time Picker */}
+          <View style={styles.inputItem}>
+            <Text style={styles.label}>Date & Time *</Text>
+            <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>
+              <Text style={styles.dateButtonText}>
+                {moment(startDatetime).format('DD MMM YYYY, hh:mm A')}
+              </Text>
             </TouchableOpacity>
+            {formErrors.date && <Text style={styles.errorText}>{formErrors.date}</Text>}
+            {Platform.OS === 'android' && showPicker && (
+              <DateTimePicker
+                value={startDatetime}
+                mode={pickerMode}
+                display="default"
+                onChange={onChangeDateTime}
+                is24Hour={true}
+                maximumDate={new Date()}
+                positiveButton={{ label: 'OK', textColor: '#0284c7' }}
+                negativeButton={{ label: 'Cancel', textColor: '#ef4444' }}
+              />
+            )}
+            {Platform.OS === 'ios' && (
+              <Modal visible={showPicker} transparent={true} animationType="slide">
+                <TouchableWithoutFeedback onPress={() => setShowPicker(false)}>
+                  <View style={styles.iosOverlay} />
+                </TouchableWithoutFeedback>
+                <View style={styles.iosPickerContainer}>
+                  <DateTimePicker
+                    value={startDatetime}
+                    mode={pickerMode}
+                    display="spinner"
+                    onChange={onChangeDateTime}
+                    is24Hour={true}
+                    maximumDate={new Date()}
+                  />
+                  <TouchableOpacity
+                    style={styles.iosDoneButton}
+                    onPress={() => {
+                      setShowPicker(false);
+                      if (pickerMode === 'time') setPickerMode('date');
+                    }}
+                  >
+                    <Text style={styles.iosDoneButtonText}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </Modal>
+            )}
           </View>
-        </View>
 
-        {/* Odometer */}
-        <View style={styles.inputItem}>
-          <Text style={styles.label}>Odometer (km) *</Text>
-          <TextInput
-            style={styles.input}
-            value={startKm}
-            onChangeText={setStartKm}
-            placeholder="Enter odometer reading"
-            keyboardType="numeric"
-            placeholderTextColor="#999"
-          />
-        </View>
+          {/* Location */}
+          <View style={styles.inputItem}>
+            <Text style={styles.label}>Location *</Text>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={[styles.input, { flex: 1 }, formErrors.address && styles.errorInput]}
+                placeholderTextColor="#9ca3af"
+                placeholder="Enter or fetch location"
+                value={startAddress}
+                onChangeText={text => {
+                  setStartAddress(text);
+                  setFormErrors(prev => ({ ...prev, address: null }));
+                }}
+              />
+              <TouchableOpacity style={styles.locationButton} onPress={getCurrentLocation}>
+                <Text style={styles.locationButtonText}>Get Current</Text>
+              </TouchableOpacity>
+            </View>
+            {formErrors.address && <Text style={styles.errorText}>{formErrors.address}</Text>}
+          </View>
 
-        {/* Coordinates */}
-        <View style={styles.coordinateContainer}>
-          <View style={[styles.inputItem, {flex: 1, marginRight: 10}]}>
-            <Text style={styles.label}>Latitude *</Text>
+          {/* Odometer */}
+          <View style={styles.inputItem}>
+            <Text style={styles.label}>Odometer (km) *</Text>
             <TextInput
-              style={styles.input}
-              value={startLat}
-              onChangeText={setStartLat}
-              placeholder="Auto-filled from location"
+              style={[styles.input, formErrors.startKm && styles.errorInput]}
+              value={startKm}
+              onChangeText={text => {
+                setStartKm(text);
+                setFormErrors(prev => ({ ...prev, startKm: null }));
+              }}
+              placeholder="Enter odometer reading"
               keyboardType="numeric"
-              placeholderTextColor="#999"
-              editable={false}
+              placeholderTextColor="#9ca3af"
             />
+            {formErrors.startKm && <Text style={styles.errorText}>{formErrors.startKm}</Text>}
           </View>
-          <View style={[styles.inputItem, {flex: 1}]}>
-            <Text style={styles.label}>Longitude *</Text>
-            <TextInput
-              style={styles.input}
-              value={startLng}
-              onChangeText={setStartLng}
-              placeholder="Auto-filled from location"
-              keyboardType="numeric"
-              placeholderTextColor="#999"
-              editable={false}
-            />
+
+          {/* Coordinates */}
+          {/* <View style={styles.coordinateContainer}>
+            <View style={[styles.inputItem, { flex: 1, marginRight: 10 }]}>
+              <Text style={styles.label}>Latitude *</Text>
+              <TextInput
+                style={[styles.input, formErrors.latitude && styles.errorInput]}
+                value={startLat}
+                placeholder="Auto-filled from location"
+                keyboardType="numeric"
+                placeholderTextColor="#9ca3af"
+                editable={false}
+              />
+              {formErrors.latitude && <Text style={styles.errorText}>{formErrors.latitude}</Text>}
+            </View>
+            <View style={[styles.inputItem, { flex: 1 }]}>
+              <Text style={styles.label}>Longitude *</Text>
+              <TextInput
+                style={[styles.input, formErrors.longitude && styles.errorInput]}
+                value={startLng}
+                placeholder="Auto-filled from location"
+                keyboardType="numeric"
+                placeholderTextColor="#9ca3af"
+                editable={false}
+              />
+              {formErrors.longitude && <Text style={styles.errorText}>{formErrors.longitude}</Text>}
+            </View>
+          </View> */}
+
+          {/* Attachments */}
+          <View style={styles.inputItem}>
+            <Text style={styles.label}>Attachments</Text>
+            {attachments.length > 0 ? (
+              <View style={styles.attachmentPreviewContainer}>
+                {attachments[0].type?.startsWith('image/') ? (
+                  <Image
+                    source={{ uri: attachments[0].uri }}
+                    style={styles.attachmentImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <View style={styles.filePreview}>
+                    <Icon name="insert-drive-file" size={40} color="#0284c7" />
+                    <Text style={styles.fileName} numberOfLines={1}>
+                      {attachments[0].name}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.attachmentActions}>
+                  <TouchableOpacity style={styles.removeButton} onPress={removeAttachment}>
+                    <Icon name="close" size={20} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.attachmentButton} onPress={handleAttachment}>
+                <Text style={styles.attachmentButtonText}>Choose File (Max 10MB)</Text>
+              </TouchableOpacity>
+            )}
           </View>
-        </View>
 
-        {/* Checklist Section */}
-        <Text style={styles.sectionHeader}>Pre-Trip Checklist *</Text>
-        <View style={styles.tableContainer}>
-          <FlatList
-            data={inspectionItems}
-            renderItem={renderItem}
-            keyExtractor={item => item.id.toString()}
-            scrollEnabled={false}
-          />
-        </View>
+          {/* Checklist Section */}
+          <Text style={styles.sectionHeader}>Pre-Trip Checklist *</Text>
+          {inspectionItems.length === 0 ? (
+            <Text style={styles.noChecklistText}>No checklist items available</Text>
+          ) : (
+            <View style={styles.tableContainer}>
+              <FlatList
+                data={inspectionItems}
+                renderItem={renderItem}
+                keyExtractor={item => item.id.toString()}
+                scrollEnabled={false}
+              />
+              {formErrors.checklist && <Text style={styles.errorText}>{formErrors.checklist}</Text>}
+            </View>
+          )}
 
-        {/* Submit Button */}
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            isSubmitting && styles.submitButtonDisabled,
-          ]}
-          onPress={handleSubmit}
-          disabled={isSubmitting}>
-          <Text style={styles.submitButtonText}>
-            {isSubmitting ? 'Starting Trip...' : 'Start Trip'}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {/* Submit Button */}
+          <TouchableOpacity
+            style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.submitButtonText}>Start Trip</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+        <Toast />
+      </KeyboardAvoidingView>
+    </>
   );
 };
 
@@ -546,27 +612,37 @@ const styles = StyleSheet.create({
   },
   inputItem: {
     flex: 1,
-    marginBottom: 15,
+    marginBottom: 16,
   },
   label: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   input: {
     color: '#111827',
     height: 45,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#d1d5db',
     borderRadius: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     backgroundColor: '#fff',
+    fontSize: 16,
+  },
+  errorInput: {
+    borderColor: '#ef4444',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '500',
   },
   dateButton: {
     height: 45,
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#d1d5db',
     borderRadius: 6,
     backgroundColor: '#fff',
@@ -574,6 +650,7 @@ const styles = StyleSheet.create({
   dateButtonText: {
     color: '#374151',
     textAlign: 'center',
+    fontSize: 16,
   },
   locationButton: {
     backgroundColor: '#0284c7',
@@ -585,6 +662,7 @@ const styles = StyleSheet.create({
   locationButtonText: {
     color: '#fff',
     fontWeight: '600',
+    fontSize: 14,
   },
   coordinateContainer: {
     flexDirection: 'row',
@@ -599,11 +677,16 @@ const styles = StyleSheet.create({
   },
   tableContainer: {
     backgroundColor: '#fff',
-    borderRadius: 6,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: '#e5e7eb',
     paddingBottom: 10,
-    marginBottom: 10,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   tableRow: {
     flexDirection: 'row',
@@ -620,6 +703,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 14,
     color: '#111827',
+    fontWeight: '600',
   },
   selectedStatusText: {
     marginTop: 4,
@@ -632,6 +716,7 @@ const styles = StyleSheet.create({
   statusDropdown: {
     backgroundColor: '#fff',
     borderColor: '#d1d5db',
+    borderWidth: 1.5,
     borderRadius: 6,
     height: 40,
     minHeight: 40,
@@ -640,6 +725,7 @@ const styles = StyleSheet.create({
   statusDropdownText: {
     fontSize: 13,
     fontWeight: '500',
+    color: '#111827',
   },
   statusDropdownPlaceholder: {
     color: '#9ca3af',
@@ -656,8 +742,8 @@ const styles = StyleSheet.create({
   },
   iosPickerContainer: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
     padding: 20,
     paddingBottom: 0,
   },
@@ -680,11 +766,107 @@ const styles = StyleSheet.create({
   },
   submitButtonDisabled: {
     backgroundColor: '#81a8b8',
+    opacity: 0.6,
   },
   submitButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#6b7280',
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#f9fafb',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 12,
+  },
+  errorSubText: {
+    color: '#6b7280',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  retryButton: {
+    backgroundColor: '#0284c7',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 6,
+    marginTop: 16,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  attachmentPreviewContainer: {
+    borderWidth: 1.5,
+    borderColor: '#d1d5db',
+    borderRadius: 6,
+    padding: 10,
+    backgroundColor: '#fff',
+    position: 'relative',
+  },
+  attachmentImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 4,
+  },
+  filePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  fileName: {
+    marginLeft: 10,
+    color: '#374151',
+    flex: 1,
+    fontSize: 14,
+  },
+  attachmentActions: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+  },
+  removeButton: {
+    padding: 5,
+  },
+  attachmentButton: {
+    height: 45,
+    borderWidth: 1.5,
+    borderColor: '#d1d5db',
+    borderRadius: 6,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  attachmentButtonText: {
+    color: '#374151',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  noChecklistText: {
+    color: '#9ca3af',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: 16,
+    fontSize: 14,
   },
 });
 

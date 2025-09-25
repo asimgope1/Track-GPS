@@ -6,23 +6,25 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
-  KeyboardAvoidingView,
   Platform,
+  KeyboardAvoidingView,
+  ActivityIndicator,
   Modal,
-  Alert,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Header from '../../components/Header';
-import {Calendar} from 'react-native-calendars';
+import { Calendar } from 'react-native-calendars';
 import { BASE_URL } from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import moment from 'moment';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from '@react-navigation/native';
 import { Loader } from '../../components/Loader';
+import Toast from 'react-native-toast-message';
+import { Icon } from '@rneui/themed';
 
-const TripAssignment = ({navigation}) => {
+const TripAssignment = ({ navigation }) => {
   const [tripTime, setTripTime] = useState(new Date());
   const [driverName, setDriverName] = useState('');
   const [distance, setDistance] = useState('');
@@ -34,284 +36,387 @@ const TripAssignment = ({navigation}) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [date, setDate] = useState(new Date());
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [Loading,SetLoading]=useState(false)
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Trip Name Dropdown
+  // Dropdown states
   const [tripNameOpen, setTripNameOpen] = useState(false);
   const [tripNameValue, setTripNameValue] = useState(null);
-  const [tripNameItems, setTripNameItems] = useState([
-    {label: 'Trip A', value: 'Trip A'},
-    {label: 'Trip B', value: 'Trip B'},
-  ]);
+  const [tripNameItems, setTripNameItems] = useState([]);
 
-  // Trip Status Dropdown
   const [tripStatusOpen, setTripStatusOpen] = useState(false);
   const [tripStatusValue, setTripStatusValue] = useState(null);
   const [tripStatusItems, setTripStatusItems] = useState([
-    {label: 'Scheduled', value: 'Scheduled'},
-    {label: 'Completed', value: 'Completed'},
+    { label: 'Scheduled', value: 'Scheduled' },
+    { label: 'Completed', value: 'Completed' },
   ]);
 
-  // Vehicle Dropdown
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const [vehicleValue, setVehicleValue] = useState(null);
-  const [vehicleItems, setVehicleItems] = useState([
- 
-  ]);
+  const [vehicleItems, setVehicleItems] = useState([]);
 
-
-    const [driverOpen, setDriverOpen] = useState(false);
-    const [driverValue, setDriverValue] = useState(null);
-    const [driverItems, setDriverItems] = useState([]);
+  const [driverOpen, setDriverOpen] = useState(false);
+  const [driverValue, setDriverValue] = useState(null);
+  const [driverItems, setDriverItems] = useState([]);
 
   const [tripDate, setTripDate] = useState('');
+  const [days, setDays] = useState('');
+  const [hours, setHours] = useState('');
 
-  const handleDayPress = day => {
+  // Validation errors state
+  const [errors, setErrors] = useState({
+    tripName: '',
+    vehicle: '',
+    driver: '',
+    date: '',
+    distance: '',
+    fuel: '',
+    days: '',
+    hours: '',
+    general: '',
+  });
+
+  const zIndexCounter = useRef(1000);
+
+  // Toast configuration
+  const showToast = (type, text1, text2) => {
+    Toast.show({
+      type: type,
+      text1: text1,
+      text2: text2,
+      position: 'top',
+      visibilityTime: type === 'error' ? 4000 : 3000,
+      autoHide: true,
+      topOffset: StatusBar.currentHeight || 40,
+    });
+  };
+
+  // Clear specific error
+  const clearError = (fieldName) => {
+    setErrors((prev) => ({
+      ...prev,
+      [fieldName]: '',
+    }));
+  };
+
+  // Validation function
+  const validateForm = () => {
+    const newErrors = {
+      tripName: '',
+      vehicle: '',
+      driver: '',
+      date: '',
+      distance: '',
+      fuel: '',
+      days: '',
+      hours: '',
+      general: '',
+    };
+
+    let isValid = true;
+
+    if (!tripNameValue) {
+      newErrors.tripName = 'Trip name is required';
+      isValid = false;
+    }
+
+    if (!vehicleValue) {
+      newErrors.vehicle = 'Vehicle selection is required';
+      isValid = false;
+    }
+
+    if (!driverValue) {
+      newErrors.driver = 'Driver selection is required';
+      isValid = false;
+    }
+
+    if (!date || isNaN(date.getTime())) {
+      newErrors.date = 'Valid date and time are required';
+      isValid = false;
+    } else if (moment(date).isBefore(moment())) {
+      newErrors.date = 'Please select a future date and time';
+      isValid = false;
+    }
+
+    if (distance && isNaN(distance)) {
+      newErrors.distance = 'Distance must be a number';
+      isValid = false;
+    }
+
+    if (fuel && isNaN(fuel)) {
+      newErrors.fuel = 'Fuel must be a number';
+      isValid = false;
+    }
+
+    if (days && (isNaN(days) || parseInt(days) < 0)) {
+      newErrors.days = 'Days must be a positive number';
+      isValid = false;
+    }
+
+    if (hours && (isNaN(hours) || parseInt(hours) < 0 || parseInt(hours) > 23)) {
+      newErrors.hours = 'Hours must be between 0-23';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleDayPress = (day) => {
     setTripDate(day.dateString);
     setShowCalendar(false);
+    clearError('date');
   };
 
   const onChangeDate = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
-      // Keep the existing time and only update the date portion
       const newDate = new Date(selectedDate);
       newDate.setHours(date.getHours());
       newDate.setMinutes(date.getMinutes());
+
+      if (moment(newDate).isBefore(moment())) {
+        showToast('error', 'Invalid Date', 'Please select a future date');
+        return;
+      }
+
       setDate(newDate);
-      // Show time picker after date is selected
+      clearError('date');
       setShowTimePicker(true);
+      showToast('success', 'Date Selected', moment(newDate).format('DD MMM YYYY'));
     }
   };
 
-  // Time Picker Handler
   const onChangeTime = (event, selectedDate) => {
     setShowTimePicker(false);
     if (selectedDate) {
-      // Keep the existing date and only update the time portion
       const newDate = new Date(date);
       newDate.setHours(selectedDate.getHours());
       newDate.setMinutes(selectedDate.getMinutes());
+
+      if (moment(newDate).isBefore(moment())) {
+        showToast('error', 'Invalid Time', 'Please select a future time');
+        return;
+      }
+
       setDate(newDate);
+      clearError('date');
+      showToast('success', 'Time Selected', moment(newDate).format('hh:mm A'));
     }
   };
 
-useEffect(() => {
-    // Fetch vehicle data when component mounts
-    GetVehicle();
-    GetTrip()
-    GetDrivers();
-  }, []);
+  const GetVehicle = async () => {
+    setLoading(true);
+    const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
 
+    try {
+      const response = await GETNETWORK(Url, true);
+      const vehicles = response.data?.things || [];
+      const mappedItems = vehicles.map((item) => ({
+        label: item.thing_name,
+        value: item.thing_id,
+      }));
+      setVehicleItems(mappedItems);
+      showToast('success', 'Vehicles Loaded', `${vehicles.length} vehicles loaded`);
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
+      showToast('error', 'Data Error', 'Failed to fetch vehicle data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const GetVehicle = async () => {
-      SetLoading(true)
-      const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
-    
-      try {
-        const response = await GETNETWORK(Url, true);
-        console.log('Vehicle Data:', response.data);
-    
-        const vehicles = response.data?.things || [];
-    
-        const mappedItems = vehicles.map(item => ({
-          label: item.thing_name,
-          value: item.thing_id,
-        }));
-    
-        setVehicleItems(mappedItems);
-        SetLoading(false)
-      } catch (error) {
-        console.error('Error fetching vehicles:', error);
-        alert('Failed to fetch vehicle data. Please try again.');
-        SetLoading(false)
-      }
-    };
+  const GetTrip = async () => {
+    setLoading(true);
+    const Url = `${BASE_URL}trips/trip_master/`;
 
-     const GetTrip = async () => {
-      SetLoading(true)
-        const Url = `${BASE_URL}trips/trip_master/`;
-    
-        try {
-          const response = await GETNETWORK(Url, true);
-          console.log('Trip Data:', response.data);
-    
-          const trips = response.data|| [];
-    
-          const mappedItems = trips.map(item => ({
-            label: item.trip_name,
-            value: item.trip_id,
-          }));
-          setTripNameItems(mappedItems);
-          SetLoading(false)
-    
-        } catch (error) {
-          console.error('Error fetching trips:', error);
-          alert('Failed to fetch trip data. Please try again.');
-          SetLoading(true)
-        }
-      }
+    try {
+      const response = await GETNETWORK(Url, true);
+      const trips = response.data || [];
+      const mappedItems = trips.map((item) => ({
+        label: item.trip_name,
+        value: item.trip_id,
+      }));
+      setTripNameItems(mappedItems);
+      showToast('success', 'Trips Loaded', `${trips.length} trips loaded`);
+    } catch (error) {
+      console.error('Error fetching trips:', error);
+      showToast('error', 'Data Error', 'Failed to fetch trip data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
- // Update path as needed
+  const GetDrivers = async () => {
+    setLoading(true);
+    const Url = `${BASE_URL}trips/driver_master/`;
 
-const handleSubmit = async () => {
-  // if (!tripNameValue || !vehicleValue || !driverName || !date) {
-  //   Alert.alert('Error', 'Please fill all required fields');
-  //   return;
-  // }
-  SetLoading(true)
+    try {
+      const response = await GETNETWORK(Url, true);
+      const drivers = response.data || [];
+      const mappedItems = drivers.map((item) => ({
+        label: item.driver_name,
+        value: item.driver_master_id,
+      }));
+      setDriverItems(mappedItems);
+      showToast('success', 'Drivers Loaded', `${drivers.length} drivers loaded`);
+    } catch (error) {
+      console.error('Error fetching drivers:', error);
+      showToast('error', 'Data Error', 'Failed to fetch driver data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  try {
-    // Format the date for the API
-    const formattedDateTime = moment(date).format('YYYY-MM-DDTHH:mm:ss');
+  const handleSubmit = async () => {
+    // Clear previous errors
+    setErrors({
+      tripName: '',
+      vehicle: '',
+      driver: '',
+      date: '',
+      distance: '',
+      fuel: '',
+      days: '',
+      hours: '',
+      general: '',
+    });
 
-    // Prepare the payload
-    const tripData = {
-      trip_id: tripNameValue,
-      thing_id: vehicleValue,
-      driver: driverValue,
-      scheduled_datetime: formattedDateTime,
-      estimated_distance: distance ? parseFloat(distance) : 0,
-      estimated_fuel: fuel ? parseFloat(fuel) : 0,
-      estimated_time: estTime || '00:00:00', // Keep as HH:mm:ss format
-      load_details: loadDetails || '',
-      // trip_status: tripStatusValue || 'Scheduled',
-    };
-
-    console.log('Trip data:', tripData);
-
-    // Make sure BASE_URL doesn't have a trailing slash
-    const apiUrl = `${BASE_URL.replace(/\/$/, '')}/trips/trip_assignment/`;
-
-    // Call your POSTNETWORK function
-    const response = await POSTNETWORK(
-      apiUrl,
-      tripData,
-      true, // enable token
-    );
-SetLoading(false)
-    // Check if response parsing failed (HTML error page)
-    if (typeof response === 'string' && response.startsWith('<!')) {
-      throw new Error('Server returned an error page');
+    if (!validateForm()) {
+      showToast('error', 'Validation Error', 'Please fill all required fields correctly');
+      return;
     }
 
-    if (!response || response?.error) {
-      throw new Error(response?.msg || 'Failed to assign trip');
+    setIsSubmitting(true);
+    setLoading(true);
+
+    try {
+      const formattedDateTime = moment(date).format('YYYY-MM-DDTHH:mm:ss');
+    
+      const tripData = {
+        trip_id: tripNameValue,
+        thing_id: vehicleValue,
+        driver: driverValue,
+        scheduled_datetime: formattedDateTime,
+        estimated_distance: distance ? parseFloat(distance) : 0,
+        estimated_fuel: fuel ? parseFloat(fuel) : 0,
+        estimated_time: estTime || '00:00:00',
+        load_details: loadDetails || '',
+      };
+    
+      console.log('Trip data:', tripData);
+    
+      const apiUrl = `${BASE_URL}trips/trip_assignment/`;
+      const response = await POSTNETWORK(apiUrl, tripData, true);
+      console.log('response', response);
+    
+      if (response?.status === 'success') {
+        showToast('success', 'Success', response.msg || 'Trip assigned successfully!');
+        resetForm();
+      } else {
+        throw new Error(response?.msg || 'Failed to assign trip');
+        
+      }
+    } catch (error) {
+      console.error('Error assigning trip:', error.message || error);
+      resetForm();
+      setIsSubmitting(false);
+      setLoading(false);
+    
+      if (error.message.includes('Network request failed')) {
+        showToast('error', 'Network Error', 'Please check your internet connection and try again.');
+      } else if (error.message.includes('401')) {
+        showToast('error', 'Authentication Error', 'Session expired. Please login again.');
+      } else if (error.message.includes('500')) {
+        showToast('error', 'Server Error', 'Server is temporarily unavailable. Please try again later.');
+      } else {
+        showToast('error', 'Submission Failed', error.message || 'Failed to assign trip. Please try again.');
+      }
     }
+    
+  };
 
-    Alert.alert('Success', response.msg || 'Trip assigned successfully!');
+  const handleDaysChange = (text) => {
+    const cleanText = text.replace(/[^0-9]/g, '');
+    setDays(cleanText);
+    calculateTotalTime(cleanText, hours);
+    clearError('days');
+  };
 
-    // Reset form
+  const handleHoursChange = (text) => {
+    const cleanText = text.replace(/[^0-9]/g, '');
+    setHours(cleanText);
+    calculateTotalTime(days, cleanText);
+    clearError('hours');
+  };
+
+  const calculateTotalTime = (daysValue, hoursValue) => {
+    const daysNum = parseInt(daysValue) || 0;
+    const hoursNum = parseInt(hoursValue) || 0;
+    const totalHours = daysNum * 24 + hoursNum;
+    const formattedTime = `${String(totalHours).padStart(2, '0')}:00:00`;
+    setEstTime(formattedTime);
+  };
+
+  const toggleDropdown = (dropdownType) => {
+    setTripNameOpen(false);
+    setTripStatusOpen(false);
+    setVehicleOpen(false);
+    setDriverOpen(false);
+
+    if (dropdownType === 'tripName') {
+      setTripNameOpen(true);
+      zIndexCounter.current += 300;
+    } else if (dropdownType === 'vehicle') {
+      setVehicleOpen(true);
+      zIndexCounter.current += 200;
+    } else if (dropdownType === 'driver') {
+      setDriverOpen(true);
+      zIndexCounter.current += 100;
+    }
+  };
+
+  const resetForm = () => {
     setTripNameValue(null);
     setVehicleValue(null);
-    setDriverName('');
+    setDriverValue(null);
     setDistance('');
     setFuel('');
     setEstTime('');
     setLoadDetails('');
     setDate(new Date());
     setTripStatusValue(null);
+    setDays('');
+    setHours('');
+    setTripDate('');
+    setShowCalendar(false);
+    setShowDatePicker(false);
+    setShowTimePicker(false);
+    setErrors({
+      tripName: '',
+      vehicle: '',
+      driver: '',
+      date: '',
+      distance: '',
+      fuel: '',
+      days: '',
+      hours: '',
+      general: '',
+    });
 
-    return response.trip_assignment_id;
-  } catch (error) {
-    console.error('Error assigning trip:', error.message || error);
-SetLoading(false);
-
-    Alert.alert(
-      'Error',
-      error.message || 'Failed to assign trip. Please try again.',
-    );
-    throw error;
-  }
-};
-
-
-const [days, setDays] = useState('');
-const [hours, setHours] = useState('');
-
-
-useFocusEffect(
-  React.useCallback(() => {
-    // Reset form when the screen is focused
-    resetForm();
-    return () => {
-      // Cleanup if needed
-    };
-  }, []),
-);
-
-const resetForm = () => {
-  setTripNameValue(null);
-  setVehicleValue(null);
-  setDriverName('');
-  setDistance('');
-  setFuel('');
-  setEstTime('');
-  setLoadDetails('');
-  setDate(new Date());
-  setTripStatusValue(null);
-  setDays('');
-  setHours('');
-  setTripDate('');
-  setShowCalendar(false);
-  setShowDatePicker(false);
-  setShowTimePicker(false);
-  setTripNameItems([]);
-  setVehicleItems([]);
-  setDriverItems([]);
-};
-
-
-
-
-const handleDaysChange = text => {
-  const cleanText = text.replace(/[^0-9]/g, '');
-  setDays(cleanText);
-  calculateTotalTime(cleanText, hours);
-};
-
-const handleHoursChange = text => {
-  const cleanText = text.replace(/[^0-9]/g, '');
-  setHours(cleanText);
-  calculateTotalTime(days, cleanText);
-};
-
-const calculateTotalTime = (daysValue, hoursValue) => {
-  const daysNum = parseInt(daysValue) || 0;
-  const hoursNum = parseInt(hoursValue) || 0;
-
-  // Calculate total hours (1 day = 24 hours)
-  const totalHours = daysNum * 24 + hoursNum;
-
-  // Format as HH:00:00 (you can modify if you need minutes/seconds)
-  const formattedTime = `${String(totalHours).padStart(2, '0')}:00:00`;
-  setEstTime(formattedTime);
-};
-
-
-  const GetDrivers = async () => {
-SetLoading(true);
-
-    const Url = `${BASE_URL}trips/driver_master/`;
-    try {
-      const response = await GETNETWORK(Url, true);
-      const drivers = response.data || [];
-      const mappedItems = drivers.map(item => ({
-        label: item.driver_name,
-        value: item.driver_master_id,
-      }));
-      setDriverItems(mappedItems);
-SetLoading(false);
-
-    } catch (error) {
-      console.error('Error fetching drivers:', error);
-      Alert.alert('Error', 'Failed to fetch driver data. Please try again.');
-SetLoading(false);
-
-    }
+    GetVehicle();
+    GetTrip();
+    GetDrivers();
+    showToast('info', 'Form Reset', 'All fields have been cleared');
   };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      resetForm();
+      return () => {};
+    }, []),
+  );
 
   return (
     <>
@@ -322,52 +427,57 @@ SetLoading(false);
       />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled">
-          {/* Row: Trip Name & Status */}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Row: Trip Name */}
           <View style={styles.row}>
-            <View style={[styles.inputItem, {zIndex: tripNameOpen ? 1000 : 1}]}>
-              <Text style={styles.label}>Trip Name</Text>
+            <View style={[styles.inputItem, { zIndex: tripNameOpen ? zIndexCounter.current + 300 : 1 }]}>
+              <Text style={styles.label}>Trip Name *</Text>
               <DropDownPicker
                 open={tripNameOpen}
                 value={tripNameValue}
                 items={tripNameItems}
-                setOpen={setTripNameOpen}
+                setOpen={(open) => {
+                  if (open) toggleDropdown('tripName');
+                  else setTripNameOpen(false);
+                }}
                 setValue={setTripNameValue}
                 setItems={setTripNameItems}
                 placeholder="Select Trip"
-                style={styles.dropdown}
+                listMode="MODAL"
+                style={[styles.dropdown, errors.tripName && styles.errorBorder]}
                 dropDownContainerStyle={styles.dropdownContainer}
                 textStyle={styles.dropdownText}
                 placeholderStyle={styles.dropdownPlaceholder}
                 searchable={true}
-                modalProps={{
-                  animationType: 'slide',
-                }}
+                modalProps={{ animationType: 'slide' }}
                 modalContentContainerStyle={styles.modalContent}
                 modalTitle="Select Trip"
                 modalTitleStyle={styles.modalTitle}
-                onOpen={() => {
-                  setTripStatusOpen(false);
-                  setVehicleOpen(false);
-                }}
+                onSelectItem={() => clearError('tripName')}
               />
+              {errors.tripName && <Text style={styles.errorText}>{errors.tripName}</Text>}
             </View>
           </View>
 
           {/* Row: Date & Time */}
           <View style={styles.row}>
             <View style={styles.inputItem}>
-              <Text style={styles.label}>Scheduled Date & Time</Text>
+              <Text style={styles.label}>Scheduled Date & Time *</Text>
               <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowDatePicker(true)}>
+                style={[styles.dateButton, errors.date && styles.errorBorder]}
+                onPress={() => setShowDatePicker(true)}
+              >
                 <Text style={styles.dateButtonText}>
                   {moment(date).format('DD MMM YYYY, hh:mm A')}
                 </Text>
               </TouchableOpacity>
+              {errors.date && <Text style={styles.errorText}>{errors.date}</Text>}
 
               {showDatePicker && (
                 <DateTimePicker
@@ -376,15 +486,10 @@ SetLoading(false);
                   mode="date"
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={onChangeDate}
+                  minimumDate={new Date()}
                   {...(Platform.OS === 'android' && {
-                    positiveButton: {
-                      label: 'OK',
-                      textColor: '#0284c7',
-                    },
-                    negativeButton: {
-                      label: 'Cancel',
-                      textColor: '#ef4444',
-                    },
+                    positiveButton: { label: 'OK', textColor: '#0284c7' },
+                    negativeButton: { label: 'Cancel', textColor: '#ef4444' },
                   })}
                 />
               )}
@@ -398,14 +503,8 @@ SetLoading(false);
                   onChange={onChangeTime}
                   is24Hour={true}
                   {...(Platform.OS === 'android' && {
-                    positiveButton: {
-                      label: 'OK',
-                      textColor: '#0284c7',
-                    },
-                    negativeButton: {
-                      label: 'Cancel',
-                      textColor: '#ef4444',
-                    },
+                    positiveButton: { label: 'OK', textColor: '#0284c7' },
+                    negativeButton: { label: 'Cancel', textColor: '#ef4444' },
                   })}
                 />
               )}
@@ -414,52 +513,60 @@ SetLoading(false);
 
           {/* Row: Vehicle & Driver */}
           <View style={styles.row}>
-            <View style={[styles.inputItem, {zIndex: vehicleOpen ? 1000 : 1}]}>
-              <Text style={styles.label}>Assigned Vehicle</Text>
+            <View style={[styles.inputItem, { zIndex: vehicleOpen ? zIndexCounter.current + 200 : 1 }]}>
+              <Text style={styles.label}>Assigned Vehicle *</Text>
               <DropDownPicker
                 open={vehicleOpen}
                 value={vehicleValue}
                 items={vehicleItems}
-                setOpen={setVehicleOpen}
+                setOpen={(open) => {
+                  if (open) toggleDropdown('vehicle');
+                  else setVehicleOpen(false);
+                }}
                 setValue={setVehicleValue}
                 setItems={setVehicleItems}
                 placeholder="Select Vehicle"
-                style={styles.dropdown}
+                listMode="MODAL"
+                style={[styles.dropdown, errors.vehicle && styles.errorBorder]}
                 dropDownContainerStyle={styles.dropdownContainer}
                 textStyle={styles.dropdownText}
                 placeholderStyle={styles.dropdownPlaceholder}
                 searchable={true}
-                modalProps={{
-                  animationType: 'slide',
-                }}
+                modalProps={{ animationType: 'slide' }}
                 modalContentContainerStyle={styles.modalContent}
                 modalTitle="Select Vehicle"
                 modalTitleStyle={styles.modalTitle}
-                onOpen={() => {
-                  setTripNameOpen(false);
-                  setTripStatusOpen(false);
-                }}
+                onSelectItem={() => clearError('vehicle')}
               />
+              {errors.vehicle && <Text style={styles.errorText}>{errors.vehicle}</Text>}
             </View>
-            <View style={styles.inputItem}>
-              <Text style={styles.label}>Assigned Driver</Text>
+
+            <View style={[styles.inputItem, { zIndex: driverOpen ? zIndexCounter.current + 100 : 1 }]}>
+              <Text style={styles.label}>Assigned Driver *</Text>
               <DropDownPicker
                 open={driverOpen}
                 value={driverValue}
                 items={driverItems}
-                setOpen={setDriverOpen}
+                setOpen={(open) => {
+                  if (open) toggleDropdown('driver');
+                  else setDriverOpen(false);
+                }}
                 setValue={setDriverValue}
                 setItems={setDriverItems}
                 placeholder="Select Driver"
-                style={styles.dropdown}
+                listMode="MODAL"
+                style={[styles.dropdown, errors.driver && styles.errorBorder]}
                 dropDownContainerStyle={styles.dropdownContainer}
                 textStyle={styles.dropdownText}
                 placeholderStyle={styles.dropdownPlaceholder}
                 searchable={true}
-                onOpen={() => {
-                  setTripNameOpen(false);
-                }}
+                modalProps={{ animationType: 'slide' }}
+                modalContentContainerStyle={styles.modalContent}
+                modalTitle="Select Driver"
+                modalTitleStyle={styles.modalTitle}
+                onSelectItem={() => clearError('driver')}
               />
+              {errors.driver && <Text style={styles.errorText}>{errors.driver}</Text>}
             </View>
           </View>
 
@@ -468,77 +575,97 @@ SetLoading(false);
             <View style={styles.inputItem}>
               <Text style={styles.label}>Estimated Distance (km)</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, errors.distance && styles.errorBorder]}
                 value={distance}
-                placeholderTextColor={'gray'}
-                onChangeText={setDistance}
+                placeholderTextColor={'#9ca3af'}
+                onChangeText={(text) => {
+                  setDistance(text);
+                  clearError('distance');
+                }}
                 keyboardType="numeric"
                 placeholder="0"
               />
+              {errors.distance && <Text style={styles.errorText}>{errors.distance}</Text>}
             </View>
+
             <View style={styles.inputItem}>
               <Text style={styles.label}>Estimated Fuel Usage (L)</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, errors.fuel && styles.errorBorder]}
                 value={fuel}
-                onChangeText={setFuel}
+                onChangeText={(text) => {
+                  setFuel(text);
+                  clearError('fuel');
+                }}
                 keyboardType="numeric"
-                placeholderTextColor={'gray'}
+                placeholderTextColor={'#9ca3af'}
                 placeholder="0"
               />
+              {errors.fuel && <Text style={styles.errorText}>{errors.fuel}</Text>}
             </View>
           </View>
 
-          {/* Route Details */}
-
+          {/* Estimated Duration */}
           <View style={styles.inputItem}>
             <Text style={styles.sectionHeader}>Estimated Duration</Text>
-
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 10,
-              }}>
-              {/* Days Input */}
-              <View style={{flex: 1, marginRight: 10}}>
+            <View style={styles.durationContainer}>
+              <View style={styles.durationInputContainer}>
                 <TextInput
                   placeholder="0"
-                  placeholderTextColor={'gray'}
+                  placeholderTextColor={'#9ca3af'}
                   value={days}
                   onChangeText={handleDaysChange}
-                  style={styles.input}
+                  style={[styles.input, errors.days && styles.errorBorder]}
                   keyboardType="numeric"
                 />
-                <Text style={{textAlign: 'center', color: 'gray'}}>Days</Text>
+                <Text style={styles.durationLabel}>Days</Text>
+                {errors.days && <Text style={styles.errorText}>{errors.days}</Text>}
               </View>
 
-              {/* Hours Input */}
-              <View style={{flex: 1, marginLeft: 10}}>
+              <View style={styles.durationInputContainer}>
                 <TextInput
                   placeholder="0"
-                  placeholderTextColor={'gray'}
+                  placeholderTextColor={'#9ca3af'}
                   value={hours}
                   onChangeText={handleHoursChange}
-                  style={styles.input}
+                  style={[styles.input, errors.hours && styles.errorBorder]}
                   keyboardType="numeric"
                 />
-                <Text style={{textAlign: 'center', color: 'gray'}}>Hours</Text>
+                <Text style={styles.durationLabel}>Hours</Text>
+                {errors.hours && <Text style={styles.errorText}>{errors.hours}</Text>}
               </View>
             </View>
           </View>
 
           {/* Load Details */}
-          <Text style={styles.sectionHeader}>Load Details</Text>
-          <TextInput
-            multiline
-            numberOfLines={4}
-            placeholderTextColor={'gray'}
-            value={loadDetails}
-            onChangeText={setLoadDetails}
-            style={styles.textArea}
-            placeholder="Enter load details"
-          />
+          <View style={styles.inputItem}>
+            <Text style={styles.sectionHeader}>Load Details</Text>
+            <View style={styles.commentsContainer}>
+              <TextInput
+                multiline
+                numberOfLines={4}
+                placeholderTextColor={'#9ca3af'}
+                value={loadDetails}
+                onChangeText={(text) => {
+                  setLoadDetails(text);
+                  clearError('loadDetails');
+                }}
+                style={[styles.textArea, errors.loadDetails && styles.errorBorder]}
+                placeholder="Enter load details (max 500 characters)"
+                maxLength={500}
+              />
+              <Text style={styles.charCount}>{loadDetails.length}/500</Text>
+            </View>
+            {errors.loadDetails && <Text style={styles.errorText}>{errors.loadDetails}</Text>}
+          </View>
+
+          {/* General Error */}
+          {errors.general && (
+            <View style={styles.generalErrorContainer}>
+              <Icon name="warning" size={20} color="#ef4444" />
+              <Text style={styles.generalErrorText}>{errors.general}</Text>
+            </View>
+          )}
 
           {/* Calendar Modal */}
           <Modal visible={showCalendar} transparent animationType="slide">
@@ -547,7 +674,7 @@ SetLoading(false);
                 <Calendar
                   onDayPress={handleDayPress}
                   markedDates={{
-                    [tripDate]: {selected: true, selectedColor: '#0284c7'},
+                    [tripDate]: { selected: true, selectedColor: '#0284c7' },
                   }}
                   theme={{
                     todayTextColor: '#0284c7',
@@ -556,20 +683,69 @@ SetLoading(false);
                 />
                 <TouchableOpacity
                   style={styles.closeButton}
-                  onPress={() => setShowCalendar(false)}>
+                  onPress={() => setShowCalendar(false)}
+                >
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </Modal>
 
-          {/* Submit Button */}
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Assign Trip</Text>
-          </TouchableOpacity>
-          <Loader visible={Loading} />
+          {/* Action Buttons */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={[styles.button, styles.resetButton]}
+              onPress={resetForm}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.resetButtonText}>Reset</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, styles.submitButton, isSubmitting && styles.disabledButton]}
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.submitButtonText}>Assign Trip</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Summary Section */}
+          {(tripNameValue || vehicleValue || driverValue || date) && (
+            <View style={styles.summaryContainer}>
+              <Text style={styles.summaryTitle}>Trip Summary</Text>
+              {tripNameValue && (
+                <Text style={styles.summaryText}>
+                  🚌 Trip: {tripNameItems.find((t) => t.value === tripNameValue)?.label}
+                </Text>
+              )}
+              {vehicleValue && (
+                <Text style={styles.summaryText}>
+                  🚗 Vehicle: {vehicleItems.find((v) => v.value === vehicleValue)?.label}
+                </Text>
+              )}
+              {driverValue && (
+                <Text style={styles.summaryText}>
+                  👤 Driver: {driverItems.find((d) => d.value === driverValue)?.label}
+                </Text>
+              )}
+              {date && (
+                <Text style={styles.summaryText}>
+                  📅 Date: {moment(date).format('DD MMM YYYY, hh:mm A')}
+                </Text>
+              )}
+            </View>
+          )}
+
+          <Loader visible={loading} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Toast />
     </>
   );
 };
@@ -580,43 +756,44 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
   },
   scrollContainer: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 30,
   },
   row: {
     flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'space-between',
-    marginBottom: 10,
+    gap: 12,
+    marginBottom: 16,
   },
   inputItem: {
     flex: 1,
-    marginBottom: 15,
   },
   label: {
     fontSize: 13,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   input: {
-    color: 'black',
+    color: '#111827',
     height: 45,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#d1d5db',
     borderRadius: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     backgroundColor: '#fff',
+    fontSize: 14,
   },
   dropdown: {
     backgroundColor: '#fff',
     borderColor: '#d1d5db',
+    borderWidth: 1.5,
     borderRadius: 6,
     height: 45,
   },
   dropdownContainer: {
     backgroundColor: '#fff',
     borderColor: '#d1d5db',
+    borderWidth: 1.5,
     marginTop: 2,
   },
   dropdownText: {
@@ -636,25 +813,36 @@ const styles = StyleSheet.create({
   dateButton: {
     height: 45,
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#d1d5db',
     borderRadius: 6,
     backgroundColor: '#fff',
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
   },
   dateButtonText: {
     color: '#374151',
+    textAlign: 'center',
   },
   textArea: {
-    color:'black',
+    color: '#111827',
     height: 100,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#d1d5db',
     borderRadius: 6,
     padding: 10,
     textAlignVertical: 'top',
     backgroundColor: '#fff',
-    marginBottom: 16,
+    fontSize: 14,
+  },
+  commentsContainer: {
+    position: 'relative',
+  },
+  charCount: {
+    position: 'absolute',
+    bottom: 8,
+    right: 12,
+    fontSize: 12,
+    color: '#6b7280',
   },
   sectionHeader: {
     fontSize: 15,
@@ -662,6 +850,20 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 6,
     color: '#111827',
+  },
+  durationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  durationInputContainer: {
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  durationLabel: {
+    textAlign: 'center',
+    color: '#6b7280',
+    marginTop: 4,
   },
   modalContainer: {
     flex: 1,
@@ -685,18 +887,83 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  submitButton: {
-    backgroundColor: '#0284c7',
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  button: {
+    flex: 1,
     paddingVertical: 14,
     borderRadius: 6,
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 10,
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  resetButton: {
+    backgroundColor: '#6b7280',
+  },
+  submitButton: {
+    backgroundColor: '#0284c7',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  resetButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   submitButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  errorBorder: {
+    borderColor: '#ef4444',
+  },
+  generalErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    padding: 12,
+    borderRadius: 6,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ef4444',
+  },
+  generalErrorText: {
+    color: '#ef4444',
+    marginLeft: 8,
+    flex: 1,
+    fontSize: 14,
+  },
+  summaryContainer: {
+    backgroundColor: '#f0f9ff',
+    borderLeftWidth: 4,
+    borderLeftColor: '#0284c7',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0284c7',
+    marginBottom: 8,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: '#374151',
+    marginBottom: 4,
   },
 });
 

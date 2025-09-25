@@ -195,6 +195,7 @@ const handleLogin = async () => {
             text: 'OK',
             onPress: () => {
               storeObjByKey('loginResponse', result);
+              storeObjByKey('project_sl', result?.data?.project_sl); 
               Dispatch(checkuserToken());
               setPageLoad(false);
             }

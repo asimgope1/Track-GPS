@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Modal,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -40,6 +41,14 @@ const MaintenanceScheduleScreen = () => {
   const [maintenanceItems, setMaintenanceItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Validation errors state
+  const [validationErrors, setValidationErrors] = useState({
+    date: '',
+    vehicle: '',
+    maintenanceType: '',
+    comments: '',
+  });
+
   const zIndexCounter = useRef(1000);
 
   // Toast configuration
@@ -55,20 +64,45 @@ const MaintenanceScheduleScreen = () => {
     });
   };
 
+  // Clear validation errors for a specific field
+  const clearValidationError = (fieldName) => {
+    setValidationErrors(prev => ({
+      ...prev,
+      [fieldName]: ''
+    }));
+  };
+
+  // Clear all validation errors
+  const clearAllValidationErrors = () => {
+    setValidationErrors({
+      date: '',
+      vehicle: '',
+      maintenanceType: '',
+      comments: '',
+    });
+  };
+
   // Optimized dropdown handlers
   const handleVehicleDropdownOpen = (open) => {
     setVehicleOpen(open);
-    if (open) setMaintenanceOpen(false);
+    if (open) {
+      setMaintenanceOpen(false);
+      clearValidationError('vehicle');
+    }
   };
 
   const handleMaintenanceDropdownOpen = (open) => {
     setMaintenanceOpen(open);
-    if (open) setVehicleOpen(false);
+    if (open) {
+      setVehicleOpen(false);
+      clearValidationError('maintenanceType');
+    }
   };
 
   const handleDayPress = day => {
     setSelectedDate(day.dateString);
     setShowCalendar(false);
+    clearValidationError('date');
     showToast('success', 'Date Selected', moment(day.dateString).format('DD MMM YYYY'));
   };
 
@@ -79,6 +113,7 @@ const MaintenanceScheduleScreen = () => {
     setComments('');
     setVehicleOpen(false);
     setMaintenanceOpen(false);
+    clearAllValidationErrors();
     
     showToast('info', 'Form Reset', 'All fields have been cleared');
   };
@@ -95,6 +130,7 @@ const MaintenanceScheduleScreen = () => {
         // Cleanup
         setVehicleOpen(false);
         setMaintenanceOpen(false);
+        clearAllValidationErrors();
       };
     }, []),
   );
@@ -107,16 +143,27 @@ const MaintenanceScheduleScreen = () => {
     
     try {
       const response = await GETNETWORK(Url, true);
-      const mappedItems = response.data.map(item => ({
-        label: item.maintenance_name,
-        value: item.maintenance_id,
-      }));
       
-      setMaintenanceItems(mappedItems);
-      showToast('success', 'Maintenance Types Loaded', `${response.data.length} types loaded`);
+      if (response && response.data && Array.isArray(response.data)) {
+        const mappedItems = response.data.map(item => ({
+          label: item.maintenance_name,
+          value: item.maintenance_id,
+        }));
+        
+        setMaintenanceItems(mappedItems);
+        showToast('success', 'Maintenance Types Loaded', `${response.data.length} types loaded`);
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error) {
       console.error('Error fetching maintenance:', error);
       showToast('error', 'Load Failed', 'Failed to fetch maintenance data');
+      
+      // Show detailed error for debugging
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+      }
     } finally {
       setLoading(false);
     }
@@ -130,41 +177,81 @@ const MaintenanceScheduleScreen = () => {
     
     try {
       const response = await GETNETWORK(Url, true);
-      const vehicles = response.data?.things || [];
-      const mappedItems = vehicles.map(item => ({
-        label: item.thing_name,
-        value: item.thing_id,
-      }));
       
-      setVehicleItems(mappedItems);
-      showToast('success', 'Vehicles Loaded', `${vehicles.length} vehicles loaded`);
+      if (response && response.data) {
+        const vehicles = response.data?.things || [];
+        const mappedItems = vehicles.map(item => ({
+          label: item.thing_name,
+          value: item.thing_id,
+        }));
+        
+        setVehicleItems(mappedItems);
+        showToast('success', 'Vehicles Loaded', `${vehicles.length} vehicles loaded`);
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error) {
       console.error('Error fetching vehicles:', error);
       showToast('error', 'Load Failed', 'Failed to fetch vehicle data');
+      
+      // Show detailed error for debugging
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const validateForm = () => {
+    const errors = {
+      date: '',
+      vehicle: '',
+      maintenanceType: '',
+      comments: '',
+    };
+
+    let isValid = true;
+
+    // Date validation
     if (!selectedDate) {
-      showToast('error', 'Validation Error', 'Please select a date');
-      return false;
-    }
-    
-    if (!vehicleValue) {
-      showToast('error', 'Validation Error', 'Please select a vehicle');
-      return false;
-    }
-    
-    if (!maintenanceValue) {
-      showToast('error', 'Validation Error', 'Please select maintenance type');
-      return false;
+      errors.date = 'Please select a date';
+      isValid = false;
+    } else if (moment(selectedDate).isBefore(moment(), 'day')) {
+      errors.date = 'Cannot schedule maintenance for past dates';
+      isValid = false;
+    } else if (moment(selectedDate).isAfter(moment().add(1, 'year'))) {
+      errors.date = 'Cannot schedule maintenance more than 1 year in advance';
+      isValid = false;
     }
 
-    // Check if selected date is not in the past
-    if (moment(selectedDate).isBefore(moment(), 'day')) {
-      showToast('error', 'Validation Error', 'Cannot schedule maintenance for past dates');
+    // Vehicle validation
+    if (!vehicleValue) {
+      errors.vehicle = 'Please select a vehicle';
+      isValid = false;
+    }
+
+    // Maintenance type validation
+    if (!maintenanceValue) {
+      errors.maintenanceType = 'Please select maintenance type';
+      isValid = false;
+    }
+
+    // Comments validation (optional field, but with length check)
+    if (comments.length > 500) {
+      errors.comments = 'Comments cannot exceed 500 characters';
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+
+    if (!isValid) {
+      // Show first error in toast
+      const firstError = Object.values(errors).find(error => error !== '');
+      if (firstError) {
+        showToast('error', 'Validation Error', firstError);
+      }
       return false;
     }
 
@@ -183,6 +270,7 @@ const MaintenanceScheduleScreen = () => {
         maintenance_id: maintenanceValue,
         scheduled_date: selectedDate,
         remarks: comments || 'No remarks',
+        scheduled_timestamp: moment().format('YYYY-MM-DD HH:mm:ss'),
       };
 
       const response = await POSTNETWORK(
@@ -191,19 +279,104 @@ const MaintenanceScheduleScreen = () => {
         true,
       );
 
-      if (response && response.success !== false) {
-        showToast('success', 'Success', 'Maintenance scheduled successfully!');
-        resetForm();
+      // Enhanced success response handling
+      if (response) {
+        if (response.success === false) {
+          throw new Error(response.message || 'Server returned unsuccessful response');
+        }
+
+        if (response.data || response.id) {
+          // Success case - maintenance scheduled
+          showToast('success', 'Success', 'Maintenance scheduled successfully!');
+          
+          // Optional: Show confirmation dialog with details
+          Alert.alert(
+            'Schedule Confirmed',
+            `Maintenance has been scheduled for ${moment(selectedDate).format('DD MMM YYYY')}`,
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  resetForm();
+                  // Optional: Navigate to maintenance list or dashboard
+                  // navigation.navigate('MaintenanceList');
+                }
+              }
+            ]
+          );
+        } else {
+          // Handle ambiguous response
+          console.warn('Unexpected response format:', response);
+          showToast('success', 'Schedule Submitted', 'Your maintenance schedule has been submitted');
+          resetForm();
+        }
       } else {
-        throw new Error(response?.message || 'Failed to schedule maintenance');
+        throw new Error('No response received from server');
       }
+
     } catch (error) {
       console.error('Error scheduling maintenance:', error);
-      showToast('error', 'Submission Failed', error.message || 'Failed to schedule maintenance');
+      
+      // Enhanced error handling with specific messages
+      let errorMessage = 'Failed to schedule maintenance. Please try again.';
+      
+      if (error.response) {
+        // Server responded with error status
+        const status = error.response.status;
+        const serverMessage = error.response.data?.message || error.response.data?.error;
+        
+        switch (status) {
+          case 400:
+            errorMessage = serverMessage || 'Invalid data submitted. Please check your entries.';
+            break;
+          case 401:
+            errorMessage = 'Authentication failed. Please login again.';
+            break;
+          case 403:
+            errorMessage = 'You do not have permission to schedule maintenance.';
+            break;
+          case 409:
+            errorMessage = serverMessage || 'Maintenance already scheduled for this vehicle on the selected date.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = serverMessage || `Server error (${status}). Please try again.`;
+        }
+      } else if (error.request) {
+        // Network error
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else {
+        // Other errors
+        errorMessage = error.message || 'An unexpected error occurred.';
+      }
+
+      showToast('error', 'Submission Failed', errorMessage);
+      
+      // Optional: Show detailed error in alert for important errors
+      if (error.response?.status >= 500) {
+        Alert.alert(
+          'Server Error',
+          'Please try again later or contact support if the problem persists.',
+          [{ text: 'OK' }]
+        );
+      }
     } finally {
       setIsSubmitting(false);
       setLoading(false);
     }
+  };
+
+  // Handle comments change with validation
+  const handleCommentsChange = (text) => {
+    if (text.length <= 500) {
+      setComments(text);
+      if (text.length === 500) {
+        showToast('warning', 'Character Limit', 'Maximum 500 characters reached');
+      }
+    }
+    clearValidationError('comments');
   };
 
   return (
@@ -231,7 +404,10 @@ const MaintenanceScheduleScreen = () => {
             <View style={styles.inputItem}>
               <Text style={styles.label}>Date *</Text>
               <TouchableOpacity
-                style={styles.dateButton}
+                style={[
+                  styles.dateButton,
+                  validationErrors.date && styles.errorBorder
+                ]}
                 onPress={() => setShowCalendar(true)}>
                 <Text style={[
                   styles.dateButtonText,
@@ -240,6 +416,9 @@ const MaintenanceScheduleScreen = () => {
                   {selectedDate ? moment(selectedDate).format('DD MMM YYYY') : 'Select Date'}
                 </Text>
               </TouchableOpacity>
+              {validationErrors.date ? (
+                <Text style={styles.errorText}>{validationErrors.date}</Text>
+              ) : null}
             </View>
 
             {/* Vehicle Dropdown */}
@@ -255,7 +434,10 @@ const MaintenanceScheduleScreen = () => {
                 setValue={setVehicleValue}
                 setItems={setVehicleItems}
                 placeholder="Select Vehicle"
-                style={styles.dropdown}
+                style={[
+                  styles.dropdown,
+                  validationErrors.vehicle && styles.errorBorder
+                ]}
                 dropDownContainerStyle={styles.dropdownContainer}
                 textStyle={styles.dropdownText}
                 placeholderStyle={styles.dropdownPlaceholder}
@@ -266,6 +448,9 @@ const MaintenanceScheduleScreen = () => {
                 maxHeight={200}
                 autoScroll={true}
               />
+              {validationErrors.vehicle ? (
+                <Text style={styles.errorText}>{validationErrors.vehicle}</Text>
+              ) : null}
             </View>
           </View>
 
@@ -282,7 +467,10 @@ const MaintenanceScheduleScreen = () => {
               placeholder="Select Maintenance Type"
               searchable={true}
               searchablePlaceholder="Search maintenance type..."
-              style={styles.dropdown}
+              style={[
+                styles.dropdown,
+                validationErrors.maintenanceType && styles.errorBorder
+              ]}
               dropDownContainerStyle={styles.dropdownContainer}
               textStyle={styles.dropdownText}
               placeholderStyle={styles.dropdownPlaceholder}
@@ -293,6 +481,9 @@ const MaintenanceScheduleScreen = () => {
               maxHeight={200}
               autoScroll={true}
             />
+            {validationErrors.maintenanceType ? (
+              <Text style={styles.errorText}>{validationErrors.maintenanceType}</Text>
+            ) : null}
           </View>
 
           {/* Comments */}
@@ -300,19 +491,29 @@ const MaintenanceScheduleScreen = () => {
             <Text style={styles.label}>Comments</Text>
             <View style={styles.commentsContainer}>
               <TextInput
-                style={[styles.input, styles.multilineInput]}
+                style={[
+                  styles.input, 
+                  styles.multilineInput,
+                  validationErrors.comments && styles.errorBorder
+                ]}
                 placeholderTextColor={'#9ca3af'}
                 placeholder="Enter any additional comments (optional)"
                 value={comments}
-                onChangeText={setComments}
+                onChangeText={handleCommentsChange}
                 multiline
                 numberOfLines={4}
                 maxLength={500}
               />
-              <Text style={styles.charCount}>
+              <Text style={[
+                styles.charCount,
+                comments.length === 500 && styles.charCountWarning
+              ]}>
                 {comments.length}/500
               </Text>
             </View>
+            {validationErrors.comments ? (
+              <Text style={styles.errorText}>{validationErrors.comments}</Text>
+            ) : null}
           </View>
 
           {/* Action Buttons */}
@@ -376,6 +577,7 @@ const MaintenanceScheduleScreen = () => {
                   },
                 }}
                 minDate={moment().format('YYYY-MM-DD')}
+                maxDate={moment().add(1, 'year').format('YYYY-MM-DD')}
                 theme={{
                   todayTextColor: '#0284c7',
                   arrowColor: '#0284c7',
@@ -461,6 +663,10 @@ const styles = StyleSheet.create({
     right: 12,
     fontSize: 12,
     color: '#6b7280',
+  },
+  charCountWarning: {
+    color: '#dc2626',
+    fontWeight: '600',
   },
   dateButton: {
     height: 48,
@@ -601,6 +807,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  errorBorder: {
+    borderColor: '#dc2626',
   },
 });
 

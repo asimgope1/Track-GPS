@@ -1127,28 +1127,37 @@ const FleetSummaryCard = ({
 
       {/* Location Track or Alert */}
       {showMap &&
-      Array.isArray(Location) &&
-      Location[0] !== undefined &&
-      Location[1] !== undefined ? (
-        <View style={{flex: 1}}>
-          <Track
-            showTrack={showMap}
-            projectedTrack={[projectedTrackData]}
-            latitude={Location[0]}
-            longitude={Location[1]}
-            onClose={() => {
-              setShowMap(false);
-              Toast.show({
-                type: 'info',
-                position: 'top',
-                text1: 'Tracking Stopped',
-                text2: 'Vehicle tracking has been closed',
-                visibilityTime: 3000,
-              });
-            }}
-          />
-        </View>
-      ) : null}
+Array.isArray(Location) &&
+Location.length >= 2 &&
+Location[0] !== undefined &&
+Location[1] !== undefined ? (
+  <View style={{ flex: 1 }}>
+    <Track
+      showTrack={
+        Array.isArray(Location[0])
+          ? Location.map(coord => ({
+              latitude: parseFloat(coord[0]),
+              longitude: parseFloat(coord[1]),
+            }))
+          : [{ latitude: parseFloat(Location[0]), longitude: parseFloat(Location[1]) }]
+      }
+      projectedTrack={projectedTrackData || { data: [] }}
+      latitude={parseFloat(Location[0])}
+      longitude={parseFloat(Location[1])}
+      visible={showMap}
+      onClose={() => {
+        setShowMap(false);
+        Toast.show({
+          type: 'info',
+          position: 'top',
+          text1: 'Tracking Stopped',
+          text2: 'Vehicle tracking has been closed',
+          visibilityTime: 3000,
+        });
+      }}
+    />
+  </View>
+) : null}
 
       {/* Detail Modal */}
       <Modal
@@ -1406,28 +1415,37 @@ const FleetDashboard = navigation => {
   };
 
   const fetchDerivedData = useCallback(async () => {
-    const url = `${BASE_URL}projects/117/things/?page=1&search=&type=gps`;
-    setPageLoad(true);
     try {
+      // Get project_sl from AsyncStorage
+      const projectSl = await getObjByKey('project_sl');
+      
+      if (!projectSl) {
+        showToast('error', 'Data Error', 'Project information not found. Please login again.');
+        return;
+      }
+  
+      const url = `${BASE_URL}projects/${projectSl}/things/?page=1&search=&type=gps`;
+      setPageLoad(true);
+      
       const response = await GETNETWORK(url, true);
       console.log('API Response:------------', response);
-
+  
       if (response.data && response.data.things) {
         console.log('Things from API:--------------', response.data?.things);
-
+  
         const fullThingData = response.data.things.map(item => ({
           ...item,
           updated_on: new Date(item.updated_on),
         }));
         console.log('Full Things Data:-------', fullThingData);
-
+  
         const currentTime = new Date();
         const statusCounts = {
           Running: 0,
           Stopped: 0,
           Unreachable: 0,
         };
-
+  
         fullThingData.forEach(item => {
           const timeDiff = (currentTime - item.updated_on) / (1000 * 60);
           if (timeDiff <= 2) statusCounts.Running += 1;
@@ -1435,10 +1453,10 @@ const FleetDashboard = navigation => {
           else statusCounts.Unreachable += 1;
         });
         console.log('Status Counts:-------', statusCounts);
-
+  
         setStatusMap(statusCounts);
         setTotal(fullThingData.length);
-
+  
         const transformedData = [
           {title: 'Total Distance', color: '#28a745', icon: USAGE},
           {title: 'OverSpeed', color: '#ffc107', icon: OVERSPEED},
@@ -1453,11 +1471,10 @@ const FleetDashboard = navigation => {
           {title: 'Fleet WorkLoad', color: '#007bff', icon: ZONE},
           {title: 'Renewal Reminder', color: '#007bff', icon: ZONE},
         ];
-
+  
         setFleetData(transformedData);
         setThingData(fullThingData);
         
-        // Show success toast
         showToast('success', 'Data Loaded', 'Fleet data updated successfully');
       } else {
         showToast('error', 'Data Error', 'No vehicle data found');
@@ -1472,18 +1489,26 @@ const FleetDashboard = navigation => {
 
   const fetchCardData = useCallback(
     async thingId => {
-      const Url = `${BASE_URL}things/?thing_id=${thingId}&project_id=117`;
-      setPageLoad(true);
-
       try {
+        // Get project_sl from AsyncStorage
+        const projectSl = await getObjByKey('project_sl');
+        
+        if (!projectSl) {
+          showToast('error', 'Project Error', 'Project information not found. Please login again.');
+          return;
+        }
+  
+        const Url = `${BASE_URL}things/?thing_id=${thingId}&project_id=${projectSl}`;
+        setPageLoad(true);
+  
         const response = await GETNETWORK(Url, true);
         console.log('API Response (GPS list):', response);
-
+  
         if (response.data && response.data.things) {
           const gpsList = response.data.things;
           setFleetData(gpsList);
         }
-
+  
         const data = thingData.find(item => item.thing_id === thingId);
         if (data) {
           setSelectedValue(data);
