@@ -21,6 +21,7 @@ import Slider from '@react-native-community/slider';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import Toast from 'react-native-toast-message';
+import theme from '../../theme';
 
 const RouteOptimization = ({ navigation }) => {
   // API Configuration - Store these securely in environment variables
@@ -155,11 +156,11 @@ const RouteOptimization = ({ navigation }) => {
     const R = 6371; // Earth's radius in km
     const dLat = (coord2.latitude - coord1.latitude) * Math.PI / 180;
     const dLon = (coord2.longitude - coord1.longitude) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(coord1.latitude * Math.PI / 180) * Math.cos(coord2.latitude * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
@@ -175,10 +176,10 @@ const RouteOptimization = ({ navigation }) => {
 
     try {
       const vehicle = VEHICLE_TYPES[settings.vehicleType];
-      
+
       // Get actual route data from ORS API
       const routeData = await getRouteFromAPI(stops, settings);
-      
+
       if (!routeData || !routeData.coordinates) {
         throw new Error('Failed to get route data from API');
       }
@@ -208,7 +209,7 @@ const RouteOptimization = ({ navigation }) => {
       });
 
       showToast('success', 'Route Optimized', `Optimized for ${vehicle.name}`);
-      
+
     } catch (error) {
       console.error('Optimization error:', error);
       setErrors({ ...errors, general: error.message });
@@ -223,14 +224,14 @@ const RouteOptimization = ({ navigation }) => {
     if (stops.length < 2) return null;
 
     try {
-      const coordinates = stops.map(stop => 
+      const coordinates = stops.map(stop =>
         [stop.coordinates.longitude, stop.coordinates.latitude]
       );
 
-      const profile = settings.vehicleType === 'TRUCK' ? 'driving-hgv' : 
-                      settings.vehicleType === 'LORRY' ? 'driving-hgv' : 
-                      settings.vehicleType === 'VAN' ? 'driving-van' : 'driving-car';
-      
+      const profile = settings.vehicleType === 'TRUCK' ? 'driving-hgv' :
+        settings.vehicleType === 'LORRY' ? 'driving-hgv' :
+          settings.vehicleType === 'VAN' ? 'driving-van' : 'driving-car';
+
       const options = {
         coordinates: coordinates,
         profile: profile,
@@ -282,7 +283,7 @@ const RouteOptimization = ({ navigation }) => {
           duration: route.properties.segments[0].duration
         };
       }
-      
+
       return null;
     } catch (error) {
       console.error('ORS API Error:', error);
@@ -349,10 +350,10 @@ const RouteOptimization = ({ navigation }) => {
         return;
       }
 
-      const placeName = data.structured_formatting?.main_text || 
-                       data.structured_formatting?.secondary_text || 
-                       data.description || 
-                       'Unknown Location';
+      const placeName = data.structured_formatting?.main_text ||
+        data.structured_formatting?.secondary_text ||
+        data.description ||
+        'Unknown Location';
 
       const address = data.description || 'Address not available';
 
@@ -411,7 +412,7 @@ const RouteOptimization = ({ navigation }) => {
 
   // Update stop coordinates
   const updateStopCoordinates = (id, newCoordinates) => {
-    setStops(prev => prev.map(stop => 
+    setStops(prev => prev.map(stop =>
       stop.id === id ? { ...stop, coordinates: newCoordinates } : stop
     ));
   };
@@ -464,11 +465,11 @@ const RouteOptimization = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <StatusBar backgroundColor="#0284c7" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <Header
         title="Route Optimization"
         onMenuPress={() => navigation.openDrawer()}
@@ -476,7 +477,7 @@ const RouteOptimization = ({ navigation }) => {
         onRightPress={() => setShowSaveModal(true)}
       />
 
-      <ScrollView 
+      <ScrollView
         ref={scrollViewRef}
         style={styles.container}
         keyboardShouldPersistTaps="handled"
@@ -492,10 +493,10 @@ const RouteOptimization = ({ navigation }) => {
               ]}
               onPress={() => setSettings(prev => ({ ...prev, vehicleType: key }))}
             >
-              <Icon 
-                name={vehicle.icon} 
-                size={20} 
-                color={settings.vehicleType === key ? '#fff' : vehicle.color} 
+              <Icon
+                name={vehicle.icon}
+                size={20}
+                color={settings.vehicleType === key ? theme.colors.white : vehicle.color}
               />
               <Text style={[
                 styles.vehicleText,
@@ -545,9 +546,9 @@ const RouteOptimization = ({ navigation }) => {
               />
             )}
           </MapView>
-          
+
           {/* Map Controls */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.mapControl}
             onPress={fitMapToStops}
           >
@@ -641,14 +642,14 @@ const RouteOptimization = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
-          
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.stopsScrollView}>
             <View style={styles.stopsContainer}>
               {stops.map((stop, index) => (
                 <View key={stop.id} style={styles.stopCard}>
                   <View style={styles.stopHeader}>
                     <Text style={styles.stopNumber}>{index + 1}</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       onPress={() => setStops(prev => prev.filter(s => s.id !== stop.id))}
                       style={styles.deleteButton}
                     >
@@ -659,8 +660,8 @@ const RouteOptimization = ({ navigation }) => {
                   <Text style={styles.stopAddress} numberOfLines={2}>{stop.address}</Text>
                 </View>
               ))}
-              <TouchableOpacity 
-                style={styles.addStopCard} 
+              <TouchableOpacity
+                style={styles.addStopCard}
                 onPress={() => {
                   if (placesRef.current) {
                     placesRef.current.focus();
@@ -676,24 +677,24 @@ const RouteOptimization = ({ navigation }) => {
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.button, styles.secondaryButton]}
             onPress={() => setShowSettings(true)}
           >
             <Icon name="tune" size={20} color="#0284c7" />
             <Text style={styles.secondaryButtonText}>Settings</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={[styles.button, styles.primaryButton, (isOptimizing || stops.length < 2) && styles.disabledButton]}
             onPress={handleOptimize}
             disabled={isOptimizing || stops.length < 2}
           >
             {isOptimizing ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={theme.colors.white} />
             ) : (
               <>
-                <Icon name="route" size={20} color="#fff" /> 
+                <Icon name="route" size={20} color={theme.colors.white} />
                 <Text style={styles.primaryButtonText}>
                   {stops.length < 2 ? 'Add More Stops' : 'Optimize Route'}
                 </Text>
@@ -741,7 +742,7 @@ const RouteOptimization = ({ navigation }) => {
                 onChangeText={(text) => setSettings(prev => ({ ...prev, dieselPrice: parseFloat(text) || 0 }))}
                 keyboardType="numeric"
               />
-              
+
               <Text style={styles.settingLabel}>Working Hours per Day</Text>
               <Slider
                 value={settings.workingHours}
@@ -800,13 +801,13 @@ const RouteOptimization = ({ navigation }) => {
               maxLength={50}
             />
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setShowSaveModal(false)}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.modalButton, styles.saveModalButton]}
                 onPress={saveCurrentRoute}
               >
@@ -823,176 +824,179 @@ const RouteOptimization = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  vehicleBar: { flexDirection: 'row', padding: 10, backgroundColor: '#fff' },
-  vehicleOption: { 
-    flex: 1, alignItems: 'center', padding: 8, borderRadius: 8, marginHorizontal: 2,
-    borderWidth: 1, borderColor: '#e2e8f0'
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  vehicleBar: { flexDirection: 'row', padding: theme.spacing.md, backgroundColor: theme.colors.background },
+  vehicleOption: {
+    flex: 1, alignItems: 'center', padding: theme.spacing.sm, borderRadius: theme.radius.md, marginHorizontal: 4,
+    borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    ...theme.shadows.sm
   },
-  vehicleOptionSelected: { backgroundColor: '#0284c7', borderColor: '#0284c7' },
-  vehicleText: { fontSize: 12, marginTop: 4, color: '#64748b' },
-  vehicleTextSelected: { color: '#fff' },
-  mapContainer: { height: 300, margin: 10, borderRadius: 12, overflow: 'hidden' },
+  vehicleOptionSelected: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  vehicleText: { fontSize: theme.typography.xs, marginTop: 4, color: theme.colors.textSecondary, fontWeight: theme.typography.semibold },
+  vehicleTextSelected: { color: theme.colors.white },
+  mapContainer: { height: 350, margin: theme.spacing.md, borderRadius: theme.radius.xl, overflow: 'hidden', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', ...theme.shadows.lg },
   map: { flex: 1 },
   mapControl: {
     position: 'absolute',
-    bottom: 10,
-    right: 10,
-    backgroundColor: 'white',
-    padding: 8,
-    borderRadius: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    bottom: theme.spacing.md,
+    right: theme.spacing.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    padding: theme.spacing.sm,
+    borderRadius: theme.radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.md,
   },
-  statsContainer: { 
-    flexDirection: 'row', backgroundColor: '#fff', margin: 10, padding: 16, borderRadius: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4
+  statsContainer: {
+    flexDirection: 'row', backgroundColor: 'rgba(255, 255, 255, 0.12)', margin: theme.spacing.md, padding: theme.spacing.lg, borderRadius: theme.radius.xl,
+    borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.md
   },
   statItem: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 16, fontWeight: '600', color: '#1e293b', marginTop: 4 },
-  statLabel: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  section: { margin: 10 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#1e293b' },
+  statValue: { fontSize: theme.typography.base, fontWeight: theme.typography.bold, color: theme.colors.text, marginTop: 4 },
+  statLabel: { fontSize: theme.typography.xs, color: theme.colors.textSecondary, marginTop: 2, fontWeight: theme.typography.medium },
+  section: { margin: theme.spacing.md },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.sm },
+  sectionTitle: { fontSize: theme.typography.lg, fontWeight: theme.typography.bold, color: theme.colors.text },
   sectionHeaderActions: { flexDirection: 'row' },
   iconButton: { padding: 5, marginLeft: 5 },
   stopsScrollView: { maxHeight: 120 },
-  stopsContainer: { flexDirection: 'row' },
-  stopCard: { 
-    width: 150, backgroundColor: '#fff', padding: 12, marginRight: 10, borderRadius: 8,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2
+  stopsContainer: { flexDirection: 'row', paddingVertical: theme.spacing.xs },
+  stopCard: {
+    width: 160, backgroundColor: 'rgba(255, 255, 255, 0.12)', padding: theme.spacing.md, marginRight: theme.spacing.md, borderRadius: theme.radius.lg,
+    borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.sm
   },
-  stopHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  stopNumber: { 
-    width: 20, height: 20, borderRadius: 10, backgroundColor: '#0284c7', 
-    color: '#fff', textAlign: 'center', fontSize: 12, lineHeight: 20 
+  stopHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  stopNumber: {
+    width: 24, height: 24, borderRadius: 12, backgroundColor: theme.colors.primary,
+    color: theme.colors.white, textAlign: 'center', fontSize: theme.typography.xs, lineHeight: 24, fontWeight: theme.typography.bold
   },
-  stopName: { fontSize: 14, fontWeight: '600', color: '#1e293b', marginTop: 4 },
-  stopAddress: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  ratingContainer: { 
-    flexDirection: 'row', alignItems: 'center', marginTop: 4 
+  stopName: { fontSize: theme.typography.sm, fontWeight: theme.typography.semibold, color: theme.colors.text, marginTop: 4 },
+  stopAddress: { fontSize: theme.typography.xs, color: theme.colors.textSecondary, marginTop: 2 },
+  ratingContainer: {
+    flexDirection: 'row', alignItems: 'center', marginTop: 4
   },
-  ratingText: { fontSize: 10, color: '#f59e0b', marginLeft: 4 },
-  addStopCard: { 
-    width: 150, backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#cbd5e1', 
-    borderStyle: 'dashed', borderRadius: 8, justifyContent: 'center', alignItems: 'center'
+  ratingText: { fontSize: theme.typography.xs, color: theme.colors.warning, marginLeft: 4 },
+  addStopCard: {
+    width: 160, backgroundColor: 'rgba(255, 255, 255, 0.5)', borderWidth: 1.5, borderColor: theme.colors.border,
+    borderStyle: 'dashed', borderRadius: theme.radius.lg, justifyContent: 'center', alignItems: 'center',
+    marginRight: theme.spacing.md,
   },
-  addStopText: { color: '#0284c7', marginTop: 4, fontSize: 12 },
-  placesContainer: { margin: 10, backgroundColor: '#fff', borderRadius: 12, padding: 10 },
-  searchHeader: { 
-    flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingHorizontal: 5 
+  addStopText: { color: theme.colors.primary, marginTop: 4, fontSize: theme.typography.sm, fontWeight: theme.typography.semibold },
+  placesContainer: { margin: theme.spacing.md, backgroundColor: 'rgba(255, 255, 255, 0.12)', borderRadius: theme.radius.xl, padding: theme.spacing.sm, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', ...theme.shadows.md },
+  searchHeader: {
+    flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingHorizontal: 5
   },
-  searchTitle: { 
-    fontSize: 16, fontWeight: '600', color: '#1e293b', marginLeft: 8 
+  searchTitle: {
+    fontSize: theme.typography.base, fontWeight: theme.typography.semibold, color: theme.colors.text, marginLeft: 8
   },
-  actionButtons: { flexDirection: 'row', margin: 10, gap: 10 },
-  button: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8, gap: 8 },
-  primaryButton: { backgroundColor: '#0284c7' },
-  secondaryButton: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#cbd5e1' },
+  actionButtons: { flexDirection: 'row', margin: theme.spacing.md, gap: theme.spacing.md },
+  button: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: theme.spacing.md, borderRadius: theme.radius.md, gap: 8 },
+  primaryButton: { backgroundColor: theme.colors.primary, ...theme.shadows.glow },
+  secondaryButton: { backgroundColor: 'rgba(255, 255, 255, 0.08)', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)' },
   disabledButton: { opacity: 0.6 },
-  primaryButtonText: { color: '#fff', fontWeight: '600' },
-  secondaryButtonText: { color: '#0284c7', fontWeight: '600' },
-  savedRoute: { 
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 12, 
-    borderRadius: 8, marginBottom: 8 
+  primaryButtonText: { color: theme.colors.white, fontWeight: theme.typography.bold, fontSize: theme.typography.base },
+  secondaryButtonText: { color: theme.colors.primary, fontWeight: theme.typography.bold, fontSize: theme.typography.base },
+  savedRoute: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.12)', padding: theme.spacing.lg,
+    borderRadius: theme.radius.lg, marginBottom: theme.spacing.sm, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', ...theme.shadows.sm
   },
-  routeInfo: { flex: 1, marginLeft: 12 },
-  routeName: { fontSize: 16, fontWeight: '600', color: '#1e293b' },
-  routeDetails: { fontSize: 12, color: '#64748b' },
-  routeDate: { fontSize: 12, color: '#94a3b8' },
-  modalContainer: { flex: 1, backgroundColor: '#f8fafc' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
-  modalTitle: { fontSize: 20, fontWeight: '600', color: '#1e293b' },
-  settingGroup: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
-  settingGroupTitle: { fontSize: 16, fontWeight: '600', color: '#1e293b', marginBottom: 12 },
-  settingLabel: { fontSize: 14, color: '#475569', marginBottom: 8 },
-  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 12, fontSize: 16 },
-  switchSetting: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 8 },
-  switchLabel: { fontSize: 16, color: '#1e293b' },
-  sliderValue: { textAlign: 'center', color: '#64748b', marginTop: 8 },
-  centerModal: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
-  saveModalContent: { backgroundColor: '#fff', padding: 20, borderRadius: 12, width: '80%' },
-  textInput: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 12, marginVertical: 10 },
-  modalButtons: { flexDirection: 'row', gap: 10 },
-  modalButton: { flex: 1, padding: 12, borderRadius: 8, alignItems: 'center' },
-  cancelButton: { backgroundColor: '#f1f5f9' },
-  saveModalButton: { backgroundColor: '#0284c7' },
-  cancelButtonText: { color: '#64748b', fontWeight: '600' },
-  saveModalButtonText: { color: '#fff', fontWeight: '600' },
-  markerContainer: { 
-    backgroundColor: '#0284c7', width: 24, height: 24, borderRadius: 12, 
-    justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff'
+  routeInfo: { flex: 1, marginLeft: theme.spacing.md },
+  routeName: { fontSize: theme.typography.base, fontWeight: theme.typography.semibold, color: theme.colors.text },
+  routeDetails: { fontSize: theme.typography.sm, color: theme.colors.textSecondary, marginTop: 2 },
+  routeDate: { fontSize: theme.typography.xs, color: theme.colors.textMuted },
+  modalContainer: { flex: 1, backgroundColor: theme.colors.background },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: theme.spacing.lg, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+  modalTitle: { fontSize: theme.typography.xl, fontWeight: theme.typography.bold, color: theme.colors.text },
+  settingGroup: { padding: theme.spacing.lg, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+  settingGroupTitle: { fontSize: theme.typography.lg, fontWeight: theme.typography.semibold, color: theme.colors.text, marginBottom: theme.spacing.md },
+  settingLabel: { fontSize: theme.typography.sm, color: theme.colors.textSecondary, marginBottom: theme.spacing.sm, fontWeight: theme.typography.medium },
+  input: { backgroundColor: 'rgba(255, 255, 255, 0.08)', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', borderRadius: theme.radius.md, padding: theme.spacing.md, fontSize: theme.typography.base, color: theme.colors.text, ...theme.shadows.sm },
+  switchSetting: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: theme.spacing.sm },
+  switchLabel: { fontSize: theme.typography.base, color: theme.colors.text, fontWeight: theme.typography.medium },
+  sliderValue: { textAlign: 'center', color: theme.colors.textSecondary, marginTop: theme.spacing.sm, fontWeight: theme.typography.medium },
+  centerModal: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.7)' },
+  saveModalContent: { backgroundColor: 'rgba(255, 255, 255, 0.12)', padding: theme.spacing.xl, borderRadius: theme.radius.xl, width: '85%', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', ...theme.shadows.lg },
+  textInput: { backgroundColor: 'rgba(255, 255, 255, 0.08)', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', borderRadius: theme.radius.md, padding: theme.spacing.md, marginVertical: theme.spacing.md, fontSize: theme.typography.base, color: theme.colors.text, ...theme.shadows.sm },
+  modalButtons: { flexDirection: 'row', gap: theme.spacing.md, marginTop: theme.spacing.sm },
+  modalButton: { flex: 1, padding: theme.spacing.md, borderRadius: theme.radius.md, alignItems: 'center', minHeight: 52, justifyContent: 'center' },
+  cancelButton: { backgroundColor: theme.colors.borderLight },
+  saveModalButton: { backgroundColor: theme.colors.primary, ...theme.shadows.glow },
+  cancelButtonText: { color: theme.colors.textSecondary, fontWeight: theme.typography.bold, fontSize: theme.typography.base },
+  saveModalButtonText: { color: theme.colors.white, fontWeight: theme.typography.bold, fontSize: theme.typography.base },
+  markerContainer: {
+    backgroundColor: theme.colors.primary, width: 28, height: 28, borderRadius: 14,
+    justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: theme.colors.white,
+    ...theme.shadows.sm
   },
-  markerText: { color: '#fff', fontSize: 12, fontWeight: '600' },
-  deleteButton: { padding: 2 },
+  markerText: { color: theme.colors.white, fontSize: theme.typography.xs, fontWeight: theme.typography.bold },
+  deleteButton: { padding: 4, backgroundColor: 'rgba(220, 38, 38, 0.1)', borderRadius: 12 },
   // New styles for enhanced search
-  emptyResults: { 
-    padding: 20, alignItems: 'center' 
+  emptyResults: {
+    padding: theme.spacing.lg, alignItems: 'center'
   },
-  emptyText: { 
-    color: '#64748b', fontSize: 14 
+  emptyText: {
+    color: theme.colors.textMuted, fontSize: theme.typography.sm
   },
-  resultRow: { 
-    flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, 
-    borderBottomColor: '#f1f5f9' 
+  resultRow: {
+    flexDirection: 'row', alignItems: 'center', padding: theme.spacing.md, borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.border
   },
-  resultIcon: { 
-    marginRight: 12 
+  resultIcon: {
+    marginRight: theme.spacing.md
   },
-  resultInfo: { 
-    flex: 1 
+  resultInfo: {
+    flex: 1
   },
-  resultPrimary: { 
-    fontSize: 16, fontWeight: '500', color: '#1e293b' 
+  resultPrimary: {
+    fontSize: theme.typography.base, fontWeight: theme.typography.medium, color: theme.colors.text
   },
-  resultSecondary: { 
-    fontSize: 14, color: '#64748b', marginTop: 2 
+  resultSecondary: {
+    fontSize: theme.typography.sm, color: theme.colors.textSecondary, marginTop: 2
   },
-  searchingIndicator: { 
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', 
-    padding: 10, backgroundColor: '#f8fafc', borderRadius: 8, marginTop: 5 
+  searchingIndicator: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    padding: theme.spacing.md, backgroundColor: theme.colors.surface, borderRadius: theme.radius.md, marginTop: 5
   },
-  searchingText: { 
-    marginLeft: 8, color: '#64748b', fontSize: 14 
+  searchingText: {
+    marginLeft: 8, color: theme.colors.textMuted, fontSize: theme.typography.sm
   }
 });
 
 const placesStyles = {
   container: { flex: 0 },
-  textInputContainer: { 
-    backgroundColor: 'transparent', 
-    borderBottomWidth: 0 
+  textInputContainer: {
+    backgroundColor: 'transparent',
+    borderBottomWidth: 0
   },
-  textInput: { 
-    backgroundColor: '#fff', 
-    borderRadius: 8, 
-    paddingHorizontal: 16, 
-    fontSize: 16,
-    borderWidth: 1, 
-    borderColor: '#cbd5e1',
-    height: 50,
-    color: '#000', // 👈 ensures typed text is visible
+  textInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    fontSize: theme.typography.base,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    height: 52,
+    color: theme.colors.text,
   },
   description: {
-    fontSize: 16,
-    color: '#000', // 👈 ensures search results text is visible
+    fontSize: theme.typography.base,
+    color: theme.colors.text,
   },
-  listView: { 
-    backgroundColor: '#fff', 
-    borderRadius: 8, 
-    maxHeight: 200,
+  listView: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: theme.radius.md,
+    maxHeight: 220,
     zIndex: 999,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    marginTop: theme.spacing.xs,
+    ...theme.shadows.lg,
   },
   row: {
-    padding: 10,
+    padding: theme.spacing.md,
+    borderBottomColor: theme.colors.border,
   }
 };
 

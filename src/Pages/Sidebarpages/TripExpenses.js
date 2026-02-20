@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useCallback} from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,10 +17,10 @@ import {
 } from 'react-native';
 import Header from '../../components/Header';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {pick} from '@react-native-documents/picker';
-import {Icon} from '@rneui/themed';
+import { pick } from '@react-native-documents/picker';
+import { Icon } from '@rneui/themed';
 import { useStatusBarHeight } from '../../constants/config';
-import {BASE_URL} from '../../constants/url';
+import { BASE_URL } from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import { getObjByKey } from '../../utils/Storage';
 import { Calendar } from 'react-native-calendars';
@@ -29,7 +29,7 @@ import moment from 'moment';
 import theme from '../../theme';
 import { formStyles } from '../../styles/FormStyles';
 
-const TripExpenses = ({navigation, onClose}) => {
+const TripExpenses = ({ navigation, onClose }) => {
   const statusBarHeight = useStatusBarHeight();
   const [trips, setTrips] = useState([]);
   const [expenses, setExpenses] = useState([]);
@@ -82,7 +82,7 @@ const TripExpenses = ({navigation, onClose}) => {
 
   const handleDayPress = day => {
     const dateString = day.dateString;
-    
+
     // Validate date is not in future
     if (moment(dateString).isAfter(moment(), 'day')) {
       showToast('error', 'Invalid Date', 'Cannot select future dates');
@@ -97,9 +97,9 @@ const TripExpenses = ({navigation, onClose}) => {
         selectedTextColor: theme.colors.white,
       },
     });
-    
+
     // Clear date error if any
-    setFormErrors(prev => ({...prev, date: null}));
+    setFormErrors(prev => ({ ...prev, date: null }));
     showToast('success', 'Date Selected', moment(dateString).format('DD MMM YYYY'));
   };
 
@@ -110,7 +110,7 @@ const TripExpenses = ({navigation, onClose}) => {
 
       if (pickResults && pickResults.length > 0) {
         const pickResult = pickResults[0];
-        
+
         // Validate file size (10MB limit)
         if (pickResult.size && pickResult.size > 10 * 1024 * 1024) {
           showToast('error', 'File Too Large', 'Please select a file smaller than 10MB');
@@ -129,7 +129,7 @@ const TripExpenses = ({navigation, onClose}) => {
           name: pickResult.name,
           type: pickResult.type,
         }]);
-        
+
         showToast('success', 'File Selected', 'Attachment added successfully');
       }
     } catch (error) {
@@ -222,12 +222,12 @@ const TripExpenses = ({navigation, onClose}) => {
       [new Date().toISOString().split('T')[0]]: {
         selected: true,
         selectedColor: '#0284c7',
-        selectedTextColor: '#ffffff',
+        selectedTextColor: theme.colors.whitefff,
       },
     });
     setFormErrors({});
     setModalVisible(true);
-    
+
     showToast('info', 'Add Expense', `Adding expense for ${selectedTrip?.trip_name}`);
   };
 
@@ -265,7 +265,7 @@ const TripExpenses = ({navigation, onClose}) => {
         const loginRes = await getObjByKey('loginResponse');
         const userToken = loginRes?.data?.access_token;
         setToken(userToken);
-        
+
         if (!userToken) {
           throw new Error('Authentication token not available');
         }
@@ -310,9 +310,9 @@ const TripExpenses = ({navigation, onClose}) => {
       if (result.status === 'success') {
         // Refresh expenses data
         await fetchData(false);
-        
+
         Alert.alert(
-          'Success!', 
+          'Success!',
           'Expense added successfully!',
           [
             {
@@ -342,14 +342,14 @@ const TripExpenses = ({navigation, onClose}) => {
       }
     } catch (error) {
       console.error('Error submitting expense:', error);
-      
+
       let errorMessage = 'Failed to submit expense. Please try again.';
       if (error.message.includes('Network request failed')) {
         errorMessage = 'Network error. Please check your internet connection.';
       } else if (error.message.includes('401')) {
         errorMessage = 'Authentication failed. Please login again.';
       }
-      
+
       showToast('error', 'Submission Failed', errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -368,15 +368,15 @@ const TripExpenses = ({navigation, onClose}) => {
   const getStatusStyle = status => {
     switch (status) {
       case 'in_progress':
-        return {color: '#2563eb', text: 'Ongoing', bgColor: '#dbeafe'};
+        return { color: '#2563eb', text: 'Ongoing', bgColor: '#dbeafe' };
       case 'scheduled':
-        return {color: '#d97706', text: 'Scheduled', bgColor: '#fef3c7'};
+        return { color: '#d97706', text: 'Scheduled', bgColor: '#fef3c7' };
       case 'completed':
-        return {color: '#059669', text: 'Completed', bgColor: '#d1fae5'};
+        return { color: '#059669', text: 'Completed', bgColor: '#d1fae5' };
       case 'cancelled':
-        return {color: '#dc2626', text: 'Cancelled', bgColor: '#fee2e2'};
+        return { color: '#dc2626', text: 'Cancelled', bgColor: '#fee2e2' };
       default:
-        return {color: '#6b7280', text: status, bgColor: '#f3f4f6'};
+        return { color: theme.colors.textSecondary, text: status, bgColor: '#f3f4f6' };
     }
   };
 
@@ -408,21 +408,21 @@ const TripExpenses = ({navigation, onClose}) => {
 
   return (
     <>
-      <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
-      <Header 
-        title="Trip Expenses" 
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <Header
+        title="Trip Expenses"
         onMenuPress={handleMenuPress}
         showRefresh={true}
         onRefresh={handleRefresh}
         refreshing={refreshing}
       />
-      
+
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           refreshControl={null} // Custom refresh handled in header
@@ -453,8 +453,8 @@ const TripExpenses = ({navigation, onClose}) => {
                   <View style={styles.tripHeader}>
                     <View style={styles.tripTitleContainer}>
                       <Text style={styles.tripName}>{trip.trip_name}</Text>
-                      <View style={[styles.statusBadge, {backgroundColor: statusInfo.bgColor}]}>
-                        <Text style={[styles.statusText, {color: statusInfo.color}]}>
+                      <View style={[styles.statusBadge, { backgroundColor: statusInfo.bgColor }]}>
+                        <Text style={[styles.statusText, { color: statusInfo.color }]}>
                           {statusInfo.text}
                         </Text>
                       </View>
@@ -519,7 +519,7 @@ const TripExpenses = ({navigation, onClose}) => {
                     <TouchableOpacity
                       style={styles.addButton}
                       onPress={() => handleAddExpense(trip.trip_id)}>
-                      <Icon name="add" size={20} color="#fff" />
+                      <Icon name="add" size={20} color={theme.colors.white} />
                       <Text style={styles.addButtonText}>Add New Expense</Text>
                     </TouchableOpacity>
                   )}
@@ -540,7 +540,7 @@ const TripExpenses = ({navigation, onClose}) => {
           <View style={[formStyles.modalContainer, { margin: theme.spacing.lg, maxHeight: Dimensions.get('window').height * 0.85 }]}>
             <View style={formStyles.modalHeader}>
               <Text style={formStyles.modalTitle}>Add Expense</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => !isSubmitting && setModalVisible(false)}
                 disabled={isSubmitting}
               >
@@ -552,7 +552,7 @@ const TripExpenses = ({navigation, onClose}) => {
               contentContainerStyle={formStyles.modalContent}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
-              
+
               {selectedTripId && (
                 <View style={styles.selectedTripInfo}>
                   <Text style={styles.selectedTripText}>
@@ -561,7 +561,7 @@ const TripExpenses = ({navigation, onClose}) => {
                 </View>
               )}
 
-              <View style={[styles.dropdownWrapper, {zIndex: categoryOpen ? zIndexCounter.current + 100 : 1}]}>
+              <View style={[styles.dropdownWrapper, { zIndex: categoryOpen ? zIndexCounter.current + 100 : 1 }]}>
                 <Text style={formStyles.label}>Category *</Text>
                 <DropDownPicker
                   open={categoryOpen}
@@ -578,7 +578,7 @@ const TripExpenses = ({navigation, onClose}) => {
                   listMode="MODAL"
                   searchable={true}
                   searchablePlaceholder="Search category..."
-                  onSelectItem={() => setFormErrors(prev => ({...prev, category: null}))}
+                  onSelectItem={() => setFormErrors(prev => ({ ...prev, category: null }))}
                 />
                 {formErrors.category && (
                   <Text style={formStyles.errorText}>{formErrors.category}</Text>
@@ -591,12 +591,22 @@ const TripExpenses = ({navigation, onClose}) => {
                   markedDates={markedDates}
                   onDayPress={handleDayPress}
                   theme={{
-                    selectedDayBackgroundColor: theme.colors.primary,
-                    selectedDayTextColor: theme.colors.white,
-                    todayTextColor: theme.colors.primary,
-                    arrowColor: theme.colors.primary,
-                    textDisabledColor: '#d1d5db',
-                  }}
+                backgroundColor: 'transparent',
+                calendarBackground: 'transparent',
+                textSectionTitleColor: '#E2E8F0',
+                selectedDayBackgroundColor: '#4F46E5',
+                selectedDayTextColor: '#FFFFFF',
+                todayTextColor: '#818CF8',
+                dayTextColor: '#FFFFFF',
+                textDisabledColor: '#94A3B8',
+                dotColor: '#4F46E5',
+                selectedDotColor: '#FFFFFF',
+                arrowColor: '#4F46E5',
+                monthTextColor: '#FFFFFF',
+                textDayFontWeight: '500',
+                textMonthFontWeight: 'bold',
+                textDayHeaderFontWeight: '600',
+              }}
                   hideExtraDays={true}
                   firstDay={1}
                   minDate={'2020-01-01'}
@@ -617,7 +627,7 @@ const TripExpenses = ({navigation, onClose}) => {
                   value={amount}
                   onChangeText={(text) => {
                     setAmount(text);
-                    setFormErrors(prev => ({...prev, amount: null}));
+                    setFormErrors(prev => ({ ...prev, amount: null }));
                   }}
                   style={[formStyles.input, formErrors.amount && formStyles.errorInput]}
                 />
@@ -651,7 +661,7 @@ const TripExpenses = ({navigation, onClose}) => {
                   <View style={styles.attachmentPreviewContainer}>
                     {attachments[0].type?.startsWith('image/') ? (
                       <Image
-                        source={{uri: attachments[0].uri}}
+                        source={{ uri: attachments[0].uri }}
                         style={styles.attachmentImage}
                         resizeMode="contain"
                       />
@@ -737,13 +747,13 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   tripCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: theme.radius.xl,
     padding: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary,
-    ...theme.shadows.sm,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.lg,
   },
   tripHeader: {
     flexDirection: 'row',

@@ -12,18 +12,19 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import React, {useEffect, useState, useRef, useCallback} from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Header from '../../components/Header';
-import {GETNETWORK, POSTNETWORK} from '../../utils/Network';
+import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import { useStatusBarHeight } from '../../constants/config';
-import {BASE_URL} from '../../constants/url';
+import { BASE_URL } from '../../constants/url';
 import DropDownPicker from 'react-native-dropdown-picker';
 import StarRating from 'react-native-star-rating-widget';
 import { useFocusEffect } from '@react-navigation/native';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
+import theme from '../../theme';
 
-const DriverRating = ({navigation}) => {
+const DriverRating = ({ navigation }) => {
   const statusBarHeight = useStatusBarHeight();
   // State for dropdowns
   const [tripNameOpen, setTripNameOpen] = useState(false);
@@ -46,16 +47,16 @@ const DriverRating = ({navigation}) => {
 
   // Rating options
   const ratingOptions = [
-    {label: '1 Star', value: 1, color: '#ef4444'},
-    {label: '2 Stars', value: 2, color: '#f97316'},
-    {label: '3 Stars', value: 3, color: '#eab308'},
-    {label: '4 Stars', value: 4, color: '#84cc16'},
-    {label: '5 Stars', value: 5, color: '#22c55e'},
+    { label: '1 Star', value: 1, color: theme.colors.error },
+    { label: '2 Stars', value: 2, color: '#f97316' },
+    { label: '3 Stars', value: 3, color: '#eab308' },
+    { label: '4 Stars', value: 4, color: '#84cc16' },
+    { label: '5 Stars', value: 5, color: '#22c55e' },
   ];
 
   const yesNoOptions = [
-    {label: 'Yes', value: 'yes', color: '#22c55e'},
-    {label: 'No', value: 'no', color: '#ef4444'},
+    { label: 'Yes', value: 'yes', color: '#22c55e' },
+    { label: 'No', value: 'no', color: theme.colors.error },
   ];
 
   // Toast configuration
@@ -92,7 +93,7 @@ const DriverRating = ({navigation}) => {
 
   const GetTrip = async () => {
     if (loading) return;
-    
+
     setLoading(true);
     const Url = `${BASE_URL}trips/trip_master/`;
     try {
@@ -114,7 +115,7 @@ const DriverRating = ({navigation}) => {
 
   const GetDrivers = async () => {
     if (loading) return;
-    
+
     setLoading(true);
     const Url = `${BASE_URL}trips/driver_master/`;
     try {
@@ -136,14 +137,14 @@ const DriverRating = ({navigation}) => {
 
   const GetChecklist = async () => {
     if (loading) return;
-    
+
     setLoading(true);
     const Url = `${BASE_URL}trips/driver_checklist_master/`;
     try {
       const response = await GETNETWORK(Url, true);
       const checklist = response.data || [];
       setChecklistItems(checklist);
-      console.log('checlist',checklist)
+      console.log('checlist', checklist)
       showToast('success', 'Checklist Loaded', `${checklist.length} checklist items loaded`);
     } catch (error) {
       console.error('Error fetching checklist:', error);
@@ -190,22 +191,22 @@ const DriverRating = ({navigation}) => {
     setLoading(true);
     try {
       const checklistValues = checklistItems
-      .map(item => {
-        const ratingValue = ratings[item.driver_checklist_master_id];
-        if (ratingValue === undefined || ratingValue === null || ratingValue === '') {
-          return null;
-        }
-    
-        return {
-          checklist_master_id: item.driver_checklist_master_id,
-          value:
-            item.checklist_type === 'rate'
-              ? ratingValue * 2
-              : ratingValue, // keep "yes"/"no" for question
-        };
-      })
-      .filter(item => item !== null);
-    
+        .map(item => {
+          const ratingValue = ratings[item.driver_checklist_master_id];
+          if (ratingValue === undefined || ratingValue === null || ratingValue === '') {
+            return null;
+          }
+
+          return {
+            checklist_master_id: item.driver_checklist_master_id,
+            value:
+              item.checklist_type === 'rate'
+                ? ratingValue * 2
+                : ratingValue, // keep "yes"/"no" for question
+          };
+        })
+        .filter(item => item !== null);
+
 
       if (checklistValues.length === 0) {
         showToast('error', 'Required', 'Please provide valid ratings for checklist items');
@@ -273,10 +274,10 @@ const DriverRating = ({navigation}) => {
     const selectedOption = options.find(opt => opt.value === selectedValue);
     const isOpen = openDropdowns[item.driver_checklist_master_id] || false;
     const zIndex = isOpen ? zIndexCounter.current + index : 1;
-  
+
     // Debugging log to verify state
     console.log(`Checklist Item: ${item.checklist_name}, isOpen: ${isOpen}, selectedValue: ${selectedValue}`);
-  
+
     return (
       <View style={[styles.tableRow, { zIndex }]} key={item.driver_checklist_master_id}>
         <View style={styles.itemNameContainer}>
@@ -287,13 +288,13 @@ const DriverRating = ({navigation}) => {
               onPress={() => handleChecklistDropdownOpen(item.driver_checklist_master_id, true)}
               style={styles.selectedStatusContainer}
             >
-              <Text style={[styles.selectedStatusText, { color: selectedOption?.color || '#374151' }]}>
+              <Text style={[styles.selectedStatusText, { color: selectedOption?.color || theme.colors.text }]}>
                 {selectedOption?.label || 'N/A'}
               </Text>
             </TouchableOpacity>
           )}
         </View>
-  
+
         {isRateType ? (
           // ⭐ Star Rating for "rate"
           <View style={styles.starRatingContainer}>
@@ -324,7 +325,7 @@ const DriverRating = ({navigation}) => {
                 const newValue = callback(selectedValue);
                 handleRatingSelect(item.driver_checklist_master_id, newValue);
               }}
-              setItems={() => {}}
+              setItems={() => { }}
               placeholder="Select Yes/No"
               style={[styles.statusDropdown, selectedOption && !isOpen && { backgroundColor: selectedOption.color + '20' }]}
               textStyle={styles.statusDropdownText}
@@ -345,30 +346,30 @@ const DriverRating = ({navigation}) => {
       </View>
     );
   };
-  
+
 
   return (
     <>
-      <StatusBar backgroundColor={'#0284c7'} barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <Header
         title="Driver Rating"
         onMenuPress={() => navigation.openDrawer()}
       />
 
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           nestedScrollEnabled={true}
         >
           <View style={styles.row}>
-            <View style={[styles.inputItem, {zIndex: tripNameOpen ? 1000 : 1}]}>
+            <View style={[styles.inputItem, { zIndex: tripNameOpen ? 1000 : 1 }]}>
               <Text style={styles.label}>Trip Name</Text>
               <DropDownPicker
-              
+
                 open={tripNameOpen}
                 value={tripNameValue}
                 items={tripNameItems}
@@ -382,7 +383,7 @@ const DriverRating = ({navigation}) => {
                 placeholderStyle={styles.dropdownPlaceholder}
                 searchable={true}
                 searchPlaceholder="Search trips..."
-                  listMode="MODAL"
+                listMode="MODAL"
                 scrollViewProps={{
                   nestedScrollEnabled: true,
                 }}
@@ -391,7 +392,7 @@ const DriverRating = ({navigation}) => {
               />
             </View>
 
-            <View style={[styles.inputItem, {zIndex: driverOpen ? 1000 : 1}]}>
+            <View style={[styles.inputItem, { zIndex: driverOpen ? 1000 : 1 }]}>
               <Text style={styles.label}>Driver</Text>
               <DropDownPicker
                 open={driverOpen}
@@ -440,7 +441,7 @@ const DriverRating = ({navigation}) => {
                 value={comment}
                 onChangeText={setComment}
                 placeholder="Enter any additional comments or feedback..."
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={theme.colors.textPlaceholder}
                 multiline={true}
                 numberOfLines={4}
                 textAlignVertical="top"
@@ -448,14 +449,14 @@ const DriverRating = ({navigation}) => {
             </View>
 
             <View style={styles.buttonContainer}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.resetButton, loading && styles.disabledButton]}
                 onPress={resetForm}
                 disabled={loading}
               >
                 <Text style={styles.resetButtonText}>Reset Form</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.submitButton, loading && styles.disabledButton]}
                 onPress={submitRating}
@@ -479,78 +480,78 @@ const DriverRating = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.background,
   },
   scrollContent: {
-    padding: 20,
+    padding: theme.spacing.lg,
     paddingBottom: 40,
   },
   row: {
-    marginBottom: 20,
+    marginBottom: theme.spacing.md,
   },
   inputItem: {
-    marginBottom: 20,
+    marginBottom: theme.spacing.md,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
   },
   dropdown: {
-    borderColor: '#d1d5db',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    minHeight: 48,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: theme.radius.md,
+    minHeight: 52,
     borderWidth: 1.5,
+    ...theme.shadows.sm,
   },
   dropdownContainer: {
-    borderColor: '#d1d5db',
-    backgroundColor: '#fff',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1.5,
-    borderRadius: 8,
+    borderRadius: theme.radius.md,
     maxHeight: 300,
+    ...theme.shadows.md,
   },
   dropdownText: {
-    fontSize: 14,
-    color: '#374151',
+    fontSize: theme.typography.sm,
+    color: theme.colors.text,
   },
   dropdownPlaceholder: {
-    color: '#9ca3af',
-    fontSize: 14,
+    color: theme.colors.textPlaceholder,
+    fontSize: theme.typography.sm,
   },
   ratingSection: {
-    marginTop: 10,
+    marginTop: theme.spacing.sm,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 8,
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
   },
   sectionSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 20,
+    fontSize: theme.typography.sm,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.lg,
   },
   tableContainer: {
-    marginBottom: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: theme.spacing.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.lg,
   },
   tableRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    paddingVertical: theme.spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.borderLight,
   },
   itemNameContainer: {
     flex: 1,
@@ -559,96 +560,99 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   itemName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.medium,
+    color: theme.colors.text,
     flex: 1,
   },
   selectedStatusText: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 8,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
+    marginLeft: theme.spacing.xs,
   },
   starRatingContainer: {
     alignItems: 'center',
     minWidth: 150,
   },
   starRatingText: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 4,
-    fontWeight: '500',
+    fontSize: theme.typography.xs,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.xxs,
+    fontWeight: theme.typography.medium,
   },
   statusDropdownContainer: {
     width: 120,
   },
   statusDropdown: {
-    borderColor: '#d1d5db',
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: theme.radius.sm,
     minHeight: 40,
     borderWidth: 1.5,
   },
   statusDropdownText: {
-    fontSize: 14,
-    color: '#374151',
+    fontSize: theme.typography.sm,
+    color: theme.colors.text,
   },
   statusDropdownPlaceholder: {
-    color: '#9ca3af',
-    fontSize: 14,
+    color: theme.colors.textPlaceholder,
+    fontSize: theme.typography.sm,
   },
   statusIndicator: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    marginRight: 8,
+    marginRight: theme.spacing.xs,
   },
   commentContainer: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.xl,
   },
   commentInput: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    padding: 12,
-    minHeight: 100,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.md,
+    minHeight: 120,
     textAlignVertical: 'top',
-    fontSize: 14,
-    color: '#374151',
-    marginTop: 8,
+    fontSize: theme.typography.base,
+    color: theme.colors.text,
+    marginTop: theme.spacing.xs,
+    ...theme.shadows.sm,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: theme.spacing.md,
   },
   resetButton: {
     flex: 1,
-    backgroundColor: '#6b7280',
-    paddingVertical: 14,
-    borderRadius: 8,
+    backgroundColor: theme.colors.borderDark,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
+    ...theme.shadows.sm,
   },
   submitButton: {
     flex: 2,
-    backgroundColor: '#0284c7',
-    paddingVertical: 14,
-    borderRadius: 8,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
+    ...theme.shadows.glow,
   },
   disabledButton: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
   resetButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.text,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
   },
   submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
   },
 });
 

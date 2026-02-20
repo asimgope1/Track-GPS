@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useRef} from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,18 +13,19 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
-import {Calendar} from 'react-native-calendars';
+import { Calendar } from 'react-native-calendars';
 import Header from '../../components/Header';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useStatusBarHeight } from '../../constants/config';
-import {BASE_URL} from '../../constants/url';
-import {GETNETWORK} from '../../utils/Network';
+import { BASE_URL } from '../../constants/url';
+import { GETNETWORK } from '../../utils/Network';
 import moment from 'moment';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
+import theme from '../../theme';
 
-const {height} = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 const MaintenanceCalendarScreen = () => {
   const statusBarHeight = useStatusBarHeight();
@@ -45,10 +46,10 @@ const MaintenanceCalendarScreen = () => {
   const [statusValue, setStatusValue] = useState(null);
   const [vehicleItems, setVehicleItems] = useState([]);
   const [statusItems, setStatusItems] = useState([
-    {label: 'Scheduled', value: 'scheduled'},
-    {label: 'Scheduled Overdue', value: 'scheduled_overdue'},
-    {label: 'Completed', value: 'completed'},
-    {label: 'All', value: 'all'},
+    { label: 'Scheduled', value: 'scheduled' },
+    { label: 'Scheduled Overdue', value: 'scheduled_overdue' },
+    { label: 'Completed', value: 'completed' },
+    { label: 'All', value: 'all' },
   ]);
 
   const zIndexCounter = useRef(1000);
@@ -59,18 +60,18 @@ const MaintenanceCalendarScreen = () => {
     if (appointment.status === 'completed') {
       return 'completed';
     }
-    
+
     // For scheduled appointments, check if they are overdue
     if (appointment.status === 'scheduled') {
       const appointmentDate = moment(appointment.date);
       const today = moment().startOf('day');
-      
+
       // If appointment date is before today, it's overdue
       if (appointmentDate.isBefore(today)) {
         return 'scheduled_overdue';
       }
     }
-    
+
     return appointment.status;
   };
 
@@ -118,7 +119,7 @@ const MaintenanceCalendarScreen = () => {
   const validateAppointmentData = (appointment) => {
     const requiredFields = ['id', 'date', 'status'];
     const missingFields = requiredFields.filter(field => !appointment[field]);
-    
+
     if (missingFields.length > 0) {
       console.warn('Invalid appointment data - missing fields:', missingFields, appointment);
       return false;
@@ -135,7 +136,7 @@ const MaintenanceCalendarScreen = () => {
   // Toast configuration
   const showToast = (type, title, message) => {
     if (!isMounted.current) return;
-    
+
     Toast.show({
       type,
       position: 'top',
@@ -200,7 +201,7 @@ const MaintenanceCalendarScreen = () => {
     }
 
     const dataToFilter = appointmentsData || appointments;
-    
+
     if (!Array.isArray(dataToFilter)) {
       console.warn('Invalid appointments data for filtering');
       setFilteredAppointments([]);
@@ -210,7 +211,7 @@ const MaintenanceCalendarScreen = () => {
     let result = dataToFilter.filter(app => {
       // Validate each appointment before filtering
       if (!validateAppointmentData(app)) return false;
-      
+
       const appointmentStatus = getAppointmentStatus(app);
       return app.date === date;
     });
@@ -232,7 +233,7 @@ const MaintenanceCalendarScreen = () => {
   // Fetch maintenance data from API with enhanced validation
   const fetchMaintenanceData = async (fromDate, toDate) => {
     if (loading || !isMounted.current) return;
-    
+
     // Validate dates
     if (!validateDate(fromDate) || !validateDate(toDate)) {
       showToast('error', 'Invalid Date', 'Please provide valid dates');
@@ -260,7 +261,7 @@ const MaintenanceCalendarScreen = () => {
               return;
             }
 
-            const date = moment(item.scheduled_date).isValid() 
+            const date = moment(item.scheduled_date).isValid()
               ? moment(item.scheduled_date).format('YYYY-MM-DD')
               : null;
 
@@ -273,10 +274,10 @@ const MaintenanceCalendarScreen = () => {
             const appointmentDate = moment(date);
             const today = moment().startOf('day');
             const isOverdue = appointmentDate.isBefore(today);
-            
+
             marked[date] = {
               marked: true,
-              dotColor: isOverdue ? '#ef4444' : '#0284c7', // Red for overdue, blue for scheduled
+              dotColor: isOverdue ? theme.colors.error : '#0284c7', // Red for overdue, blue for scheduled
               selectedColor: '#bae6fd',
             };
 
@@ -287,7 +288,7 @@ const MaintenanceCalendarScreen = () => {
             const appointment = {
               id: item.id || `scheduled-${Date.now()}-${Math.random()}`,
               date: date,
-              time: moment(item.created_on).isValid() 
+              time: moment(item.created_on).isValid()
                 ? moment(item.created_on).format('hh:mm A')
                 : 'Unknown Time',
               vehicleId: item.thing_id,
@@ -374,10 +375,10 @@ const MaintenanceCalendarScreen = () => {
         }));
 
         setVehicleItems(uniqueVehicles);
-        
+
         // Filter appointments with the new data
         filterAppointments(selectedDate, vehicleValue, statusValue, allAppointments);
-        
+
         showToast('success', 'Data Loaded', `Loaded ${allAppointments.length} maintenance records`);
       }
     } catch (error) {
@@ -395,10 +396,10 @@ const MaintenanceCalendarScreen = () => {
   // Load data when component mounts
   useEffect(() => {
     isMounted.current = true;
-    
+
     const fromDate = moment().startOf('month').format('YYYY-MM-DD');
     const toDate = moment().endOf('month').format('YYYY-MM-DD');
-    
+
     if (validateDate(fromDate) && validateDate(toDate)) {
       fetchMaintenanceData(fromDate, toDate);
     }
@@ -463,7 +464,7 @@ const MaintenanceCalendarScreen = () => {
   // Clear all filters
   const clearAllFilters = () => {
     if (!isMounted.current) return;
-    
+
     setVehicleValue(null);
     setStatusValue(null);
     showToast('info', 'Filters Cleared', 'All filters have been reset');
@@ -478,14 +479,14 @@ const MaintenanceCalendarScreen = () => {
     setStatusValue(null);
     setVehicleOpen(false);
     setStatusOpen(false);
-    
+
     const fromDate = moment().startOf('month').format('YYYY-MM-DD');
     const toDate = moment().endOf('month').format('YYYY-MM-DD');
-    
+
     if (validateDate(fromDate) && validateDate(toDate)) {
       fetchMaintenanceData(fromDate, toDate);
     }
-    
+
     showToast('info', 'Form Reset', 'Calendar view has been reset');
   };
 
@@ -540,7 +541,7 @@ const MaintenanceCalendarScreen = () => {
       case 'scheduled':
         return '#0284c7';
       case 'scheduled_overdue':
-        return '#ef4444';
+        return theme.colors.error;
       default:
         return '#0284c7';
     }
@@ -554,7 +555,7 @@ const MaintenanceCalendarScreen = () => {
       case 'scheduled':
         return '#0284c7';
       case 'scheduled_overdue':
-        return '#ef4444';
+        return theme.colors.error;
       default:
         return '#0284c7';
     }
@@ -574,7 +575,7 @@ const MaintenanceCalendarScreen = () => {
     }
   };
 
-  const renderAppointmentItem = ({item}) => {
+  const renderAppointmentItem = ({ item }) => {
     if (!validateAppointmentData(item)) {
       return null; // Don't render invalid appointments
     }
@@ -612,7 +613,7 @@ const MaintenanceCalendarScreen = () => {
           </Text>
         )}
         {appointmentStatus === 'scheduled_overdue' && (
-          <Text style={[styles.cardSub, {color: '#ef4444', fontStyle: 'italic'}]}>
+          <Text style={[styles.cardSub, { color: theme.colors.error, fontStyle: 'italic' }]}>
             ⚠️ This maintenance was due on {moment(item.date).format('DD MMM YYYY')}
           </Text>
         )}
@@ -621,8 +622,8 @@ const MaintenanceCalendarScreen = () => {
   };
 
   return (
-    <View style={{flex: 1}}>
-      <StatusBar backgroundColor="#0284c7" barStyle="light-content" />
+    <View style={{ flex: 1 }}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <Header
         title="Maintenance Calendar"
         onMenuPress={() => navigation.openDrawer()}
@@ -641,7 +642,7 @@ const MaintenanceCalendarScreen = () => {
             contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
-            
+
             {/* Add Schedule Button */}
             <TouchableOpacity
               style={styles.addButton}
@@ -659,7 +660,7 @@ const MaintenanceCalendarScreen = () => {
 
             {/* Filter Dropdowns */}
             <View style={styles.filterRow}>
-              <View style={[styles.flexDropdown, {zIndex: vehicleOpen ? zIndexCounter.current + 1 : 1}]}>
+              <View style={[styles.flexDropdown, { zIndex: vehicleOpen ? zIndexCounter.current + 1 : 1 }]}>
                 <DropDownPicker
                   searchable={true}
                   searchablePlaceholder="Search Vehicle"
@@ -675,11 +676,11 @@ const MaintenanceCalendarScreen = () => {
                   textStyle={styles.dropdownText}
                   placeholderStyle={styles.dropdownPlaceholder}
                   listMode="SCROLLVIEW"
-                  scrollViewProps={{nestedScrollEnabled: true}}
+                  scrollViewProps={{ nestedScrollEnabled: true }}
                 />
               </View>
 
-              <View style={[styles.flexDropdown, {zIndex: statusOpen ? zIndexCounter.current + 1 : 1}]}>
+              <View style={[styles.flexDropdown, { zIndex: statusOpen ? zIndexCounter.current + 1 : 1 }]}>
                 <DropDownPicker
                   searchable={true}
                   searchablePlaceholder="Search Status"
@@ -695,7 +696,7 @@ const MaintenanceCalendarScreen = () => {
                   textStyle={styles.dropdownText}
                   placeholderStyle={styles.dropdownPlaceholder}
                   listMode="SCROLLVIEW"
-                  scrollViewProps={{nestedScrollEnabled: true}}
+                  scrollViewProps={{ nestedScrollEnabled: true }}
                 />
               </View>
             </View>
@@ -716,24 +717,36 @@ const MaintenanceCalendarScreen = () => {
               firstDay={1}
               current={currentMonth}
               theme={{
-                selectedDayBackgroundColor: '#0ea5e9',
-                todayTextColor: '#0284c7',
-                arrowColor: '#0284c7',
+                backgroundColor: 'transparent',
+                calendarBackground: 'transparent',
+                textSectionTitleColor: '#E2E8F0',
+                selectedDayBackgroundColor: '#4F46E5',
+                selectedDayTextColor: '#FFFFFF',
+                todayTextColor: '#818CF8',
+                dayTextColor: '#FFFFFF',
+                textDisabledColor: '#94A3B8',
+                dotColor: '#4F46E5',
+                selectedDotColor: '#FFFFFF',
+                arrowColor: '#4F46E5',
+                monthTextColor: '#FFFFFF',
+                textDayFontWeight: '500',
+                textMonthFontWeight: 'bold',
+                textDayHeaderFontWeight: '600',
               }}
             />
 
             {/* Legend for calendar dots */}
             <View style={styles.legendContainer}>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, {backgroundColor: '#0284c7'}]} />
+                <View style={[styles.legendDot, { backgroundColor: '#0284c7' }]} />
                 <Text style={styles.legendText}>Scheduled</Text>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, {backgroundColor: '#ef4444'}]} />
+                <View style={[styles.legendDot, { backgroundColor: theme.colors.error }]} />
                 <Text style={styles.legendText}>Overdue</Text>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, {backgroundColor: '#10b981'}]} />
+                <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
                 <Text style={styles.legendText}>Completed</Text>
               </View>
             </View>
@@ -877,20 +890,20 @@ const MaintenanceCalendarScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-    padding: 10,
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.sm,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.background,
   },
   scrollContainer: {
-    paddingBottom: 20,
+    paddingBottom: theme.spacing.lg,
   },
   listContainer: {
-    marginTop: 20,
+    marginTop: theme.spacing.lg,
     height: height * 0.35,
     minHeight: 200,
   },
@@ -898,200 +911,208 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   flatListContent: {
-    paddingBottom: 20,
+    paddingBottom: theme.spacing.lg,
   },
   card: {
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
+    marginBottom: theme.spacing.md,
     borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    ...theme.shadows.sm,
   },
   cardTitle: {
-    fontWeight: '600',
-    fontSize: 16,
-    color: '#0c4a6e',
-    marginBottom: 4,
+    fontWeight: theme.typography.semibold,
+    fontSize: theme.typography.base,
+    color: theme.colors.primaryDark,
+    marginBottom: theme.spacing.xs,
   },
   cardSub: {
-    fontSize: 14,
-    color: '#334155',
-    marginBottom: 4,
+    fontSize: theme.typography.sm,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
   },
   cardStatus: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
+    marginBottom: theme.spacing.xs,
   },
   addButton: {
-    backgroundColor: '#0284c7',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.radius.md,
     alignSelf: 'flex-end',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: {width: 0, height: 2},
-    elevation: 3,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.glow,
   },
   addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.semibold,
   },
   filterWrapper: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
   },
   filterTitle: {
-    fontWeight: '600',
-    color: '#374151',
-    fontSize: 16,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+    fontSize: theme.typography.base,
   },
   clearButtonText: {
-    color: '#0284c7',
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.primary,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
   },
   filterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
-    gap: 12,
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.md,
   },
   flexDropdown: {
     flex: 1,
   },
   dropdown: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1.5,
-    borderRadius: 8,
-    minHeight: 48,
+    borderRadius: theme.radius.md,
+    minHeight: 52,
+    ...theme.shadows.sm,
   },
   dropdownContainer: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1.5,
-    borderRadius: 8,
+    borderRadius: theme.radius.md,
+    ...theme.shadows.md,
   },
   dropdownText: {
-    fontSize: 14,
-    color: '#111827',
+    fontSize: theme.typography.sm,
+    color: theme.colors.text,
   },
   dropdownPlaceholder: {
-    color: '#9ca3af',
-    fontSize: 14,
+    color: theme.colors.textPlaceholder,
+    fontSize: theme.typography.sm,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#0284c7',
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.semibold,
+    marginBottom: theme.spacing.md,
+    color: theme.colors.primary,
   },
   emptyState: {
-    padding: 20,
+    padding: theme.spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: theme.spacing.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: theme.radius.lg,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.sm,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#6b7280',
+    fontSize: theme.typography.base,
+    color: theme.colors.textMuted,
     textAlign: 'center',
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     width: '90%',
     maxWidth: 400,
-    padding: 20,
-    borderRadius: 12,
-    elevation: 5,
+    padding: theme.spacing.xl,
+    borderRadius: theme.radius.lg,
+    ...theme.shadows.lg,
   },
   modalTitle: {
-    fontWeight: '600',
-    fontSize: 20,
-    marginBottom: 20,
-    color: '#0284c7',
+    fontWeight: theme.typography.bold,
+    fontSize: theme.typography.xl,
+    marginBottom: theme.spacing.lg,
+    color: theme.colors.primary,
     textAlign: 'center',
   },
   detailRow: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
     alignItems: 'flex-start',
   },
   detailLabel: {
-    fontWeight: '600',
+    fontWeight: theme.typography.semibold,
     width: 120,
-    color: '#374151',
-    fontSize: 14,
+    color: theme.colors.text,
+    fontSize: theme.typography.sm,
   },
   detailValue: {
     flex: 1,
-    color: '#475569',
-    fontSize: 14,
+    color: theme.colors.textSecondary,
+    fontSize: theme.typography.sm,
   },
   statusText: {
-    fontWeight: '600',
+    fontWeight: theme.typography.semibold,
   },
   remarksText: {
     fontStyle: 'italic',
   },
   errorText: {
-    color: '#ef4444',
+    color: theme.colors.error,
     textAlign: 'center',
-    fontSize: 16,
-    marginVertical: 20,
+    fontSize: theme.typography.base,
+    marginVertical: theme.spacing.lg,
   },
   modalButtons: {
     flexDirection: 'row',
-    marginTop: 25,
-    gap: 12,
+    marginTop: theme.spacing.xl,
+    gap: theme.spacing.md,
   },
   closeButton: {
-    backgroundColor: '#0284c7',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: theme.colors.primary,
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
     flex: 1,
+    ...theme.shadows.glow,
   },
   closeText: {
-    color: '#fff',
+    color: theme.colors.white,
     textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 16,
+    fontWeight: theme.typography.semibold,
+    fontSize: theme.typography.base,
   },
   editButton: {
-    backgroundColor: '#f59e0b',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: theme.colors.warning,
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
     flex: 1,
+    ...theme.shadows.sm,
   },
   editText: {
-    color: '#fff',
+    color: theme.colors.white,
     textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 16,
+    fontWeight: theme.typography.semibold,
+    fontSize: theme.typography.base,
   },
   legendContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginVertical: 15,
-    paddingVertical: 10,
-    backgroundColor: '#f8fafc',
-    borderRadius: 8,
+    marginVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: theme.radius.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.sm,
   },
   legendItem: {
     flexDirection: 'row',
@@ -1101,24 +1122,24 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    marginRight: 6,
+    marginRight: theme.spacing.xs,
   },
   legendText: {
-    fontSize: 12,
-    color: '#374151',
+    fontSize: theme.typography.xs,
+    color: theme.colors.text,
   },
   overdueWarning: {
-    backgroundColor: '#fef2f2',
-    padding: 10,
-    borderRadius: 6,
-    marginTop: 10,
+    backgroundColor: theme.colors.errorLight,
+    padding: theme.spacing.sm,
+    borderRadius: theme.radius.md,
+    marginTop: theme.spacing.sm,
     borderLeftWidth: 4,
-    borderLeftColor: '#ef4444',
+    borderLeftColor: theme.colors.error,
   },
   overdueWarningText: {
-    color: '#ef4444',
-    fontSize: 14,
-    fontWeight: '500',
+    color: theme.colors.error,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.medium,
   },
 });
 

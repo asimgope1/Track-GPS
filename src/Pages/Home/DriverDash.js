@@ -1,4 +1,4 @@
-import React, {useState, useEffect, Fragment, useCallback, useMemo} from 'react';
+import React, { useState, useEffect, Fragment, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,17 +16,17 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import {BASE_URL} from '../../constants/url';
-import {Loader} from '../../components/Loader';
-import {Icon} from 'react-native-paper';
-import {GETNETWORK, POSTNETWORK} from '../../utils/Network';
-import {getObjByKey} from '../../utils/Storage';
+import { BASE_URL } from '../../constants/url';
+import { Loader } from '../../components/Loader';
+import { Icon } from 'react-native-paper';
+import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
+import { getObjByKey } from '../../utils/Storage';
 import TripStart from '../Sidebarpages/TripStart';
 import TripStop from '../Sidebarpages/TripStop';
 import TripExpenses from '../Sidebarpages/TripExpenses';
 import theme from '../../theme';
 
-const Dashboard = ({navigation}) => {
+const Dashboard = ({ navigation }) => {
   const [showTripStartModal, setShowTripStartModal] = useState(false);
   const [showTripStopModal, setShowTripStopModal] = useState(false);
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
@@ -166,7 +166,7 @@ const Dashboard = ({navigation}) => {
         <View
           style={[
             styles.statusBadge,
-            {backgroundColor: getStatusColor(trip.trip_status)},
+            { backgroundColor: getStatusColor(trip.trip_status) },
           ]}>
           <Text style={styles.statusText}>{getStatusText(trip.trip_status)}</Text>
         </View>
@@ -259,91 +259,91 @@ const Dashboard = ({navigation}) => {
   ), [searchQuery, statusFilter]);
 
   const renderFilterButtons = useCallback(() => (
-  <ScrollView
-    horizontal
-    showsHorizontalScrollIndicator={false}
-    style={styles.filterContainer}>
-    <TouchableOpacity
-      style={[
-        styles.filterButton,
-        statusFilter === 'all' && styles.activeFilter,
-      ]}
-      onPress={() => setStatusFilter('all')}>
-      <Text
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.filterContainer}>
+      <TouchableOpacity
         style={[
-          styles.filterText,
-          statusFilter === 'all' && styles.activeFilterText,
-        ]}>
-        All
-      </Text>
-    </TouchableOpacity>
+          styles.filterButton,
+          statusFilter === 'all' && styles.activeFilter,
+        ]}
+        onPress={() => setStatusFilter('all')}>
+        <Text
+          style={[
+            styles.filterText,
+            statusFilter === 'all' && styles.activeFilterText,
+          ]}>
+          All
+        </Text>
+      </TouchableOpacity>
 
-    <TouchableOpacity
-      style={[
-        styles.filterButton,
-        statusFilter === 'scheduled' && styles.activeFilter,
-      ]}
-      onPress={() => setStatusFilter('scheduled')}>
-      <Text
+      <TouchableOpacity
         style={[
-          styles.filterText,
-          statusFilter === 'scheduled' && styles.activeFilterText,
-        ]}>
-        Scheduled
-      </Text>
-    </TouchableOpacity>
+          styles.filterButton,
+          statusFilter === 'scheduled' && styles.activeFilter,
+        ]}
+        onPress={() => setStatusFilter('scheduled')}>
+        <Text
+          style={[
+            styles.filterText,
+            statusFilter === 'scheduled' && styles.activeFilterText,
+          ]}>
+          Scheduled
+        </Text>
+      </TouchableOpacity>
 
-    <TouchableOpacity
-      style={[
-        styles.filterButton,
-        statusFilter === 'in_progress' && styles.activeFilter,
-      ]}
-      onPress={() => setStatusFilter('in_progress')}>
-      <Text
+      <TouchableOpacity
         style={[
-          styles.filterText,
-          statusFilter === 'in_progress' && styles.activeFilterText,
-        ]}>
-        In Progress
-      </Text>
-    </TouchableOpacity>
+          styles.filterButton,
+          statusFilter === 'in_progress' && styles.activeFilter,
+        ]}
+        onPress={() => setStatusFilter('in_progress')}>
+        <Text
+          style={[
+            styles.filterText,
+            statusFilter === 'in_progress' && styles.activeFilterText,
+          ]}>
+          In Progress
+        </Text>
+      </TouchableOpacity>
 
-    <TouchableOpacity
-      style={[
-        styles.filterButton,
-        statusFilter === 'completed' && styles.activeFilter,
-      ]}
-      onPress={() => setStatusFilter('completed')}>
-      <Text
+      <TouchableOpacity
         style={[
-          styles.filterText,
-          statusFilter === 'completed' && styles.activeFilterText,
-        ]}>
-        Completed
-      </Text>
-    </TouchableOpacity>
+          styles.filterButton,
+          statusFilter === 'completed' && styles.activeFilter,
+        ]}
+        onPress={() => setStatusFilter('completed')}>
+        <Text
+          style={[
+            styles.filterText,
+            statusFilter === 'completed' && styles.activeFilterText,
+          ]}>
+          Completed
+        </Text>
+      </TouchableOpacity>
 
-    <TouchableOpacity
-      style={[
-        styles.filterButton,
-        statusFilter === 'cancelled' && styles.activeFilter,
-      ]}
-      onPress={() => setStatusFilter('cancelled')}>
-      <Text
+      <TouchableOpacity
         style={[
-          styles.filterText,
-          statusFilter === 'cancelled' && styles.activeFilterText,
-        ]}>
-        Cancelled
-      </Text>
-    </TouchableOpacity>
-  </ScrollView>
+          styles.filterButton,
+          statusFilter === 'cancelled' && styles.activeFilter,
+        ]}
+        onPress={() => setStatusFilter('cancelled')}>
+        <Text
+          style={[
+            styles.filterText,
+            statusFilter === 'cancelled' && styles.activeFilterText,
+          ]}>
+          Cancelled
+        </Text>
+      </TouchableOpacity>
+    </ScrollView>
   ), [statusFilter]);
 
   return (
     <Fragment>
-      <StatusBar backgroundColor={'#0284c7'} barStyle="dark-content" />
-      <SafeAreaView style={styles.safeareacontainer}>
+      <StatusBar backgroundColor="transparent" translucent barStyle="light-content" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
         <KeyboardAvoidingView
           style={styles.mainContent}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -537,7 +537,7 @@ const Dashboard = ({navigation}) => {
             {tripToStart && (
               <TripStart
                 navigation={navigation}
-                route={{params: {trip: tripToStart}}}
+                route={{ params: { trip: tripToStart } }}
                 onClose={() => {
                   setShowTripStartModal(false);
                   GetTrip(DriverId, statusFilter);
@@ -546,45 +546,45 @@ const Dashboard = ({navigation}) => {
             )}
           </Modal>
 
-    <Modal
-  animationType="slide"
-  transparent={false}
-  visible={showTripStopModal}
-  onRequestClose={() => setShowTripStopModal(false)}>
-  {tripToStop && (
-    <TripStop
-      navigation={navigation} // Make sure this is defined
-      route={{
-        params: {
-          tripId: tripToStop.trip_assignment_id,
-          trip: tripToStop,
-        },
-      }}
-      onClose={() => {
-        setShowTripStopModal(false);
-        GetTrip(DriverId, statusFilter);
-      }}
-    />
-  )}
-</Modal>
+          <Modal
+            animationType="slide"
+            transparent={false}
+            visible={showTripStopModal}
+            onRequestClose={() => setShowTripStopModal(false)}>
+            {tripToStop && (
+              <TripStop
+                navigation={navigation} // Make sure this is defined
+                route={{
+                  params: {
+                    tripId: tripToStop.trip_assignment_id,
+                    trip: tripToStop,
+                  },
+                }}
+                onClose={() => {
+                  setShowTripStopModal(false);
+                  GetTrip(DriverId, statusFilter);
+                }}
+              />
+            )}
+          </Modal>
 
-<Modal
-  animationType="slide"
-  transparent={false}
-  visible={showAddExpenseModal}
-  onRequestClose={() => setShowAddExpenseModal(false)}>
-  {tripForExpense && (
-    <TripExpenses
-      navigation={navigation}
-      onClose={() => {
-        setShowAddExpenseModal(false);
-        GetTrip(DriverId, statusFilter); // Refresh trips data when closing
-      }}
-      // Pass the specific trip data if needed by TripExpenses component
-      tripData={tripForExpense}
-    />
-  )}
-</Modal>
+          <Modal
+            animationType="slide"
+            transparent={false}
+            visible={showAddExpenseModal}
+            onRequestClose={() => setShowAddExpenseModal(false)}>
+            {tripForExpense && (
+              <TripExpenses
+                navigation={navigation}
+                onClose={() => {
+                  setShowAddExpenseModal(false);
+                  GetTrip(DriverId, statusFilter); // Refresh trips data when closing
+                }}
+                // Pass the specific trip data if needed by TripExpenses component
+                tripData={tripForExpense}
+              />
+            )}
+          </Modal>
         </KeyboardAvoidingView>
       </SafeAreaView>
       <Loader visible={pageLoad} />
@@ -608,23 +608,24 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 40,
-    maxHeight: 40,
-    backgroundColor: theme.colors.surface,
+    height: 48,
+    maxHeight: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     marginHorizontal: theme.spacing.md,
     marginTop: theme.spacing.xs,
     marginBottom: theme.spacing.xs,
     paddingHorizontal: theme.spacing.md,
     borderRadius: theme.radius.sm,
-    ...theme.shadows.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   searchIcon: {
-    marginRight: theme.spacing.xxs,
+    marginRight: theme.spacing.xs,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 0,
-    fontSize: theme.typography.sm,
+    paddingVertical: theme.spacing.sm,
+    fontSize: theme.typography.base,
     color: theme.colors.text,
   },
   filterContainer: {
@@ -646,7 +647,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: theme.radius.full,
-    backgroundColor: theme.colors.borderLight,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   activeFilter: {
     backgroundColor: theme.colors.primary,
@@ -668,7 +669,7 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.lg,
   },
   tripCard: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: theme.radius.md,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
@@ -794,7 +795,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   modalContent: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
     borderRadius: theme.radius.lg,
     padding: theme.spacing.xl,
     width: '90%',

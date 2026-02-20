@@ -1,7 +1,8 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { HEIGHT, WIDTH } from '../../constants/config';
 import { colors, spacing, radius, typography, shadows } from '../../theme';
+
+const { width, height } = Dimensions.get('window');
 
 export const loginStyles = StyleSheet.create({
   safeareacontainer: {
@@ -12,94 +13,112 @@ export const loginStyles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingVertical: spacing.xxl,
+    minHeight: height,
+  },
+  gradientBg: {
+    ...StyleSheet.absoluteFillObject,
   },
   card: {
-    width: WIDTH * 0.9,
-    maxWidth: 400,
+    width: width * 0.9,
+    maxWidth: 420,
     alignSelf: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: radius.xl,
     padding: spacing.xxl,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
-    ...shadows.md,
+    overflow: 'hidden',
+    ...shadows.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   logoBox: {
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.xxl,
   },
   logo: {
     width: 72,
     height: 72,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   title: {
-    fontSize: RFValue(24),
+    fontSize: RFValue(typography.xl),
     fontWeight: typography.bold,
-    color: colors.primary,
-    letterSpacing: 0.5,
+    color: colors.text,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: RFValue(13),
-    color: colors.textMuted,
-    marginTop: spacing.xxs,
+    fontSize: RFValue(typography.sm),
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    fontWeight: typography.medium,
   },
   inputWrap: {
     width: '100%',
     marginBottom: spacing.lg,
     backgroundColor: colors.borderLight,
-    borderRadius: radius.sm,
-    overflow: 'hidden',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   input: {
     backgroundColor: 'transparent',
     fontSize: RFValue(typography.base),
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   rememberRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xl,
   },
   rememberLabel: {
     fontSize: RFValue(typography.sm),
     color: colors.textSecondary,
+    fontWeight: typography.medium,
   },
   forgotLink: {
     paddingVertical: spacing.xxs,
-    paddingHorizontal: spacing.xs,
   },
   forgotText: {
     fontSize: RFValue(typography.sm),
     color: colors.primary,
-    fontWeight: typography.semibold,
+    fontWeight: typography.bold,
   },
   loginButton: {
     width: '100%',
-    height: 48,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
+    height: 52,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing.md,
-    ...shadows.sm,
+    ...shadows.glow,
+  },
+  loginButtonGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   loginButtonText: {
-    fontSize: RFValue(typography.base),
-    fontWeight: typography.semibold,
+    fontSize: RFValue(typography.md),
+    fontWeight: typography.bold,
     color: colors.white,
+    letterSpacing: 0.5,
   },
   footer: {
-    marginTop: spacing.xxl,
+    marginTop: spacing.xxxl,
     alignItems: 'center',
+    paddingBottom: spacing.xl,
   },
   footerText: {
-    fontSize: RFValue(11),
-    color: colors.textMuted,
+    fontSize: RFValue(12),
+    color: colors.white,
+    opacity: 0.8,
+    fontWeight: typography.medium,
   },
   footerBrand: {
     fontWeight: typography.bold,
-    color: colors.textSecondary,
+    color: colors.white,
   },
 });

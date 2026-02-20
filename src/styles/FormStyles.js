@@ -56,18 +56,18 @@ export const formStyles = StyleSheet.create({
   },
   input: {
     ...inputBase,
-    minHeight: 48,
-    fontSize: typography.base,
-    color: colors.text,
+    minHeight: 50,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   multilineInput: {
-    minHeight: 88,
+    minHeight: 100,
     textAlignVertical: 'top',
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
+    paddingVertical: spacing.md,
   },
   errorInput: {
     ...inputErrorBase,
-    borderWidth: 1.5,
   },
   errorText: {
     color: colors.error,
@@ -76,13 +76,13 @@ export const formStyles = StyleSheet.create({
     fontWeight: typography.medium,
   },
   dateButton: {
-    minHeight: 48,
+    minHeight: 50,
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.borderLight,
   },
   dateButtonText: {
     color: colors.text,

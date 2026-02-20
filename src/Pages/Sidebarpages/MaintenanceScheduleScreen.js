@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState, useRef} from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,16 +13,17 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {Calendar} from 'react-native-calendars';
+import { Calendar } from 'react-native-calendars';
 import Header from '../../components/Header';
-import {GETNETWORK, POSTNETWORK} from '../../utils/Network';
+import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import { useStatusBarHeight } from '../../constants/config';
-import {BASE_URL} from '../../constants/url';
+import { BASE_URL } from '../../constants/url';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
 import moment from 'moment';
+import theme from '../../theme';
 
 const MaintenanceScheduleScreen = () => {
   const statusBarHeight = useStatusBarHeight();
@@ -116,7 +117,7 @@ const MaintenanceScheduleScreen = () => {
     setVehicleOpen(false);
     setMaintenanceOpen(false);
     clearAllValidationErrors();
-    
+
     showToast('info', 'Form Reset', 'All fields have been cleared');
   };
 
@@ -139,19 +140,19 @@ const MaintenanceScheduleScreen = () => {
 
   const GetMaintenance = async () => {
     if (loading) return;
-    
+
     setLoading(true);
     const Url = `${BASE_URL}maintenance/maintenance_master/`;
-    
+
     try {
       const response = await GETNETWORK(Url, true);
-      
+
       if (response && response.data && Array.isArray(response.data)) {
         const mappedItems = response.data.map(item => ({
           label: item.maintenance_name,
           value: item.maintenance_id,
         }));
-        
+
         setMaintenanceItems(mappedItems);
         showToast('success', 'Maintenance Types Loaded', `${response.data.length} types loaded`);
       } else {
@@ -160,7 +161,7 @@ const MaintenanceScheduleScreen = () => {
     } catch (error) {
       console.error('Error fetching maintenance:', error);
       showToast('error', 'Load Failed', 'Failed to fetch maintenance data');
-      
+
       // Show detailed error for debugging
       if (error.response) {
         console.error('Response data:', error.response.data);
@@ -173,20 +174,20 @@ const MaintenanceScheduleScreen = () => {
 
   const GetVehicle = async () => {
     if (loading) return;
-    
+
     setLoading(true);
     const Url = `${BASE_URL}projects/117/things/?page=1&search=`;
-    
+
     try {
       const response = await GETNETWORK(Url, true);
-      
+
       if (response && response.data) {
         const vehicles = response.data?.things || [];
         const mappedItems = vehicles.map(item => ({
           label: item.thing_name,
           value: item.thing_id,
         }));
-        
+
         setVehicleItems(mappedItems);
         showToast('success', 'Vehicles Loaded', `${vehicles.length} vehicles loaded`);
       } else {
@@ -195,7 +196,7 @@ const MaintenanceScheduleScreen = () => {
     } catch (error) {
       console.error('Error fetching vehicles:', error);
       showToast('error', 'Load Failed', 'Failed to fetch vehicle data');
-      
+
       // Show detailed error for debugging
       if (error.response) {
         console.error('Response data:', error.response.data);
@@ -290,7 +291,7 @@ const MaintenanceScheduleScreen = () => {
         if (response.data || response.id) {
           // Success case - maintenance scheduled
           showToast('success', 'Success', 'Maintenance scheduled successfully!');
-          
+
           // Optional: Show confirmation dialog with details
           Alert.alert(
             'Schedule Confirmed',
@@ -318,15 +319,15 @@ const MaintenanceScheduleScreen = () => {
 
     } catch (error) {
       console.error('Error scheduling maintenance:', error);
-      
+
       // Enhanced error handling with specific messages
       let errorMessage = 'Failed to schedule maintenance. Please try again.';
-      
+
       if (error.response) {
         // Server responded with error status
         const status = error.response.status;
         const serverMessage = error.response.data?.message || error.response.data?.error;
-        
+
         switch (status) {
           case 400:
             errorMessage = serverMessage || 'Invalid data submitted. Please check your entries.';
@@ -355,7 +356,7 @@ const MaintenanceScheduleScreen = () => {
       }
 
       showToast('error', 'Submission Failed', errorMessage);
-      
+
       // Optional: Show detailed error in alert for important errors
       if (error.response?.status >= 500) {
         Alert.alert(
@@ -383,12 +384,12 @@ const MaintenanceScheduleScreen = () => {
 
   return (
     <>
-      <StatusBar backgroundColor={'#0284c7'} barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <Header
         title="Maintenance Schedule"
         onMenuPress={() => navigation.openDrawer()}
       />
-      
+
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -424,7 +425,7 @@ const MaintenanceScheduleScreen = () => {
             </View>
 
             {/* Vehicle Dropdown */}
-            <View style={[styles.inputItem, {zIndex: vehicleOpen ? zIndexCounter.current + 1 : 1}]}>
+            <View style={[styles.inputItem, { zIndex: vehicleOpen ? zIndexCounter.current + 1 : 1 }]}>
               <Text style={styles.label}>Vehicle *</Text>
               <DropDownPicker
                 open={vehicleOpen}
@@ -457,7 +458,7 @@ const MaintenanceScheduleScreen = () => {
           </View>
 
           {/* Maintenance Type Dropdown */}
-          <View style={[styles.inputItem, {zIndex: maintenanceOpen ? zIndexCounter.current + 1 : 1}]}>
+          <View style={[styles.inputItem, { zIndex: maintenanceOpen ? zIndexCounter.current + 1 : 1 }]}>
             <Text style={styles.label}>Maintenance Type *</Text>
             <DropDownPicker
               open={maintenanceOpen}
@@ -494,11 +495,11 @@ const MaintenanceScheduleScreen = () => {
             <View style={styles.commentsContainer}>
               <TextInput
                 style={[
-                  styles.input, 
+                  styles.input,
                   styles.multilineInput,
                   validationErrors.comments && styles.errorBorder
                 ]}
-                placeholderTextColor={'#9ca3af'}
+                placeholderTextColor={theme.colors.textPlaceholder}
                 placeholder="Enter any additional comments (optional)"
                 value={comments}
                 onChangeText={handleCommentsChange}
@@ -527,14 +528,14 @@ const MaintenanceScheduleScreen = () => {
             >
               <Text style={styles.resetButtonText}>Reset</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[styles.button, styles.submitButton, isSubmitting && styles.disabledButton]}
               onPress={handleSubmit}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={theme.colors.white} size="small" />
               ) : (
                 <Text style={styles.submitButtonText}>Schedule Maintenance</Text>
               )}
@@ -573,19 +574,30 @@ const MaintenanceScheduleScreen = () => {
                 onDayPress={handleDayPress}
                 markedDates={{
                   [selectedDate]: {
-                    selected: true, 
-                    selectedColor: '#0284c7',
-                    selectedTextColor: '#fff'
+                    selected: true,
+                    selectedColor: theme.colors.primary,
+                    selectedTextColor: theme.colors.white
                   },
                 }}
                 minDate={moment().format('YYYY-MM-DD')}
                 maxDate={moment().add(1, 'year').format('YYYY-MM-DD')}
                 theme={{
-                  todayTextColor: '#0284c7',
-                  arrowColor: '#0284c7',
-                  selectedDayBackgroundColor: '#0284c7',
-                  selectedDayTextColor: '#fff',
-                }}
+                backgroundColor: 'transparent',
+                calendarBackground: 'transparent',
+                textSectionTitleColor: '#E2E8F0',
+                selectedDayBackgroundColor: '#4F46E5',
+                selectedDayTextColor: '#FFFFFF',
+                todayTextColor: '#818CF8',
+                dayTextColor: '#FFFFFF',
+                textDisabledColor: '#94A3B8',
+                dotColor: '#4F46E5',
+                selectedDotColor: '#FFFFFF',
+                arrowColor: '#4F46E5',
+                monthTextColor: '#FFFFFF',
+                textDayFontWeight: '500',
+                textMonthFontWeight: 'bold',
+                textDayHeaderFontWeight: '600',
+              }}
               />
               <View style={styles.calendarButtons}>
                 <TouchableOpacity
@@ -607,7 +619,7 @@ const MaintenanceScheduleScreen = () => {
             </View>
           </View>
         </Modal>
-        
+
         <Loader visible={loading} />
       </KeyboardAvoidingView>
 
@@ -619,205 +631,212 @@ const MaintenanceScheduleScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.background,
   },
   scrollContainer: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.xxl,
   },
   inputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
-    gap: 12,
+    marginBottom: theme.spacing.sm,
+    gap: theme.spacing.md,
   },
   inputItem: {
     flex: 1,
-    marginBottom: 20,
+    marginBottom: theme.spacing.md,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
   },
   input: {
-    color: '#111827',
+    color: theme.colors.text,
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
-    fontSize: 14,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    fontSize: theme.typography.base,
+    minHeight: 52,
+    ...theme.shadows.sm,
   },
   multilineInput: {
-    height: 100,
+    height: 120,
     textAlignVertical: 'top',
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
   },
   commentsContainer: {
     position: 'relative',
   },
   charCount: {
     position: 'absolute',
-    bottom: 8,
-    right: 12,
-    fontSize: 12,
-    color: '#6b7280',
+    bottom: theme.spacing.xs,
+    right: theme.spacing.sm,
+    fontSize: theme.typography.xs,
+    color: theme.colors.textMuted,
   },
   charCountWarning: {
-    color: '#dc2626',
-    fontWeight: '600',
+    color: theme.colors.error,
+    fontWeight: theme.typography.bold,
   },
   dateButton: {
-    height: 48,
+    height: 52,
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    paddingHorizontal: 12,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   dateButtonText: {
-    color: '#374151',
-    fontSize: 14,
+    color: theme.colors.text,
+    fontSize: theme.typography.sm,
   },
   placeholderText: {
-    color: '#9ca3af',
+    color: theme.colors.textPlaceholder,
   },
   dropdown: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1.5,
-    borderRadius: 8,
-    height: 48,
+    borderRadius: theme.radius.md,
+    height: 52,
+    ...theme.shadows.sm,
   },
   dropdownContainer: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1.5,
-    borderRadius: 8,
-    marginTop: 2,
+    borderRadius: theme.radius.md,
+    marginTop: theme.spacing.xs,
+    ...theme.shadows.md,
   },
   dropdownText: {
-    fontSize: 14,
-    color: '#111827',
+    fontSize: theme.typography.sm,
+    color: theme.colors.text,
   },
   dropdownPlaceholder: {
-    color: '#9ca3af',
-    fontSize: 14,
+    color: theme.colors.textPlaceholder,
+    fontSize: theme.typography.sm,
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 10,
-    marginBottom: 20,
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
   },
   button: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: 56,
   },
   resetButton: {
-    backgroundColor: '#6b7280',
+    backgroundColor: theme.colors.borderDark,
   },
   submitButton: {
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
+    ...theme.shadows.glow,
   },
   disabledButton: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
   resetButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.text,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
   },
   submitButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
   },
   summaryContainer: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderLeftWidth: 4,
-    borderLeftColor: '#0284c7',
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 10,
+    borderLeftColor: theme.colors.primary,
+    padding: theme.spacing.lg,
+    borderRadius: theme.radius.lg,
+    marginTop: theme.spacing.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.md,
   },
   summaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0284c7',
-    marginBottom: 8,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
+    color: theme.colors.primaryDark,
+    marginBottom: theme.spacing.sm,
   },
   summaryText: {
-    fontSize: 14,
-    color: '#374151',
-    marginBottom: 4,
+    fontSize: theme.typography.sm,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
+    fontWeight: theme.typography.medium,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
   },
   calendarContainer: {
-    backgroundColor: '#fff',
-    margin: 20,
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    backgroundColor: theme.colors.surface,
+    margin: theme.spacing.lg,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.lg,
+    ...theme.shadows.lg,
   },
   calendarTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#0284c7',
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.primary,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   calendarButtons: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 16,
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
   },
   calendarButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.sm,
     alignItems: 'center',
   },
   closeCalendarButton: {
-    backgroundColor: '#6b7280',
+    backgroundColor: theme.colors.textMuted,
   },
   confirmCalendarButton: {
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
   },
   closeCalendarButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
   },
   confirmCalendarButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
   },
   errorText: {
-    color: '#dc2626',
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
+    color: theme.colors.error,
+    fontSize: theme.typography.xs,
+    marginTop: theme.spacing.xxs,
+    marginLeft: theme.spacing.xxs,
+    fontWeight: theme.typography.medium,
   },
   errorBorder: {
-    borderColor: '#dc2626',
+    borderColor: theme.colors.error,
   },
 });
 

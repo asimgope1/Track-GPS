@@ -237,7 +237,7 @@ const TripStart = ({ navigation, route, onClose }) => {
     const lower = key.toLowerCase();
     if (lower === 'ok') return '#22c55e';
     if (lower === 'attention' || lower === 'repair') return '#eab308';
-    if (lower === 'replace') return '#ef4444';
+    if (lower === 'replace') return theme.colors.error;
     return '#94a3b8';
   };
 
@@ -260,7 +260,7 @@ const TripStart = ({ navigation, route, onClose }) => {
 
   // Form Submission
   const handleSubmit = async () => {
-    console.log('handleSubmit: for start trip',route.params?.trip?.trip_assignment_id);
+    console.log('handleSubmit: for start trip', route.params?.trip?.trip_assignment_id);
     if (!validateForm()) {
       showToast('error', 'Validation Error', 'Please fix all errors before submitting');
       return;
@@ -414,7 +414,7 @@ const TripStart = ({ navigation, route, onClose }) => {
               const selectedValue = typeof callback === 'function' ? callback(selectedStatus) : callback;
               handleStatusSelect(item.id, selectedValue);
             }}
-            setItems={() => {}}
+            setItems={() => { }}
             placeholder="Select Status"
             style={[styles.statusDropdown, selectedStatusObj && { backgroundColor: selectedStatusObj.color + '20' }]}
             textStyle={styles.statusDropdownText}
@@ -459,7 +459,7 @@ const TripStart = ({ navigation, route, onClose }) => {
 
   return (
     <>
-      <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={formStyles.container}
@@ -478,45 +478,45 @@ const TripStart = ({ navigation, route, onClose }) => {
                 </Text>
               </TouchableOpacity>
               {formErrors.date && <Text style={formStyles.errorText}>{formErrors.date}</Text>}
-            {Platform.OS === 'android' && showPicker && (
-              <DateTimePicker
-                value={startDatetime}
-                mode={pickerMode}
-                display="default"
-                onChange={onChangeDateTime}
-                is24Hour={true}
-                maximumDate={new Date()}
-                positiveButton={{ label: 'OK', textColor: theme.colors.primary }}
-                negativeButton={{ label: 'Cancel', textColor: theme.colors.error }}
-              />
-            )}
-            {Platform.OS === 'ios' && (
-              <Modal visible={showPicker} transparent={true} animationType="slide">
-                <TouchableWithoutFeedback onPress={() => setShowPicker(false)}>
-                  <View style={styles.iosOverlay} />
-                </TouchableWithoutFeedback>
-                <View style={styles.iosPickerContainer}>
-                  <DateTimePicker
-                    value={startDatetime}
-                    mode={pickerMode}
-                    display="spinner"
-                    onChange={onChangeDateTime}
-                    is24Hour={true}
-                    maximumDate={new Date()}
-                  />
-                  <TouchableOpacity
-                    style={styles.iosDoneButton}
-                    onPress={() => {
-                      setShowPicker(false);
-                      if (pickerMode === 'time') setPickerMode('date');
-                    }}
-                  >
-                    <Text style={styles.iosDoneButtonText}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-              </Modal>
-            )}
-          </View>
+              {Platform.OS === 'android' && showPicker && (
+                <DateTimePicker
+                  value={startDatetime}
+                  mode={pickerMode}
+                  display="default"
+                  onChange={onChangeDateTime}
+                  is24Hour={true}
+                  maximumDate={new Date()}
+                  positiveButton={{ label: 'OK', textColor: theme.colors.primary }}
+                  negativeButton={{ label: 'Cancel', textColor: theme.colors.error }}
+                />
+              )}
+              {Platform.OS === 'ios' && (
+                <Modal visible={showPicker} transparent={true} animationType="slide">
+                  <TouchableWithoutFeedback onPress={() => setShowPicker(false)}>
+                    <View style={styles.iosOverlay} />
+                  </TouchableWithoutFeedback>
+                  <View style={styles.iosPickerContainer}>
+                    <DateTimePicker
+                      value={startDatetime}
+                      mode={pickerMode}
+                      display="spinner"
+                      onChange={onChangeDateTime}
+                      is24Hour={true}
+                      maximumDate={new Date()}
+                    />
+                    <TouchableOpacity
+                      style={styles.iosDoneButton}
+                      onPress={() => {
+                        setShowPicker(false);
+                        if (pickerMode === 'time') setPickerMode('date');
+                      }}
+                    >
+                      <Text style={styles.iosDoneButtonText}>Done</Text>
+                    </TouchableOpacity>
+                  </View>
+                </Modal>
+              )}
+            </View>
 
             {/* Location */}
             <View style={formStyles.inputItem}>
@@ -556,8 +556,8 @@ const TripStart = ({ navigation, route, onClose }) => {
               {formErrors.startKm && <Text style={formStyles.errorText}>{formErrors.startKm}</Text>}
             </View>
 
-          {/* Coordinates */}
-          {/* <View style={styles.coordinateContainer}>
+            {/* Coordinates */}
+            {/* <View style={styles.coordinateContainer}>
             <View style={[styles.inputItem, { flex: 1, marginRight: 10 }]}>
               <Text style={styles.label}>Latitude *</Text>
               <TextInput
@@ -565,7 +565,7 @@ const TripStart = ({ navigation, route, onClose }) => {
                 value={startLat}
                 placeholder="Auto-filled from location"
                 keyboardType="numeric"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={theme.colors.textPlaceholder}
                 editable={false}
               />
               {formErrors.latitude && <Text style={styles.errorText}>{formErrors.latitude}</Text>}
@@ -577,7 +577,7 @@ const TripStart = ({ navigation, route, onClose }) => {
                 value={startLng}
                 placeholder="Auto-filled from location"
                 keyboardType="numeric"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={theme.colors.textPlaceholder}
                 editable={false}
               />
               {formErrors.longitude && <Text style={styles.errorText}>{formErrors.longitude}</Text>}
@@ -624,13 +624,13 @@ const TripStart = ({ navigation, route, onClose }) => {
               <Text style={styles.noChecklistText}>No checklist items available</Text>
             ) : (
               <View style={formStyles.tableContainer}>
-              <FlatList
-                data={inspectionItems}
-                renderItem={renderItem}
-                keyExtractor={item => item.id.toString()}
-                scrollEnabled={false}
-              />
-              {formErrors.checklist && <Text style={formStyles.errorText}>{formErrors.checklist}</Text>}
+                <FlatList
+                  data={inspectionItems}
+                  renderItem={renderItem}
+                  keyExtractor={item => item.id.toString()}
+                  scrollEnabled={false}
+                />
+                {formErrors.checklist && <Text style={formStyles.errorText}>{formErrors.checklist}</Text>}
               </View>
             )}
           </View>
@@ -658,10 +658,11 @@ const styles = StyleSheet.create({
   locationButton: {
     backgroundColor: theme.colors.primary,
     paddingHorizontal: theme.spacing.sm,
-    minHeight: 48,
-    borderRadius: theme.radius.sm,
+    minHeight: 52,
+    borderRadius: theme.radius.md,
     justifyContent: 'center',
     alignItems: 'center',
+    ...theme.shadows.glow,
   },
   locationButtonText: {
     color: theme.colors.white,
@@ -691,14 +692,15 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
   statusDropdown: {
-    backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.border,
-    borderWidth: 1,
-    borderRadius: theme.radius.sm,
-    minHeight: 48,
-    height: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1.5,
+    borderRadius: theme.radius.md,
+    minHeight: 52,
+    height: 52,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: 0,
+    ...theme.shadows.sm,
   },
   statusDropdownText: {
     fontSize: theme.typography.sm,
@@ -735,12 +737,13 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.semibold,
   },
   attachmentPreviewContainer: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.sm,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
     padding: theme.spacing.sm,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     position: 'relative',
+    ...theme.shadows.sm,
   },
   attachmentImage: {
     width: '100%',
@@ -767,13 +770,14 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xxs,
   },
   attachmentButton: {
-    minHeight: 48,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.sm,
-    backgroundColor: theme.colors.surface,
+    minHeight: 52,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
+    ...theme.shadows.sm,
   },
   attachmentButtonText: {
     color: theme.colors.textSecondary,

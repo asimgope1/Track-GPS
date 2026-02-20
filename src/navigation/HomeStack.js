@@ -5,8 +5,8 @@ import {
   DrawerItem,
   DrawerItemList,
 } from '@react-navigation/drawer';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // Screens
@@ -43,12 +43,12 @@ function HomeStack() {
       <Stack.Screen
         name="Home"
         component={Home}
-        options={{headerShown: false}}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="DashBoard"
         component={DashBoard}
-        options={{headerShown: false}}
+        options={{ headerShown: false }}
       />
       <Stack.Screen name="VehicleMap" component={VehicleMap} />
       <Stack.Screen name="Track" component={Track} />
@@ -226,19 +226,19 @@ const CustomDrawerContent = props => {
   // Function to check if user has permission for a menu item
   const hasPermission = (menuKey) => {
     if (!userData?.permissions) return false;
-    
+
     // If user has "all" permission, return true for everything
     if (hasAllPermission()) return true;
-    
+
     const menu = menuConfig[menuKey];
     if (!menu) return false;
-    
+
     const permissionRules = menu.permissions;
     const userPermissions = userData.permissions;
-    
+
     // Check if user has any of the required permissions for this menu
     const requiredPermissions = Object.values(permissionRules);
-    return requiredPermissions.some(permission => 
+    return requiredPermissions.some(permission =>
       userPermissions.includes(permission)
     );
   };
@@ -246,10 +246,10 @@ const CustomDrawerContent = props => {
   // Function to check if user has any of the view permissions for analytics/reports
   const hasViewPermissions = () => {
     if (!userData?.permissions) return false;
-    
+
     // If user has "all" permission, return true
     if (hasAllPermission()) return true;
-    
+
     const viewPermissions = [
       'view_vehicle_analytics',
       'view_driver_analytics',
@@ -263,8 +263,8 @@ const CustomDrawerContent = props => {
       'view_vehicle_utilization_report',
       'view_driver_utilization_report'
     ];
-    
-    return viewPermissions.some(permission => 
+
+    return viewPermissions.some(permission =>
       userData.permissions.includes(permission)
     );
   };
@@ -323,23 +323,27 @@ const CustomDrawerContent = props => {
       {/* Home Drawer Item - Always visible */}
       <DrawerItem
         label="Home"
-        icon={({color, size}) => (
+        icon={({ color, size }) => (
           <Icon
             name="home"
-            color={currentRouteName === 'HomeStack' ? colors.primary : color}
+            color={currentRouteName === 'HomeStack' ? colors.white : colors.textSecondary}
             size={size}
           />
         )}
         focused={currentRouteName === 'HomeStack'}
         labelStyle={{
-          color: currentRouteName === 'HomeStack' ? colors.primary : colors.text,
-          fontWeight: currentRouteName === 'HomeStack' ? 'bold' : 'normal',
+          color: currentRouteName === 'HomeStack' ? colors.white : colors.text,
+          fontWeight: currentRouteName === 'HomeStack' ? typography.bold : typography.medium,
         }}
         style={{
-          backgroundColor:
-            currentRouteName === 'HomeStack' ? colors.infoLight : 'transparent',
-          borderRadius: 6,
-          marginHorizontal: 4,
+          backgroundColor: currentRouteName === 'HomeStack' ? colors.primary : 'transparent',
+          borderRadius: 10,
+          marginHorizontal: spacing.xs,
+          shadowColor: currentRouteName === 'HomeStack' ? colors.primary : 'transparent',
+          shadowOffset: currentRouteName === 'HomeStack' ? { width: 0, height: 4 } : { width: 0, height: 0 },
+          shadowOpacity: currentRouteName === 'HomeStack' ? 0.3 : 0,
+          shadowRadius: currentRouteName === 'HomeStack' ? 8 : 0,
+          elevation: currentRouteName === 'HomeStack' ? 5 : 0,
         }}
         onPress={() => props.navigation.navigate('HomeStack')}
       />
@@ -396,19 +400,24 @@ const CustomDrawerContent = props => {
                 icon={({ color, size }) => (
                   <Icon
                     name={item.icon}
-                    color={isFocused ? colors.primary : color}
+                    color={isFocused ? colors.white : colors.textSecondary}
                     size={size}
                   />
                 )}
                 focused={isFocused}
                 labelStyle={{
-                  color: isFocused ? colors.primary : colors.text,
-                  fontWeight: isFocused ? typography.bold : typography.regular,
+                  color: isFocused ? colors.white : colors.text,
+                  fontWeight: isFocused ? typography.bold : typography.medium,
                 }}
                 style={{
-                  backgroundColor: isFocused ? colors.infoLight : 'transparent',
-                  borderRadius: 8,
-                  marginHorizontal: spacing.xxs,
+                  backgroundColor: isFocused ? colors.primary : 'transparent',
+                  borderRadius: 10,
+                  marginHorizontal: spacing.xs,
+                  shadowColor: isFocused ? colors.primary : 'transparent',
+                  shadowOffset: isFocused ? { width: 0, height: 4 } : { width: 0, height: 0 },
+                  shadowOpacity: isFocused ? 0.3 : 0,
+                  shadowRadius: isFocused ? 8 : 0,
+                  elevation: isFocused ? 5 : 0,
                 }}
                 onPress={() => props.navigation.navigate(item.screen)}
               />
@@ -430,12 +439,16 @@ const CustomDrawerContent = props => {
       <View style={styles.footer}>
         <DrawerItem
           label="Logout"
-          icon={({color, size}) => (
-            <Icon name="exit-to-app" color={color} size={size} />
+          icon={({ color, size }) => (
+            <Icon name="exit-to-app" color={colors.error} size={size} />
           )}
           onPress={() => {
             clearAll();
             Dispatch(checkuserToken());
+          }}
+          labelStyle={{
+            color: colors.error,
+            fontWeight: typography.bold,
           }}
         />
       </View>
@@ -455,6 +468,8 @@ function AppNavigator() {
         drawerType: 'front',
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.text,
+        sceneContainerStyle: { backgroundColor: 'transparent' },
+        drawerStyle: { backgroundColor: 'rgba(15, 23, 42, 0.95)', width: 280 },
         drawerLabelStyle: {
           marginLeft: -15,
           fontSize: typography.md,
@@ -463,7 +478,7 @@ function AppNavigator() {
       <Drawer.Screen
         name="HomeStack"
         component={HomeStack}
-        options={{title: 'Home'}}
+        options={{ title: 'Home' }}
       />
 
       {/* Add all screens that might be navigated to from the drawer */}
@@ -493,39 +508,38 @@ function getScreenComponent(screenName) {
     'TripStop': TripStop,
     'RouteOptimization': RouteOptimization,
   };
-  
+
   return screenComponents[screenName] || MaintenanceScheduleScreen; // fallback
 }
 
 const styles = StyleSheet.create({
   header: {
-    paddingVertical: spacing.xl,
+    paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
-    backgroundColor: colors.primary,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: 'transparent',
+    borderBottomWidth: 0,
   },
   headerTitle: {
     color: colors.white,
-    fontSize: typography.xl,
+    fontSize: typography.lg,
     fontWeight: typography.bold,
     textAlign: 'center',
-    marginBottom: spacing.xs,
-    letterSpacing: 0.5,
+    marginBottom: spacing.xxs,
+    letterSpacing: 0.3,
   },
   userInfo: {
-    color: 'rgba(255,255,255,0.95)',
+    color: colors.textSecondary,
     fontSize: typography.sm,
     textAlign: 'center',
     marginBottom: spacing.xxs,
   },
   allPermissionsBadge: {
-    color: '#fef08a',
+    color: colors.warning,
     fontWeight: typography.bold,
     fontSize: typography.xs,
   },
   permissionInfo: {
-    color: 'rgba(255,255,255,0.8)',
+    color: colors.textMuted,
     fontSize: typography.xs,
     textAlign: 'center',
   },
@@ -536,7 +550,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     padding: spacing.sm,
-    backgroundColor: colors.borderLight,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   sectionTitle: {
     fontSize: typography.sm,
@@ -560,7 +574,7 @@ const styles = StyleSheet.create({
   footer: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     paddingTop: spacing.xs,
   },
 });

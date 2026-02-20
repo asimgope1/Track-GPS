@@ -6,10 +6,9 @@ export const headerStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 0,
   },
   iconButton: {
     padding: spacing.xs,
@@ -17,6 +16,7 @@ export const headerStyles = StyleSheet.create({
     minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 22,
   },
   titleWrapper: {
     flex: 1,
@@ -24,9 +24,9 @@ export const headerStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   enhancedHeaderTitle: {
-    fontSize: typography.lg,
+    fontSize: typography.md,
     fontWeight: typography.semibold,
     color: colors.white,
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
 });

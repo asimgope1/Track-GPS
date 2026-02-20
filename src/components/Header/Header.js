@@ -17,7 +17,7 @@ const Header = ({ title, onMenuPress, rightIcon = null, showCloseButton = false 
     <View
       style={[
         headerStyles.enhancedHeaderContainer,
-        { paddingTop: insets.top + 12, backgroundColor: colors.primary },
+        { paddingTop: insets.top + 12, backgroundColor: 'transparent' },
       ]}>
       <TouchableOpacity
         style={headerStyles.iconButton}

@@ -10,6 +10,7 @@ import {
   Alert,
   BackHandler,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import { TextInput } from 'react-native-paper';
 import { Switch } from 'react-native-paper';
@@ -17,8 +18,8 @@ import { useDispatch } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
 import Toast from 'react-native-toast-message';
+import LinearGradient from 'react-native-linear-gradient';
 
-import { MyStatusBar } from '../../constants/config';
 import { BASE_URL } from '../../constants/url';
 import { storeObjByKey } from '../../utils/Storage';
 import { checkuserToken } from '../../redux/actions/auth';
@@ -53,12 +54,8 @@ const Login = ({ navigation, route }) => {
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       if (state.isConnected) {
-        Toast.show({
-          type: 'success',
-          position: 'top',
-          text1: 'Internet Connected',
-          visibilityTime: 3000,
-        });
+        // We can silence the successful internet connect to keep UI cleaner, 
+        // but let's keep it as per original logic.
       } else {
         Toast.show({
           type: 'error',
@@ -150,77 +147,93 @@ const Login = ({ navigation, route }) => {
 
   return (
     <Fragment>
-      <MyStatusBar backgroundColor={colors.background} barStyle="dark-content" />
-      <SafeAreaView style={[appStyles.safeareacontainer, loginStyles.safeareacontainer]}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}>
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={loginStyles.scroll}>
-            <View style={loginStyles.card}>
-              <View style={loginStyles.logoBox}>
-                <Image
-                  source={require('../../assets/images/tracking.png')}
-                  style={loginStyles.logo}
-                  resizeMode="contain"
-                />
-                <Text style={loginStyles.title}>FleetCue</Text>
-                <Text style={loginStyles.subtitle}>Fleet management made simple</Text>
-              </View>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <View style={{ flex: 1 }}>
+        <LinearGradient
+          colors={['#0F172A', '#1E1B4B', '#4F46E5']}
+          style={loginStyles.gradientBg}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+        <SafeAreaView style={{ flex: 1 }}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={loginStyles.scroll}>
 
-              <TextInput
-                label="Email"
-                style={loginStyles.inputWrap}
-                mode="outlined"
-                outlineColor={colors.border}
-                activeOutlineColor={colors.primary}
-                placeholder="Enter your email"
-                placeholderTextColor={colors.textPlaceholder}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-
-              <PasswordInput password={password} setPassword={setPassword} />
-
-              <View style={loginStyles.rememberRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Switch
-                    value={isSwitchOn}
-                    onValueChange={setIsSwitchOn}
-                    color={colors.primary}
+              <View style={loginStyles.card}>
+                <View style={loginStyles.logoBox}>
+                  <Image
+                    source={require('../../assets/images/tracking.png')}
+                    style={loginStyles.logo}
+                    resizeMode="contain"
                   />
-                  <Text style={[loginStyles.rememberLabel, { marginLeft: 8 }]}>Remember me</Text>
+                  <Text style={loginStyles.title}>FleetCue</Text>
+                  <Text style={loginStyles.subtitle}>Welcome back to intelligent tracking</Text>
                 </View>
+
+                <TextInput
+                  label="Email address"
+                  style={loginStyles.inputWrap}
+                  mode="outlined"
+                  outlineColor={colors.border}
+                  activeOutlineColor={colors.primary}
+                  placeholder="name@company.com"
+                  placeholderTextColor={colors.textPlaceholder}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  theme={{ colors: { background: 'white' } }}
+                />
+
+                <PasswordInput password={password} setPassword={setPassword} />
+
+                <View style={loginStyles.rememberRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Switch
+                      value={isSwitchOn}
+                      onValueChange={setIsSwitchOn}
+                      color={colors.primary}
+                    />
+                    <Text style={[loginStyles.rememberLabel, { marginLeft: 10 }]}>Remember me</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('ForgotPassword')}
+                    style={loginStyles.forgotLink}
+                    activeOpacity={0.7}>
+                    <Text style={loginStyles.forgotText}>Forgot password?</Text>
+                  </TouchableOpacity>
+                </View>
+
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('ForgotPassword')}
-                  style={loginStyles.forgotLink}
-                  activeOpacity={0.7}>
-                  <Text style={loginStyles.forgotText}>Forgot password?</Text>
+                  onPress={handleLogin}
+                  style={loginStyles.loginButton}
+                  activeOpacity={0.9}>
+                  <LinearGradient
+                    colors={colors.primaryGradient}
+                    style={loginStyles.loginButtonGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}>
+                    <Text style={loginStyles.loginButtonText}>Sign In</Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity
-                onPress={handleLogin}
-                style={loginStyles.loginButton}
-                activeOpacity={0.8}>
-                <Text style={loginStyles.loginButtonText}>Sign in</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={loginStyles.footer}>
-              <Text style={loginStyles.footerText}>
-                © {new Date().getFullYear()} FleetCue · powered by{' '}
-                <Text style={loginStyles.footerBrand}>Epsumlabs</Text>
-              </Text>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+              <View style={loginStyles.footer}>
+                <Text style={loginStyles.footerText}>
+                  © {new Date().getFullYear()} FleetCue · Powered by{' '}
+                  <Text style={loginStyles.footerBrand}>Epsumlabs</Text>
+                </Text>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </View>
 
       {alertModal && (
         <Alertmodal

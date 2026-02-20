@@ -24,6 +24,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
 import { Icon } from '@rneui/themed';
+import theme from '../../theme';
 
 const TripAssignment = ({ navigation }) => {
   const statusBarHeight = useStatusBarHeight();
@@ -295,7 +296,7 @@ const TripAssignment = ({ navigation }) => {
 
     try {
       const formattedDateTime = moment(date).format('YYYY-MM-DDTHH:mm:ss');
-    
+
       const tripData = {
         trip_id: tripNameValue,
         thing_id: vehicleValue,
@@ -343,7 +344,7 @@ const TripAssignment = ({ navigation }) => {
       setIsSubmitting(false);
       setLoading(false);
     }
-    
+
   };
 
   const handleDaysChange = (text) => {
@@ -423,13 +424,13 @@ const TripAssignment = ({ navigation }) => {
   useFocusEffect(
     React.useCallback(() => {
       resetForm();
-      return () => {};
+      return () => { };
     }, []),
   );
 
   return (
     <>
-      <StatusBar backgroundColor={'#0284c7'} barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <Header
         title="Trip Assignment"
         onMenuPress={() => navigation.openDrawer()}
@@ -497,8 +498,8 @@ const TripAssignment = ({ navigation }) => {
                   onChange={onChangeDate}
                   minimumDate={new Date()}
                   {...(Platform.OS === 'android' && {
-                    positiveButton: { label: 'OK', textColor: '#0284c7' },
-                    negativeButton: { label: 'Cancel', textColor: '#ef4444' },
+                    positiveButton: { label: 'OK', textColor: theme.colors.primary },
+                    negativeButton: { label: 'Cancel', textColor: theme.colors.error },
                   })}
                 />
               )}
@@ -512,8 +513,8 @@ const TripAssignment = ({ navigation }) => {
                   onChange={onChangeTime}
                   is24Hour={true}
                   {...(Platform.OS === 'android' && {
-                    positiveButton: { label: 'OK', textColor: '#0284c7' },
-                    negativeButton: { label: 'Cancel', textColor: '#ef4444' },
+                    positiveButton: { label: 'OK', textColor: theme.colors.primary },
+                    negativeButton: { label: 'Cancel', textColor: theme.colors.error },
                   })}
                 />
               )}
@@ -586,7 +587,7 @@ const TripAssignment = ({ navigation }) => {
               <TextInput
                 style={[styles.input, errors.distance && styles.errorBorder]}
                 value={distance}
-                placeholderTextColor={'#9ca3af'}
+                placeholderTextColor={theme.colors.textPlaceholder}
                 onChangeText={(text) => {
                   setDistance(text);
                   clearError('distance');
@@ -607,7 +608,7 @@ const TripAssignment = ({ navigation }) => {
                   clearError('fuel');
                 }}
                 keyboardType="numeric"
-                placeholderTextColor={'#9ca3af'}
+                placeholderTextColor={theme.colors.textPlaceholder}
                 placeholder="0"
               />
               {errors.fuel && <Text style={styles.errorText}>{errors.fuel}</Text>}
@@ -621,7 +622,7 @@ const TripAssignment = ({ navigation }) => {
               <View style={styles.durationInputContainer}>
                 <TextInput
                   placeholder="0"
-                  placeholderTextColor={'#9ca3af'}
+                  placeholderTextColor={theme.colors.textPlaceholder}
                   value={days}
                   onChangeText={handleDaysChange}
                   style={[styles.input, errors.days && styles.errorBorder]}
@@ -634,7 +635,7 @@ const TripAssignment = ({ navigation }) => {
               <View style={styles.durationInputContainer}>
                 <TextInput
                   placeholder="0"
-                  placeholderTextColor={'#9ca3af'}
+                  placeholderTextColor={theme.colors.textPlaceholder}
                   value={hours}
                   onChangeText={handleHoursChange}
                   style={[styles.input, errors.hours && styles.errorBorder]}
@@ -653,7 +654,7 @@ const TripAssignment = ({ navigation }) => {
               <TextInput
                 multiline
                 numberOfLines={4}
-                placeholderTextColor={'#9ca3af'}
+                placeholderTextColor={theme.colors.textPlaceholder}
                 value={loadDetails}
                 onChangeText={(text) => {
                   setLoadDetails(text);
@@ -671,7 +672,7 @@ const TripAssignment = ({ navigation }) => {
           {/* General Error */}
           {errors.general && (
             <View style={styles.generalErrorContainer}>
-              <Icon name="warning" size={20} color="#ef4444" />
+              <Icon name="warning" size={20} color={theme.colors.error} />
               <Text style={styles.generalErrorText}>{errors.general}</Text>
             </View>
           )}
@@ -683,12 +684,25 @@ const TripAssignment = ({ navigation }) => {
                 <Calendar
                   onDayPress={handleDayPress}
                   markedDates={{
-                    [tripDate]: { selected: true, selectedColor: '#0284c7' },
+                    [tripDate]: { selected: true, selectedColor: theme.colors.primary },
                   }}
                   theme={{
-                    todayTextColor: '#0284c7',
-                    arrowColor: '#0284c7',
-                  }}
+                backgroundColor: 'transparent',
+                calendarBackground: 'transparent',
+                textSectionTitleColor: '#E2E8F0',
+                selectedDayBackgroundColor: '#4F46E5',
+                selectedDayTextColor: '#FFFFFF',
+                todayTextColor: '#818CF8',
+                dayTextColor: '#FFFFFF',
+                textDisabledColor: '#94A3B8',
+                dotColor: '#4F46E5',
+                selectedDotColor: '#FFFFFF',
+                arrowColor: '#4F46E5',
+                monthTextColor: '#FFFFFF',
+                textDayFontWeight: '500',
+                textMonthFontWeight: 'bold',
+                textDayHeaderFontWeight: '600',
+              }}
                 />
                 <TouchableOpacity
                   style={styles.closeButton}
@@ -716,7 +730,7 @@ const TripAssignment = ({ navigation }) => {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={theme.colors.white} size="small" />
               ) : (
                 <Text style={styles.submitButtonText}>Assign Trip</Text>
               )}
@@ -762,217 +776,236 @@ const TripAssignment = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.background,
   },
   scrollContainer: {
-    padding: 16,
-    paddingBottom: 30,
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.xxl,
   },
   row: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   inputItem: {
     flex: 1,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
   },
   input: {
-    color: '#111827',
-    height: 45,
+    color: theme.colors.text,
+    height: 52,
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
-    fontSize: 14,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    fontSize: theme.typography.base,
+    ...theme.shadows.sm,
   },
   dropdown: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1.5,
-    borderRadius: 6,
-    height: 45,
+    borderRadius: theme.radius.md,
+    height: 52,
+    ...theme.shadows.sm,
   },
   dropdownContainer: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1.5,
     marginTop: 2,
+    borderRadius: theme.radius.md,
+    ...theme.shadows.md,
   },
   dropdownText: {
-    fontSize: 14,
-    color: '#111827',
+    fontSize: theme.typography.sm,
+    color: theme.colors.text,
   },
   dropdownPlaceholder: {
-    color: '#9ca3af',
+    color: theme.colors.textPlaceholder,
+    fontSize: theme.typography.sm,
   },
   modalContent: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: theme.spacing.lg,
   },
   modalTitle: {
-    fontWeight: '600',
+    fontWeight: theme.typography.bold,
   },
   dateButton: {
-    height: 45,
+    height: 52,
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    backgroundColor: '#fff',
-    paddingHorizontal: 12,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: theme.spacing.md,
+    ...theme.shadows.sm,
   },
   dateButtonText: {
-    color: '#374151',
+    color: theme.colors.text,
     textAlign: 'center',
+    fontSize: theme.typography.sm,
   },
   textArea: {
-    color: '#111827',
-    height: 100,
+    color: theme.colors.text,
+    height: 120,
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    padding: 10,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.md,
     textAlignVertical: 'top',
-    backgroundColor: '#fff',
-    fontSize: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    fontSize: theme.typography.base,
+    ...theme.shadows.sm,
   },
   commentsContainer: {
     position: 'relative',
   },
   charCount: {
     position: 'absolute',
-    bottom: 8,
-    right: 12,
-    fontSize: 12,
-    color: '#6b7280',
+    bottom: theme.spacing.xs,
+    right: theme.spacing.sm,
+    fontSize: theme.typography.xs,
+    color: theme.colors.textMuted,
   },
   sectionHeader: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginTop: 10,
-    marginBottom: 6,
-    color: '#111827',
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.bold,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.text,
   },
   durationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: theme.spacing.xs,
   },
   durationInputContainer: {
     flex: 1,
-    marginHorizontal: 5,
+    marginHorizontal: theme.spacing.xs,
   },
   durationLabel: {
     textAlign: 'center',
-    color: '#6b7280',
-    marginTop: 4,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.xxs,
+    fontSize: theme.typography.xs,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
   },
   calendarContainer: {
-    backgroundColor: '#fff',
-    margin: 20,
-    borderRadius: 10,
-    padding: 10,
+    backgroundColor: theme.colors.surface,
+    margin: theme.spacing.xl,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.xl,
+    ...theme.shadows.lg,
   },
   closeButton: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: '#0284c7',
-    borderRadius: 5,
+    marginTop: theme.spacing.md,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
+    ...theme.shadows.glow,
   },
   closeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: theme.colors.white,
+    fontWeight: theme.typography.bold,
+    fontSize: theme.typography.sm,
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-    marginBottom: 10,
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
   button: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 6,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: 52,
   },
   resetButton: {
-    backgroundColor: '#6b7280',
+    backgroundColor: theme.colors.borderDark,
+    ...theme.shadows.sm,
   },
   submitButton: {
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
+    ...theme.shadows.glow,
   },
   disabledButton: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
   resetButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.text,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
   },
   submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
   },
   errorText: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-    fontWeight: '500',
+    color: theme.colors.error,
+    fontSize: theme.typography.xs,
+    marginTop: theme.spacing.xxs,
+    marginLeft: theme.spacing.xxs,
+    fontWeight: theme.typography.medium,
   },
   errorBorder: {
-    borderColor: '#ef4444',
+    borderColor: theme.colors.error,
   },
   generalErrorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef2f2',
-    padding: 12,
-    borderRadius: 6,
-    marginBottom: 16,
+    backgroundColor: theme.colors.errorLight,
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
+    marginBottom: theme.spacing.md,
     borderLeftWidth: 4,
-    borderLeftColor: '#ef4444',
+    borderLeftColor: theme.colors.error,
   },
   generalErrorText: {
-    color: '#ef4444',
-    marginLeft: 8,
+    color: theme.colors.error,
+    marginLeft: theme.spacing.sm,
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.medium,
   },
   summaryContainer: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderLeftWidth: 4,
-    borderLeftColor: '#0284c7',
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 10,
+    borderLeftColor: theme.colors.primary,
+    padding: theme.spacing.lg,
+    borderRadius: theme.radius.lg,
+    marginTop: theme.spacing.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.md,
   },
   summaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0284c7',
-    marginBottom: 8,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
+    color: theme.colors.primaryDark,
+    marginBottom: theme.spacing.sm,
   },
   summaryText: {
-    fontSize: 14,
-    color: '#374151',
-    marginBottom: 4,
+    fontSize: theme.typography.sm,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
+    fontWeight: theme.typography.medium,
   },
 });
 

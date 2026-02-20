@@ -1,4 +1,4 @@
-import React, {Fragment, useEffect, useState, useCallback} from 'react';
+import React, { Fragment, useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,12 +16,12 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {Icon} from '@rneui/themed';
-import {HEIGHT, MyStatusBar, WIDTH, useStatusBarHeight} from '../../constants/config';
-import {colors as themeColors} from '../../theme';
-import {GETNETWORK} from '../../utils/Network';
-import {BASE_URL} from '../../constants/url';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Icon } from '@rneui/themed';
+import { HEIGHT, MyStatusBar, WIDTH, useStatusBarHeight } from '../../constants/config';
+import { colors as themeColors } from '../../theme';
+import { GETNETWORK } from '../../utils/Network';
+import { BASE_URL } from '../../constants/url';
 import {
   BarChart,
   LineChart,
@@ -29,7 +29,7 @@ import {
   PopulationPyramid,
   RadarChart,
 } from 'react-native-gifted-charts';
-import {Calendar} from 'react-native-calendars';
+import { Calendar } from 'react-native-calendars';
 import {
   FILTER,
   FUEL,
@@ -41,10 +41,10 @@ import {
   USAGE,
   ZONE,
 } from '../../constants/imagepath';
-import {Image} from 'react-native';
+import { Image } from 'react-native';
 import HistoryModal from '../History/HistoryModal';
 import Track from '../Track/Track';
-import {Loader} from '../../components/Loader';
+import { Loader } from '../../components/Loader';
 import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getObjByKey } from '../../utils/Storage';
@@ -55,17 +55,17 @@ import Header from '../../components/Header';
 
 const WHITE = '#FFFFFF';
 const data1 = [
-  {value: 70},
-  {value: 36},
-  {value: 50},
-  {value: 40},
-  {value: 18},
-  {value: 38},
+  { value: 70 },
+  { value: 36 },
+  { value: 50 },
+  { value: 40 },
+  { value: 18 },
+  { value: 38 },
 ];
 const driverData = [
-  {name: 'Ashima', alertCount: 12, lastAlert: '2025-05-05 10:30 AM'},
-  {name: 'Rihana', alertCount: 9, lastAlert: '2025-05-04 3:45 PM'},
-  {name: 'Dibya', alertCount: 6, lastAlert: '2025-05-03 6:20 AM'},
+  { name: 'Ashima', alertCount: 12, lastAlert: '2025-05-05 10:30 AM' },
+  { name: 'Rihana', alertCount: 9, lastAlert: '2025-05-04 3:45 PM' },
+  { name: 'Dibya', alertCount: 6, lastAlert: '2025-05-03 6:20 AM' },
 ];
 
 // ... (FleetCard component remains the same)
@@ -101,7 +101,7 @@ const FleetCard = ({
           <TouchableOpacity onPress={() => toggleFilterModal(title)}>
             <Image
               source={FILTER}
-              style={{width: 20, height: 20}}
+              style={{ width: 20, height: 20 }}
               resizeMode="contain"
               tintColor={'#CCCCCC'} // Change the color to white
             />
@@ -112,7 +112,7 @@ const FleetCard = ({
             visible={isFilterVisible}
             transparent
             animationType="slide"
-            onRequestClose={() => {}}>
+            onRequestClose={() => { }}>
             <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback>
                 <View style={styles.modalContainer}>
@@ -182,13 +182,13 @@ const FleetCard = ({
                       justifyContent: 'space-between',
                     }}>
                     <TouchableOpacity
-                      style={[styles.dateButton, {backgroundColor: '#007bff'}]}
+                      style={[styles.dateButton, { backgroundColor: '#007bff' }]}
                       onPress={applyFilters}>
                       <Text style={styles.dateButtonText}>Apply</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.dateButton, {backgroundColor: 'gray'}]}
+                      style={[styles.dateButton, { backgroundColor: 'gray' }]}
                       onPress={() => toggleFilterModal(title)}>
                       <Text style={styles.dateButtonText}>Close</Text>
                     </TouchableOpacity>
@@ -212,15 +212,31 @@ const FleetCard = ({
                 <TouchableWithoutFeedback>
                   <View style={styles.modalContainer}>
                     <Text style={styles.modalTitle}>Select Start Date</Text>
-                    <Calendar
+                    <Calendar theme={{
+                      backgroundColor: 'transparent',
+                      calendarBackground: 'transparent',
+                      textSectionTitleColor: '#E2E8F0',
+                      selectedDayBackgroundColor: '#4F46E5',
+                      selectedDayTextColor: '#FFFFFF',
+                      todayTextColor: '#818CF8',
+                      dayTextColor: '#FFFFFF',
+                      textDisabledColor: '#94A3B8',
+                      dotColor: '#4F46E5',
+                      selectedDotColor: '#FFFFFF',
+                      arrowColor: '#4F46E5',
+                      monthTextColor: '#FFFFFF',
+                      textDayFontWeight: '500',
+                      textMonthFontWeight: 'bold',
+                      textDayHeaderFontWeight: '600',
+                    }}
                       onDayPress={day => handleDateSelect(day, title)}
                       markedDates={{
-                        [fromDate]: {selected: true, selectedColor: '#28a745'},
-                        [toDate]: {selected: true, selectedColor: '#dc3545'},
+                        [fromDate]: { selected: true, selectedColor: '#28a745' },
+                        [toDate]: { selected: true, selectedColor: '#dc3545' },
                       }}
                     />
                     <TouchableOpacity
-                      style={[styles.dateButton, {backgroundColor: 'gray'}]}
+                      style={[styles.dateButton, { backgroundColor: 'gray' }]}
                       onPress={() => setFromModalVisible(false)}>
                       <Text style={styles.dateButtonText}>Close</Text>
                     </TouchableOpacity>
@@ -243,15 +259,31 @@ const FleetCard = ({
                 <TouchableWithoutFeedback>
                   <View style={styles.modalContainer}>
                     <Text style={styles.modalTitle}>Select End Date</Text>
-                    <Calendar
+                    <Calendar theme={{
+                      backgroundColor: 'transparent',
+                      calendarBackground: 'transparent',
+                      textSectionTitleColor: '#E2E8F0',
+                      selectedDayBackgroundColor: '#4F46E5',
+                      selectedDayTextColor: '#FFFFFF',
+                      todayTextColor: '#818CF8',
+                      dayTextColor: '#FFFFFF',
+                      textDisabledColor: '#94A3B8',
+                      dotColor: '#4F46E5',
+                      selectedDotColor: '#FFFFFF',
+                      arrowColor: '#4F46E5',
+                      monthTextColor: '#FFFFFF',
+                      textDayFontWeight: '500',
+                      textMonthFontWeight: 'bold',
+                      textDayHeaderFontWeight: '600',
+                    }}
                       onDayPress={day => handleDateSelect(day, title)}
                       markedDates={{
-                        [fromDate]: {selected: true, selectedColor: '#28a745'},
-                        [toDate]: {selected: true, selectedColor: '#dc3545'},
+                        [fromDate]: { selected: true, selectedColor: '#28a745' },
+                        [toDate]: { selected: true, selectedColor: '#dc3545' },
                       }}
                     />
                     <TouchableOpacity
-                      style={[styles.dateButton, {backgroundColor: 'gray'}]}
+                      style={[styles.dateButton, { backgroundColor: 'gray' }]}
                       onPress={() => setToModalVisible(false)}>
                       <Text style={styles.dateButtonText}>Close</Text>
                     </TouchableOpacity>
@@ -263,7 +295,7 @@ const FleetCard = ({
         )}
 
         {title === 'Total Distance' && (
-          <View style={{height: HEIGHT * 0.5, width: '100%'}}>
+          <View style={{ height: HEIGHT * 0.5, width: '100%' }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <LineChart
                 height={HEIGHT * 0.19}
@@ -287,7 +319,7 @@ const FleetCard = ({
                 yAxisThickness={0}
                 rulesType="solid"
                 rulesColor="gray"
-                yAxisTextStyle={{color: 'gray'}}
+                yAxisTextStyle={{ color: 'gray' }}
                 yAxisLabelSuffix="%"
                 xAxisColor="lightgray"
                 pointerConfig={{
@@ -310,10 +342,10 @@ const FleetCard = ({
                           justifyContent: 'center',
                           paddingLeft: 16,
                         }}>
-                        <Text style={{color: 'lightgray', fontSize: 12}}>
+                        <Text style={{ color: 'lightgray', fontSize: 12 }}>
                           {2018}
                         </Text>
-                        <Text style={{color: 'white', fontWeight: 'bold'}}>
+                        <Text style={{ color: 'white', fontWeight: 'bold' }}>
                           {items[0].value}
                         </Text>
                         <Text
@@ -324,7 +356,7 @@ const FleetCard = ({
                           }}>
                           {2019}
                         </Text>
-                        <Text style={{color: 'white', fontWeight: 'bold'}}>
+                        <Text style={{ color: 'white', fontWeight: 'bold' }}>
                           {/* {items[1].value} */}
                         </Text>
                       </View>
@@ -489,7 +521,7 @@ const FleetCard = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 shadowColor: '#000',
-                shadowOffset: {width: 0, height: 3},
+                shadowOffset: { width: 0, height: 3 },
                 shadowOpacity: 0.15,
                 shadowRadius: 4,
               }}>
@@ -507,10 +539,10 @@ const FleetCard = ({
                   color="#1b5e20"
                 />
               </View>
-              <Text style={{fontSize: 14, fontWeight: '600', color: '#2e7d32'}}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#2e7d32' }}>
                 Total Trips
               </Text>
-              <Text style={{fontSize: 12, color: '#388e3c'}}>3</Text>
+              <Text style={{ fontSize: 12, color: '#388e3c' }}>3</Text>
             </View>
 
             {/* Avg Deviation - Circle Card */}
@@ -523,7 +555,7 @@ const FleetCard = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 shadowColor: '#000',
-                shadowOffset: {width: 0, height: 3},
+                shadowOffset: { width: 0, height: 3 },
                 shadowOpacity: 0.15,
                 shadowRadius: 4,
               }}>
@@ -541,10 +573,10 @@ const FleetCard = ({
                   color="#303f9f"
                 />
               </View>
-              <Text style={{fontSize: 14, fontWeight: '600', color: '#3f51b5'}}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#3f51b5' }}>
                 Deviation
               </Text>
-              <Text style={{fontSize: 12, color: '#5c6bc0'}}>22 mins</Text>
+              <Text style={{ fontSize: 12, color: '#5c6bc0' }}>22 mins</Text>
             </View>
           </View>
         )}
@@ -569,7 +601,7 @@ const FleetCard = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 shadowColor: '#000',
-                shadowOffset: {width: 0, height: 3},
+                shadowOffset: { width: 0, height: 3 },
                 shadowOpacity: 0.15,
                 shadowRadius: 4,
               }}>
@@ -587,10 +619,10 @@ const FleetCard = ({
                   color="#e65100"
                 />
               </View>
-              <Text style={{fontSize: 14, fontWeight: '600', color: '#333'}}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#333' }}>
                 Delayed
               </Text>
-              <Text style={{fontSize: 12, color: '#777'}}>3 Trips</Text>
+              <Text style={{ fontSize: 12, color: '#777' }}>3 Trips</Text>
             </View>
 
             {/* Avg Deviation - Circle Card */}
@@ -603,7 +635,7 @@ const FleetCard = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 shadowColor: '#000',
-                shadowOffset: {width: 0, height: 3},
+                shadowOffset: { width: 0, height: 3 },
                 shadowOpacity: 0.15,
                 shadowRadius: 4,
               }}>
@@ -621,16 +653,16 @@ const FleetCard = ({
                   color="#006064"
                 />
               </View>
-              <Text style={{fontSize: 14, fontWeight: '600', color: '#333'}}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#333' }}>
                 Deviation
               </Text>
-              <Text style={{fontSize: 12, color: '#777'}}>22 mins</Text>
+              <Text style={{ fontSize: 12, color: '#777' }}>22 mins</Text>
             </View>
           </View>
         )}
 
         {title === 'Object With Most Alerts' && (
-          <View style={{marginTop: 10, paddingHorizontal: 10}}>
+          <View style={{ marginTop: 10, paddingHorizontal: 10 }}>
             {/* Table Header */}
             <View
               style={{
@@ -669,9 +701,9 @@ const FleetCard = ({
                 borderBottomRightRadius: 10,
               }}>
               {[
-                {name: 'Object A', alerts: 5},
-                {name: 'Object B', alerts: 3},
-                {name: 'Object C', alerts: 1},
+                { name: 'Object A', alerts: 5 },
+                { name: 'Object B', alerts: 3 },
+                { name: 'Object C', alerts: 1 },
               ].map((obj, index) => (
                 <View
                   key={index}
@@ -686,11 +718,11 @@ const FleetCard = ({
                         : 'rgba(34, 87, 249, 0.17)',
                   }}>
                   <Text
-                    style={{flex: 1, textAlign: 'center', color: '#1e293b'}}>
+                    style={{ flex: 1, textAlign: 'center', color: '#1e293b' }}>
                     {obj.name}
                   </Text>
                   <Text
-                    style={{flex: 1, textAlign: 'center', color: '#1e293b'}}>
+                    style={{ flex: 1, textAlign: 'center', color: '#1e293b' }}>
                     {obj.alerts}
                   </Text>
                 </View>
@@ -700,7 +732,7 @@ const FleetCard = ({
         )}
 
         {title === 'Driver With Most Alerts' && (
-          <View style={{marginTop: 10, paddingHorizontal: 10}}>
+          <View style={{ marginTop: 10, paddingHorizontal: 10 }}>
             {/* Table Header */}
             <View
               style={{
@@ -761,15 +793,15 @@ const FleetCard = ({
                         : 'rgba(34, 87, 249, 0.17)',
                   }}>
                   <Text
-                    style={{flex: 1, textAlign: 'center', color: '#1e293b'}}>
+                    style={{ flex: 1, textAlign: 'center', color: '#1e293b' }}>
                     {driver.name}
                   </Text>
                   <Text
-                    style={{flex: 1, textAlign: 'center', color: '#1e293b'}}>
+                    style={{ flex: 1, textAlign: 'center', color: '#1e293b' }}>
                     {driver.alertCount}
                   </Text>
                   <Text
-                    style={{flex: 1, textAlign: 'center', color: '#1e293b'}}>
+                    style={{ flex: 1, textAlign: 'center', color: '#1e293b' }}>
                     {driver.lastAlert}
                   </Text>
                 </View>
@@ -784,23 +816,23 @@ const FleetCard = ({
               backgroundColor: 'rgba(143, 134, 214, 0.1)',
               borderRadius: 12,
             }}>
-            <View style={{height: 140}}>
+            <View style={{ height: 140 }}>
               <BarChart
                 barWidth={30}
                 noOfSections={5}
                 barBorderRadius={8}
                 frontColor="rgba(8, 0, 255, 0.35)"
                 data={[
-                  {value: 60, label: 'Unit A'},
-                  {value: 90, label: 'Unit B'},
-                  {value: 45, label: 'Unit C'},
-                  {value: 75, label: 'Unit D'},
-                  {value: 30, label: 'Unit E'},
+                  { value: 60, label: 'Unit A' },
+                  { value: 90, label: 'Unit B' },
+                  { value: 45, label: 'Unit C' },
+                  { value: 75, label: 'Unit D' },
+                  { value: 30, label: 'Unit E' },
                 ]}
                 maxValue={100}
                 yAxisLabelSuffix="%"
-                yAxisTextStyle={{color: '#475569', fontSize: 10}}
-                xAxisLabelTextStyle={{color: '#334155', fontSize: 12}}
+                yAxisTextStyle={{ color: '#E2E8F0', fontSize: 10 }}
+                xAxisLabelTextStyle={{ color: '#334155', fontSize: 12 }}
                 isAnimated
                 animationDuration={1000}
                 hideRules
@@ -895,7 +927,7 @@ const FleetSummaryCard = ({
       setLocation(item?.derived_live_config?.location || []);
       setModalVisible(false);
       setShowModal(true);
-      
+
       // Show success toast when card is clicked
       Toast.show({
         type: 'success',
@@ -926,9 +958,9 @@ const FleetSummaryCard = ({
   ];
 
   const items = [
-    {label: 'Running', value: statusMap.Running || 0, color: '#28a745'},
-    {label: 'Stopped', value: statusMap.Stopped || 0, color: '#ffc107'},
-    {label: 'Unreachable', value: statusMap.Unreachable || 0, color: '#dc3545'},
+    { label: 'Running', value: statusMap.Running || 0, color: '#28a745' },
+    { label: 'Stopped', value: statusMap.Stopped || 0, color: '#ffc107' },
+    { label: 'Unreachable', value: statusMap.Unreachable || 0, color: '#dc3545' },
     {
       label: 'Total',
       value:
@@ -969,13 +1001,10 @@ const FleetSummaryCard = ({
       <View style={styles.summaryCard}>
         <View
           style={{
-            backgroundColor: '#F5F5F5',
-            color: '#ffffff',
-            fontWeight: 'bold',
+            backgroundColor: 'transparent',
             paddingVertical: 8,
             textAlign: 'center',
             borderRadius: 8,
-            fontSize: 16,
             overflow: 'hidden',
           }}>
           <Text style={styles.headerText}>Status</Text>
@@ -991,16 +1020,16 @@ const FleetSummaryCard = ({
               radius={70}
               innerRadius={40}
               centerLabelComponent={() => (
-                <View style={{alignItems: 'center'}}>
+                <View style={{ alignItems: 'center' }}>
                   <Text
                     style={{
                       fontSize: 16,
                       fontWeight: 'bold',
-                      color: '#007bff',
+                      color: themeColors.white,
                     }}>
                     {total}
                   </Text>
-                  <Text style={{fontSize: 12, color: '#555'}}>Total</Text>
+                  <Text style={{ fontSize: 12, color: themeColors.textMuted }}>Total</Text>
                 </View>
               )}
             />
@@ -1010,7 +1039,7 @@ const FleetSummaryCard = ({
             {items.map(item => (
               <TouchableOpacity
                 key={item.label}
-                style={[styles.statusCard, {borderLeftColor: item.color}]}
+                style={[styles.statusCard, { borderLeftColor: item.color }]}
                 onPress={() => handlePress(item.label)}>
                 <Text style={styles.statusTitle}>{item.label}</Text>
                 <Text style={styles.statusCount}>{item.value}</Text>
@@ -1041,7 +1070,7 @@ const FleetSummaryCard = ({
               borderRadius: 10,
               padding: 20,
               shadowColor: '#000',
-              shadowOffset: {width: 0, height: 4},
+              shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.3,
               shadowRadius: 6,
               elevation: 10,
@@ -1058,11 +1087,11 @@ const FleetSummaryCard = ({
                 ? 'All Devices'
                 : `${selectedStatus} Details`}
             </Text>
-            <Text style={{fontSize: 16, marginBottom: 15, color: 'black'}}>
+            <Text style={{ fontSize: 16, marginBottom: 15, color: 'black' }}>
               Showing {filteredItems.length} out of {thingData.length} devices
             </Text>
 
-            <ScrollView style={{maxHeight: 300}}>
+            <ScrollView style={{ maxHeight: 300 }}>
               {filteredItems.map((item, index) => (
                 <TouchableOpacity
                   key={item.thing_id || index}
@@ -1072,7 +1101,7 @@ const FleetSummaryCard = ({
                     marginBottom: 12,
                     borderRadius: 10,
                     shadowColor: '#000',
-                    shadowOffset: {width: 0, height: 2},
+                    shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: 0.15,
                     shadowRadius: 3,
                     elevation: 2,
@@ -1087,20 +1116,20 @@ const FleetSummaryCard = ({
                     }}>
                     {item.thing_name}
                   </Text>
-                  <Text style={{fontSize: 14, marginBottom: 2, color: 'black'}}>
-                    <Text style={{fontWeight: '600', color: 'black'}}>
+                  <Text style={{ fontSize: 14, marginBottom: 2, color: 'black' }}>
+                    <Text style={{ fontWeight: '600', color: 'black' }}>
                       Thing ID:
                     </Text>{' '}
                     {item.thing_id}
                   </Text>
-                  <Text style={{fontSize: 14, marginBottom: 2, color: 'black'}}>
-                    <Text style={{fontWeight: '600', color: 'black'}}>
+                  <Text style={{ fontSize: 14, marginBottom: 2, color: 'black' }}>
+                    <Text style={{ fontWeight: '600', color: 'black' }}>
                       Description:
                     </Text>{' '}
                     {item.desc || 'No description'}
                   </Text>
-                  <Text style={{fontSize: 14, marginBottom: 6, color: 'black'}}>
-                    <Text style={{fontWeight: '600', color: 'black'}}>
+                  <Text style={{ fontSize: 14, marginBottom: 6, color: 'black' }}>
+                    <Text style={{ fontWeight: '600', color: 'black' }}>
                       Last Updated:
                     </Text>{' '}
                     {item.updated_on.toLocaleString()}
@@ -1118,7 +1147,7 @@ const FleetSummaryCard = ({
                 alignItems: 'center',
               }}
               onPress={() => setModalVisible(false)}>
-              <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16}}>
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
                 Close
               </Text>
             </Pressable>
@@ -1128,37 +1157,37 @@ const FleetSummaryCard = ({
 
       {/* Location Track or Alert */}
       {showMap &&
-Array.isArray(Location) &&
-Location.length >= 2 &&
-Location[0] !== undefined &&
-Location[1] !== undefined ? (
-  <View style={{ flex: 1 }}>
-    <Track
-      showTrack={
-        Array.isArray(Location[0])
-          ? Location.map(coord => ({
-              latitude: parseFloat(coord[0]),
-              longitude: parseFloat(coord[1]),
-            }))
-          : [{ latitude: parseFloat(Location[0]), longitude: parseFloat(Location[1]) }]
-      }
-      projectedTrack={projectedTrackData || { data: [] }}
-      latitude={parseFloat(Location[0])}
-      longitude={parseFloat(Location[1])}
-      visible={showMap}
-      onClose={() => {
-        setShowMap(false);
-        Toast.show({
-          type: 'info',
-          position: 'top',
-          text1: 'Tracking Stopped',
-          text2: 'Vehicle tracking has been closed',
-          visibilityTime: 3000,
-        });
-      }}
-    />
-  </View>
-) : null}
+        Array.isArray(Location) &&
+        Location.length >= 2 &&
+        Location[0] !== undefined &&
+        Location[1] !== undefined ? (
+        <View style={{ flex: 1 }}>
+          <Track
+            showTrack={
+              Array.isArray(Location[0])
+                ? Location.map(coord => ({
+                  latitude: parseFloat(coord[0]),
+                  longitude: parseFloat(coord[1]),
+                }))
+                : [{ latitude: parseFloat(Location[0]), longitude: parseFloat(Location[1]) }]
+            }
+            projectedTrack={projectedTrackData || { data: [] }}
+            latitude={parseFloat(Location[0])}
+            longitude={parseFloat(Location[1])}
+            visible={showMap}
+            onClose={() => {
+              setShowMap(false);
+              Toast.show({
+                type: 'info',
+                position: 'top',
+                text1: 'Tracking Stopped',
+                text2: 'Vehicle tracking has been closed',
+                visibilityTime: 3000,
+              });
+            }}
+          />
+        </View>
+      ) : null}
 
       {/* Detail Modal */}
       <Modal
@@ -1180,7 +1209,7 @@ Location[1] !== undefined ? (
               borderRadius: 10,
               padding: 20,
               shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
+              shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.25,
               shadowRadius: 4,
               elevation: 5,
@@ -1193,10 +1222,10 @@ Location[1] !== undefined ? (
                 alignItems: 'center',
                 marginBottom: 10,
               }}>
-              <Text style={{fontSize: 18, fontWeight: 'bold', color: 'white'}}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'white' }}>
                 Vehicle Details
               </Text>
-              <View style={{flexDirection: 'row'}}>
+              <View style={{ flexDirection: 'row' }}>
                 <TouchableOpacity onPress={() => {
                   setViewHistory(true);
                   Toast.show({
@@ -1249,16 +1278,16 @@ Location[1] !== undefined ? (
             </View>
 
             <View
-              style={{height: 1, backgroundColor: '#ccc', marginBottom: 10}}
+              style={{ height: 1, backgroundColor: '#ccc', marginBottom: 10 }}
             />
 
-            <View style={{gap: 12}}>
+            <View style={{ gap: 12 }}>
               {/* Speed */}
               <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Icon name="speed" size={30} color="#1E90FF" />
-                <Text style={{fontWeight: '600', color: 'white'}}>Speed:</Text>
-                <Text style={{flex: 1, color: 'white'}}>
+                <Text style={{ fontWeight: '600', color: 'white' }}>Speed:</Text>
+                <Text style={{ flex: 1, color: 'white' }}>
                   {selectedValue?.derived_live_config?.speed?.toFixed(2) ??
                     'N/A'}{' '}
                   km/h
@@ -1267,26 +1296,26 @@ Location[1] !== undefined ? (
 
               {/* Acceleration */}
               <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Icon name="trending-up" size={30} color="#1E90FF" />
-                <Text style={{fontWeight: '600', color: 'white'}}>Acc:</Text>
-                <Text style={{flex: 1, color: 'white'}}>
+                <Text style={{ fontWeight: '600', color: 'white' }}>Acc:</Text>
+                <Text style={{ flex: 1, color: 'white' }}>
                   {selectedValue?.derived_live_config?.acceleration != null
                     ? `${selectedValue.derived_live_config?.acceleration.toFixed(
-                        2,
-                      )} m/s²`
+                      2,
+                    )} m/s²`
                     : 'N/A'}
                 </Text>
               </View>
 
               {/* Total Distance */}
               <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Icon name="straighten" size={30} color="#1E90FF" />
-                <Text style={{fontWeight: '600', color: 'white'}}>
+                <Text style={{ fontWeight: '600', color: 'white' }}>
                   Total Dist:
                 </Text>
-                <Text style={{flex: 1, color: 'white'}}>
+                <Text style={{ flex: 1, color: 'white' }}>
                   {(
                     selectedValue?.derived_live_config?.total_distance / 1000
                   ).toFixed(2) ?? 'N/A'}{' '}
@@ -1296,12 +1325,12 @@ Location[1] !== undefined ? (
 
               {/* Current Distance */}
               <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Icon name="place" size={30} color="#1E90FF" />
-                <Text style={{fontWeight: '600', color: 'white'}}>
+                <Text style={{ fontWeight: '600', color: 'white' }}>
                   Current Dist:
                 </Text>
-                <Text style={{flex: 1, color: 'white'}}>
+                <Text style={{ flex: 1, color: 'white' }}>
                   {(
                     selectedValue?.derived_live_config?.current_distance / 1000
                   ).toFixed(2) ?? 'N/A'}{' '}
@@ -1311,16 +1340,16 @@ Location[1] !== undefined ? (
 
               {/* Last Updated */}
               <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Icon name="update" size={30} color="#1E90FF" />
-                <Text style={{fontWeight: '600', color: 'white'}}>
+                <Text style={{ fontWeight: '600', color: 'white' }}>
                   Last Updated:
                 </Text>
-                <Text style={{flex: 1, color: 'white'}}>
+                <Text style={{ flex: 1, color: 'white' }}>
                   {selectedValue?.derived_live_config?.generated_datetime
                     ? moment(
-                        selectedValue.derived_live_config?.generated_datetime,
-                      ).format('DD/MM/YYYY h:mm a')
+                      selectedValue.derived_live_config?.generated_datetime,
+                    ).format('DD/MM/YYYY h:mm a')
                     : 'N/A'}
                 </Text>
               </View>
@@ -1420,59 +1449,59 @@ const FleetDashboard = navigation => {
     try {
       // Get project_sl from AsyncStorage
       const projectSl = await getObjByKey('project_sl');
-      
+
       if (!projectSl) {
         showToast('error', 'Data Error', 'Project information not found. Please login again.');
         return;
       }
-  
+
       const url = `${BASE_URL}projects/${projectSl}/things/?page=1&search=&type=gps`;
       setPageLoad(true);
-      
-const response = await GETNETWORK(url, true);
+
+      const response = await GETNETWORK(url, true);
 
       if (response.data && response.data.things) {
-  
+
         const fullThingData = response.data.things.map(item => ({
           ...item,
           updated_on: new Date(item.updated_on),
         }));
-  
+
         const currentTime = new Date();
         const statusCounts = {
           Running: 0,
           Stopped: 0,
           Unreachable: 0,
         };
-  
+
         fullThingData.forEach(item => {
           const timeDiff = (currentTime - item.updated_on) / (1000 * 60);
           if (timeDiff <= 2) statusCounts.Running += 1;
           else if (timeDiff <= 5) statusCounts.Stopped += 1;
           else statusCounts.Unreachable += 1;
         });
-  
+
         setStatusMap(statusCounts);
         setTotal(fullThingData.length);
-  
+
         const transformedData = [
-          {title: 'Total Distance', color: '#28a745', icon: USAGE},
-          {title: 'OverSpeed', color: '#ffc107', icon: OVERSPEED},
-          {title: 'Idle', color: '#dc3545', icon: IDLE},
-          {title: 'Fuel', color: '#007bff', icon: FUEL},
-          {title: 'Maintainance', color: '#007bff', icon: ZONE},
-          {title: 'Timeline Deviation', color: '#007bff', icon: TIMELINE},
-          {title: 'Stay In Zone', color: '#007bff', icon: STAYZONE},
-          {title: 'Stay Away From Zone', color: '#007bff', icon: STAYAWAY},
-          {title: 'Object With Most Alerts', color: '#007bff', icon: ZONE},
-          {title: 'Driver With Most Alerts', color: '#007bff', icon: ZONE},
-          {title: 'Fleet WorkLoad', color: '#007bff', icon: ZONE},
-          {title: 'Renewal Reminder', color: '#007bff', icon: ZONE},
+          { title: 'Total Distance', color: '#28a745', icon: USAGE },
+          { title: 'OverSpeed', color: '#ffc107', icon: OVERSPEED },
+          { title: 'Idle', color: '#dc3545', icon: IDLE },
+          { title: 'Fuel', color: '#007bff', icon: FUEL },
+          { title: 'Maintainance', color: '#007bff', icon: ZONE },
+          { title: 'Timeline Deviation', color: '#007bff', icon: TIMELINE },
+          { title: 'Stay In Zone', color: '#007bff', icon: STAYZONE },
+          { title: 'Stay Away From Zone', color: '#007bff', icon: STAYAWAY },
+          { title: 'Object With Most Alerts', color: '#007bff', icon: ZONE },
+          { title: 'Driver With Most Alerts', color: '#007bff', icon: ZONE },
+          { title: 'Fleet WorkLoad', color: '#007bff', icon: ZONE },
+          { title: 'Renewal Reminder', color: '#007bff', icon: ZONE },
         ];
-  
+
         setFleetData(transformedData);
         setThingData(fullThingData);
-        
+
         showToast('success', 'Data Loaded', 'Fleet data updated successfully');
       } else {
         showToast('error', 'Data Error', 'No vehicle data found');
@@ -1490,23 +1519,23 @@ const response = await GETNETWORK(url, true);
       try {
         // Get project_sl from AsyncStorage
         const projectSl = await getObjByKey('project_sl');
-        
+
         if (!projectSl) {
           showToast('error', 'Project Error', 'Project information not found. Please login again.');
           return;
         }
-  
+
         const Url = `${BASE_URL}things/?thing_id=${thingId}&project_id=${projectSl}`;
         setPageLoad(true);
-  
+
         const response = await GETNETWORK(Url, true);
         console.log('API Response (GPS list):', response);
-  
+
         if (response.data && response.data.things) {
           const gpsList = response.data.things;
           setFleetData(gpsList);
         }
-  
+
         const data = thingData.find(item => item.thing_id === thingId);
         if (data) {
           setSelectedValue(data);
@@ -1557,18 +1586,18 @@ const response = await GETNETWORK(url, true);
 
   return (
     <Fragment>
-      <StatusBar backgroundColor={themeColors.primary} barStyle="light-content" />
-      <SafeAreaView style={styles.safeareacontainer} edges={['left', 'right', 'bottom']}>
-        <Header 
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }} edges={['left', 'right', 'bottom']}>
+        <Header
           onMenuPress={() => {
             console.log('here i want drawer navigation open', navigation);
             navigation.navigation.openDrawer();
-          }} 
-          title="Dashboard" 
+          }}
+          title="Dashboard"
         />
 
         <KeyboardAvoidingView
-          style={{flex: 1}}
+          style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           {userType === 'admin' || userType === 'manager' ? (
             <FlatList
@@ -1587,7 +1616,7 @@ const response = await GETNETWORK(url, true);
               maxToRenderPerBatch={4}
               windowSize={5}
               removeClippedSubviews={Platform.OS === 'android'}
-              renderItem={({item}) => (
+              renderItem={({ item }) => (
                 <FleetCard
                   title={item.title}
                   icon={item.icon}

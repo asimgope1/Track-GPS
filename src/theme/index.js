@@ -1,46 +1,44 @@
 /**
- * FleetCue Design System – Modern, sleek UI
- * Clean hierarchy, soft elevation, refined palette.
+ * FleetCue Design System v3 – Inspired by Google Stitch AI UI
+ * High contrast, deep glassmorphism, vibrant premium accents.
  */
 
 import { Platform } from 'react-native';
 
 export const colors = {
-  primary: '#0d9488',
-  primaryLight: '#14b8a6',
-  primaryDark: '#0f766e',
+  primary: '#4F46E5', // vibrant indigo
+  primaryLight: '#818CF8',
+  primaryDark: '#3730A3',
+  primaryGradient: ['#4F46E5', '#7C3AED'], // purple-indigo gradient 
 
-  white: '#ffffff',
-  background: '#f1f5f9',
-  surface: '#ffffff',
-  surfaceElevated: '#ffffff',
-  border: '#e2e8f0',
-  borderLight: '#f1f5f9',
+  white: '#FFFFFF',
+  background: 'transparent', // Used to be '#F3F4F6' - Now glassmorphism gradient
+  surface: 'rgba(255, 255, 255, 0.1)',
+  surfaceElevated: 'rgba(255, 255, 255, 0.15)',
+  border: 'rgba(255, 255, 255, 0.2)',
+  borderLight: 'rgba(255, 255, 255, 0.08)',
 
-  text: '#0f172a',
-  textSecondary: '#475569',
-  textMuted: '#64748b',
-  textPlaceholder: '#94a3b8',
+  text: '#FFFFFF', // pure white text for heavy dark background
+  textSecondary: '#E2E8F0', // slate-200
+  textMuted: '#94A3B8', // slate-400
+  textPlaceholder: '#CBD5E1', // slate-300
 
-  success: '#059669',
-  successLight: '#d1fae5',
-  warning: '#d97706',
-  warningLight: '#fef3c7',
-  error: '#dc2626',
-  errorLight: '#fee2e2',
-  info: '#0891b2',
-  infoLight: '#cffafe',
+  success: '#10B981',
+  successLight: '#D1FAE5',
+  warning: '#F59E0B',
+  warningLight: '#FEF3C7',
+  error: '#EF4444',
+  errorLight: '#FEE2E2',
+  info: '#3B82F6',
+  infoLight: '#DBEAFE',
 
-  statusPending: '#d97706',
-  statusInProgress: '#0891b2',
-  statusCompleted: '#059669',
-  statusCancelled: '#dc2626',
+  statusPending: '#F59E0B',
+  statusInProgress: '#3B82F6',
+  statusCompleted: '#10B981',
+  statusCancelled: '#EF4444',
 
   black: '#000000',
-  gray: '#64748b',
-  red: '#dc2626',
-  green: '#059669',
-  orange: '#ea580c',
+  transparent: 'transparent',
 };
 
 export const spacing = {
@@ -48,98 +46,117 @@ export const spacing = {
   xs: 8,
   sm: 12,
   md: 16,
-  lg: 20,
-  xl: 24,
-  xxl: 32,
+  lg: 24,
+  xl: 32,
+  xxl: 40,
+  xxxl: 48,
 };
 
 export const radius = {
   xs: 8,
-  sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 24,
+  sm: 12,
+  md: 16,
+  lg: 24,  // softer radii for modern AI look
+  xl: 32,
   full: 9999,
 };
 
 export const typography = {
-  xs: 11,
-  sm: 13,
-  base: 15,
-  md: 16,
-  lg: 18,
-  xl: 20,
-  xxl: 24,
+  xs: 12,
+  sm: 14,
+  base: 16,
+  md: 18,
+  lg: 20,
+  xl: 24,
+  xxl: 30,
+  xxxl: 36,
   regular: '400',
   medium: '500',
   semibold: '600',
-  bold: '700',
+  bold: '800', // chunkier bold
 };
 
 export const shadows = {
   none: { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
   sm: Platform.select({
     ios: {
-      shadowColor: '#0f172a',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 3,
-    },
-    android: { elevation: 1 },
-  }),
-  md: Platform.select({
-    ios: {
-      shadowColor: '#0f172a',
+      shadowColor: '#111827',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.06,
+      shadowOpacity: 0.04,
       shadowRadius: 6,
     },
     android: { elevation: 3 },
   }),
-  lg: Platform.select({
+  md: Platform.select({
     ios: {
-      shadowColor: '#0f172a',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
+      shadowColor: '#111827',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.06,
+      shadowRadius: 10,
     },
     android: { elevation: 6 },
+  }),
+  lg: Platform.select({
+    ios: {
+      shadowColor: '#111827',
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.08,
+      shadowRadius: 20,
+    },
+    android: { elevation: 12 },
+  }),
+  glow: Platform.select({
+    ios: {
+      shadowColor: '#4F46E5',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.3,
+      shadowRadius: 16,
+    },
+    android: { elevation: 16, shadowColor: '#4F46E5' },
   }),
 };
 
 export const card = {
   backgroundColor: colors.surface,
-  borderRadius: radius.md,
+  borderRadius: radius.lg,
   padding: spacing.lg,
-  ...shadows.sm,
+  ...shadows.md,
 };
 
 export const input = {
-  backgroundColor: colors.surface,
-  borderRadius: radius.sm,
-  borderWidth: 1,
+  backgroundColor: colors.borderLight,
+  borderRadius: radius.md,
+  borderWidth: 1.5,
   borderColor: colors.border,
   paddingHorizontal: spacing.md,
   paddingVertical: spacing.sm,
+  fontSize: typography.base,
+  color: colors.text,
 };
+
 export const inputFocused = {
   borderColor: colors.primary,
   backgroundColor: colors.surface,
+  borderWidth: 1.5,
+  ...shadows.sm,
 };
+
 export const inputError = {
   borderColor: colors.error,
   backgroundColor: colors.errorLight,
+  borderWidth: 1.5,
 };
-/** Section card for grouping form fields – left accent, soft shadow */
+
 export const formSection = {
   backgroundColor: colors.surface,
-  borderRadius: radius.md,
+  borderRadius: radius.lg,
   padding: spacing.lg,
   marginBottom: spacing.lg,
   borderLeftWidth: 4,
   borderLeftColor: colors.primary,
-  ...shadows.sm,
+  ...shadows.md,
 };
+
 export default {
   colors,
   spacing,
@@ -152,4 +169,3 @@ export default {
   inputError,
   formSection,
 };
-

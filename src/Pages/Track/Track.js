@@ -1,7 +1,7 @@
-import React, {useState, useRef, useEffect} from 'react';
-import {Image} from 'react-native';
-import {View, Modal, TouchableOpacity, StyleSheet, Text} from 'react-native';
-import MapView, {Marker, Polyline, PROVIDER_GOOGLE} from 'react-native-maps';
+import React, { useState, useRef, useEffect } from 'react';
+import { Image } from 'react-native';
+import { View, Modal, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -19,7 +19,7 @@ const Track = ({
 
   const mapRef = useRef();
 
-  console.log('track page',  showTrack,
+  console.log('track page', showTrack,
     latitude,
     longitude,
     visible,
@@ -32,17 +32,17 @@ const Track = ({
   const source =
     projectedTrack?.data && projectedTrack.data[0]
       ? {
-          latitude: parseFloat(projectedTrack.data[0]?.source_lat),
-          longitude: parseFloat(projectedTrack.data[0]?.source_lon),
-        }
+        latitude: parseFloat(projectedTrack.data[0]?.source_lat),
+        longitude: parseFloat(projectedTrack.data[0]?.source_lon),
+      }
       : null;
 
   const destination =
     projectedTrack?.data && projectedTrack.data[0]
       ? {
-          latitude: parseFloat(projectedTrack.data[0]?.destination_lat),
-          longitude: parseFloat(projectedTrack.data[0]?.destination_lon),
-        }
+        latitude: parseFloat(projectedTrack.data[0]?.destination_lat),
+        longitude: parseFloat(projectedTrack.data[0]?.destination_lon),
+      }
       : null;
 
   // Get the via points from the projected track data
@@ -55,12 +55,12 @@ const Track = ({
   //     item => item?.latitude !== undefined && item?.longitude !== undefined,
   //   ) || [];
 
-   const filteredShowTrack = Array.isArray(showTrack)
-     ? showTrack.filter(
-         item =>
-           item?.latitude !== undefined && item?.longitude !== undefined,
-       )
-     : [];
+  const filteredShowTrack = Array.isArray(showTrack)
+    ? showTrack.filter(
+      item =>
+        item?.latitude !== undefined && item?.longitude !== undefined,
+    )
+    : [];
 
   const region = {
     latitude: latitude || 28.6139, // Default to New Delhi
@@ -114,7 +114,7 @@ const Track = ({
 
   // Function to handle marker tap
   const handleMarkerPress = (title, description) => {
-    setSelectedMarker({title, description}); // Update the selected marker state
+    setSelectedMarker({ title, description }); // Update the selected marker state
   };
   console.log('filteredShowTrack', filteredShowTrack);
   return (
@@ -166,7 +166,7 @@ const Track = ({
                 {/* Custom Marker for the End */}
                 <Image
                   source={require('../../assets/images/vehicleMarker.png')}
-                  style={{width: 40, height: 40}} // Set the desired size of the marker
+                  style={{ width: 40, height: 40 }} // Set the desired size of the marker
                 />
               </Marker>
             </>
@@ -268,7 +268,7 @@ const Track = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+    backgroundColor: 'rgba(15, 23, 42, 0.4)', // Premium semi-transparent background
   },
   map: {
     flex: 1,
@@ -276,46 +276,64 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 40,
+    top: 50,
     right: 20,
     zIndex: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 8,
-    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    padding: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   infoModal: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
   },
   infoContainer: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    padding: 24,
+    borderRadius: 20,
+    width: '85%',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#1E1B4B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
   },
   infoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: 'black',
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 8,
+    color: '#1E1B4B',
+    letterSpacing: -0.5,
   },
   infoDescription: {
-    fontSize: 16,
-    marginBottom: 20,
-    color: 'black',
+    fontSize: 15,
+    marginBottom: 24,
+    color: '#475569',
     textAlign: 'center',
+    fontWeight: '500',
   },
   closeInfoButton: {
-    backgroundColor: '#007BFF',
-    padding: 10,
-    borderRadius: 5,
+    backgroundColor: '#4F46E5',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 6,
   },
   closeInfoText: {
     color: 'white',
     fontSize: 16,
+    fontWeight: '700',
   },
 });
 

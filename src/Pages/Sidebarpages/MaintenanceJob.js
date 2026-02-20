@@ -22,6 +22,7 @@ import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import moment from 'moment';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
+import theme from '../../theme';
 
 const { width } = Dimensions.get('window');
 
@@ -47,7 +48,7 @@ const MaintenanceJobScreen = ({ navigation }) => {
     end: false,
   });
   const [jobList, setJobList] = useState([]);
-  
+
   // Validation states
   const [errors, setErrors] = useState({
     vehicle: '',
@@ -60,11 +61,11 @@ const MaintenanceJobScreen = ({ navigation }) => {
     jobStart: '',
     jobEnd: '',
   });
-  
+
   const zIndexCounter = useRef(1000);
 
   const isFocused = useIsFocused();
-  
+
   // Reset state when screen loses focus
   useFocusEffect(
     useCallback(() => {
@@ -104,7 +105,7 @@ const MaintenanceJobScreen = ({ navigation }) => {
   // Validate individual fields
   const validateField = useCallback((field, value) => {
     let error = '';
-    
+
     switch (field) {
       case 'vehicle':
         if (!value) error = 'Vehicle selection is required';
@@ -147,7 +148,7 @@ const MaintenanceJobScreen = ({ navigation }) => {
       default:
         break;
     }
-    
+
     return error;
   }, [jobStart]);
 
@@ -183,9 +184,9 @@ const MaintenanceJobScreen = ({ navigation }) => {
     // Allow only one decimal point
     const decimalCount = (numericValue.match(/\./g) || []).length;
     const finalValue = decimalCount > 1 ? numericValue.slice(0, -1) : numericValue;
-    
+
     setCost(finalValue);
-    
+
     if (!finalValue || (!isNaN(parseFloat(finalValue)) && parseFloat(finalValue) >= 0)) {
       clearError('cost');
     }
@@ -197,9 +198,9 @@ const MaintenanceJobScreen = ({ navigation }) => {
     // Allow only one decimal point
     const decimalCount = (numericValue.match(/\./g) || []).length;
     const finalValue = decimalCount > 1 ? numericValue.slice(0, -1) : numericValue;
-    
+
     setKm(finalValue);
-    
+
     if (!finalValue || (!isNaN(parseFloat(finalValue)) && parseFloat(finalValue) >= 0)) {
       clearError('km');
     }
@@ -343,7 +344,7 @@ const MaintenanceJobScreen = ({ navigation }) => {
 
     // Check if there are any errors
     const hasErrors = Object.values(newErrors).some(error => error !== '');
-    
+
     if (hasErrors) {
       // Find the first field with error and show toast
       const firstErrorField = Object.keys(newErrors).find(key => newErrors[key] !== '');
@@ -358,7 +359,7 @@ const MaintenanceJobScreen = ({ navigation }) => {
 
   const handleCreateJob = useCallback(async () => {
     if (!validateForm()) return;
-    
+
     const payload = {
       thing_id: vehicleValue,
       maintenance_id: maintenanceValue,
@@ -370,7 +371,7 @@ const MaintenanceJobScreen = ({ navigation }) => {
       job_start_datetime: moment(jobStart).format('YYYY-MM-DDTHH:mm:ss'),
       job_end_datetime: moment(jobEnd).format('YYYY-MM-DDTHH:mm:ss'),
     };
-    
+
     try {
       setLoading(true);
       const response = await POSTNETWORK(
@@ -503,7 +504,7 @@ const MaintenanceJobScreen = ({ navigation }) => {
 
   return (
     <>
-      <StatusBar backgroundColor="#0284c7" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <Header title="Maintenance Job" onMenuPress={() => navigation.openDrawer()} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -588,14 +589,14 @@ const MaintenanceJobScreen = ({ navigation }) => {
                 errors.issues && styles.inputError
               ]}
               placeholder="Enter reported issues (minimum 5 characters)"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.colors.textPlaceholder}
               value={issues}
               multiline
               numberOfLines={3}
               onChangeText={handleIssuesChange}
               onBlur={() => {
                 const error = validateField('issues', issues);
-                if (error) setErrors(prev => ({...prev, issues: error}));
+                if (error) setErrors(prev => ({ ...prev, issues: error }));
               }}
             />
             <ErrorMessage message={errors.issues} />
@@ -611,14 +612,14 @@ const MaintenanceJobScreen = ({ navigation }) => {
                 errors.work && styles.inputError
               ]}
               placeholder="Describe work performed (minimum 5 characters)"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.colors.textPlaceholder}
               multiline
               numberOfLines={3}
               value={work}
               onChangeText={handleWorkChange}
               onBlur={() => {
                 const error = validateField('work', work);
-                if (error) setErrors(prev => ({...prev, work: error}));
+                if (error) setErrors(prev => ({ ...prev, work: error }));
               }}
             />
             <ErrorMessage message={errors.work} />
@@ -633,12 +634,12 @@ const MaintenanceJobScreen = ({ navigation }) => {
                 errors.parts && styles.inputError
               ]}
               placeholder="List parts replaced (optional)"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.colors.textPlaceholder}
               value={parts}
               onChangeText={handlePartsChange}
               onBlur={() => {
                 const error = validateField('parts', parts);
-                if (error) setErrors(prev => ({...prev, parts: error}));
+                if (error) setErrors(prev => ({ ...prev, parts: error }));
               }}
             />
             <ErrorMessage message={errors.parts} />
@@ -654,13 +655,13 @@ const MaintenanceJobScreen = ({ navigation }) => {
                   errors.cost && styles.inputError
                 ]}
                 placeholder="Enter cost (optional)"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={theme.colors.textPlaceholder}
                 value={cost}
                 onChangeText={handleCostChange}
                 keyboardType="decimal-pad"
                 onBlur={() => {
                   const error = validateField('cost', cost);
-                  if (error) setErrors(prev => ({...prev, cost: error}));
+                  if (error) setErrors(prev => ({ ...prev, cost: error }));
                 }}
               />
               <ErrorMessage message={errors.cost} />
@@ -673,13 +674,13 @@ const MaintenanceJobScreen = ({ navigation }) => {
                   errors.km && styles.inputError
                 ]}
                 placeholder="Enter total KM (optional)"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={theme.colors.textPlaceholder}
                 value={km}
                 onChangeText={handleKmChange}
                 keyboardType="decimal-pad"
                 onBlur={() => {
                   const error = validateField('km', km);
-                  if (error) setErrors(prev => ({...prev, km: error}));
+                  if (error) setErrors(prev => ({ ...prev, km: error }));
                 }}
               />
               <ErrorMessage message={errors.km} />
@@ -763,15 +764,27 @@ const MaintenanceJobScreen = ({ navigation }) => {
           <Calendar
             onDayPress={day => handleDateSelect(day, calendarVisible.start ? 'start' : 'end')}
             markedDates={{
-              [jobStart]: { selected: true, selectedColor: '#0284c7' },
-              [jobEnd]: { selected: true, selectedColor: '#10b981' },
+              [jobStart]: { selected: true, selectedColor: theme.colors.primary },
+              [jobEnd]: { selected: true, selectedColor: theme.colors.success },
             }}
             minDate={calendarVisible.end ? jobStart : undefined}
             theme={{
-              selectedDayBackgroundColor: '#0284c7',
-              todayTextColor: '#0284c7',
-              arrowColor: '#0284c7',
-            }}
+                backgroundColor: 'transparent',
+                calendarBackground: 'transparent',
+                textSectionTitleColor: '#E2E8F0',
+                selectedDayBackgroundColor: '#4F46E5',
+                selectedDayTextColor: '#FFFFFF',
+                todayTextColor: '#818CF8',
+                dayTextColor: '#FFFFFF',
+                textDisabledColor: '#94A3B8',
+                dotColor: '#4F46E5',
+                selectedDotColor: '#FFFFFF',
+                arrowColor: '#4F46E5',
+                monthTextColor: '#FFFFFF',
+                textDayFontWeight: '500',
+                textMonthFontWeight: 'bold',
+                textDayHeaderFontWeight: '600',
+              }}
           />
           <TouchableOpacity
             onPress={() => setCalendarVisible({ start: false, end: false })}
@@ -788,205 +801,216 @@ const MaintenanceJobScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    backgroundColor: '#f9fafb',
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.background,
     paddingBottom: 48,
   },
   row: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 20,
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   column: {
     flex: 1,
   },
   inputBlock: {
-    marginBottom: 20,
+    marginBottom: theme.spacing.md,
   },
   label: {
-    marginBottom: 8,
-    fontWeight: '600',
-    color: '#374151',
-    fontSize: 15,
+    marginBottom: theme.spacing.xs,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+    fontSize: theme.typography.sm,
   },
   input: {
-    color: '#111827',
+    color: theme.colors.text,
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    height: 50,
-    backgroundColor: '#fff',
-    fontSize: 15,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    height: 52,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    fontSize: theme.typography.base,
+    ...theme.shadows.sm,
   },
   textArea: {
-    height: 90,
+    height: 100,
     textAlignVertical: 'top',
-    paddingTop: 14,
+    paddingTop: theme.spacing.md,
   },
   dropdown: {
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    height: 50,
-    backgroundColor: '#fff',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    height: 52,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    ...theme.shadows.sm,
   },
   dropdownContainer: {
-    borderColor: '#d1d5db',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1.5,
-    borderRadius: 8,
+    borderRadius: theme.radius.md,
     maxHeight: 200,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    ...theme.shadows.md,
   },
   dropdownText: {
-    fontSize: 15,
-    color: '#111827',
+    fontSize: theme.typography.sm,
+    color: theme.colors.text,
   },
   dropdownPlaceholder: {
-    color: '#9ca3af',
-    fontSize: 15,
+    color: theme.colors.textPlaceholder,
+    fontSize: theme.typography.sm,
   },
   dateButton: {
-    height: 50,
-    backgroundColor: '#fff',
+    height: 52,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     justifyContent: 'center',
-    alignItems: 'center',
-    borderColor: '#d1d5db',
+    alignItems: 'flex-start',
+    paddingHorizontal: theme.spacing.md,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1.5,
-    borderRadius: 8,
+    borderRadius: theme.radius.md,
+    ...theme.shadows.sm,
   },
   dateButtonText: {
-    color: '#374151',
-    fontSize: 15,
+    color: theme.colors.text,
+    fontSize: theme.typography.sm,
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 16,
-    marginTop: 12,
-    marginBottom: 28,
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.xl,
   },
   button: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 8,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
   },
   resetButton: {
-    backgroundColor: '#6b7280',
+    backgroundColor: theme.colors.borderDark,
+    ...theme.shadows.sm,
   },
   submitButton: {
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
+    ...theme.shadows.glow,
   },
   disabledButton: {
-    backgroundColor: '#9ca3af',
+    opacity: 0.7,
   },
   resetButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 15,
+    color: theme.colors.text,
+    fontWeight: theme.typography.bold,
+    fontSize: theme.typography.base,
   },
   submitButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 15,
+    color: theme.colors.white,
+    fontWeight: theme.typography.bold,
+    fontSize: theme.typography.base,
   },
   tableTitle: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 14,
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
   },
   tableContainer: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.xl,
+    borderRadius: theme.radius.md,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    ...theme.shadows.md,
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#0284c7',
-    paddingVertical: 14,
-    paddingHorizontal: 10,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
   },
   tableHeaderCell: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 13,
+    color: theme.colors.white,
+    fontWeight: theme.typography.semibold,
+    fontSize: theme.typography.sm,
     textAlign: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: theme.spacing.xs,
   },
   tableBody: {
     maxHeight: 320,
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#fff',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderLight,
+    backgroundColor: 'transparent',
   },
   tableCell: {
-    color: '#374151',
-    fontSize: 12,
+    color: theme.colors.textSecondary,
+    fontSize: theme.typography.xs,
     textAlign: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: theme.spacing.xs,
   },
   emptyState: {
-    padding: 48,
+    padding: theme.spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: theme.radius.lg,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.sm,
   },
   emptyText: {
-    fontSize: 17,
-    color: '#6b7280',
+    fontSize: theme.typography.base,
+    color: theme.colors.textMuted,
     textAlign: 'center',
   },
   calendarModal: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    margin: 24,
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    backgroundColor: theme.colors.surface,
+    margin: theme.spacing.xl,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.xl,
+    ...theme.shadows.lg,
   },
   calendarTitle: {
-    fontSize: 19,
-    fontWeight: '600',
-    color: '#0284c7',
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.bold,
+    color: theme.colors.primary,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   closeButton: {
-    backgroundColor: '#6b7280',
-    padding: 16,
-    marginTop: 16,
-    borderRadius: 8,
+    backgroundColor: theme.colors.textMuted,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.md,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
   },
   closeButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 15,
+    color: theme.colors.white,
+    fontWeight: theme.typography.semibold,
+    fontSize: theme.typography.sm,
   },
   // Error styles
   inputError: {
-    borderColor: '#ef4444',
-    backgroundColor: '#fef2f2',
+    borderColor: theme.colors.error,
+    backgroundColor: theme.colors.errorLight,
   },
   errorText: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
+    color: theme.colors.error,
+    fontSize: theme.typography.xs,
+    marginTop: theme.spacing.xxs,
+    marginLeft: theme.spacing.xxs,
+    fontWeight: theme.typography.medium,
   },
 });
 

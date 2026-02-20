@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
 } from 'react-native';
-import React, {useEffect, useState, useCallback, useRef} from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Header from '../../components/Header';
 import { useStatusBarHeight } from '../../constants/config';
@@ -27,8 +27,9 @@ import Geolocation from '@react-native-community/geolocation';
 import { useFocusEffect } from '@react-navigation/native';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
+import theme from '../../theme';
 
-const VehicleBreakdown = ({navigation}) => {
+const VehicleBreakdown = ({ navigation }) => {
   const statusBarHeight = useStatusBarHeight();
   const [incidentId, setIncidentId] = useState('');
   const [attachments, setAttachments] = useState([]);
@@ -151,7 +152,7 @@ const VehicleBreakdown = ({navigation}) => {
 
       if (pickResults && pickResults.length > 0) {
         const pickResult = pickResults[0];
-        
+
         // Validate file size (10MB limit)
         if (pickResult.size && pickResult.size > 10 * 1024 * 1024) {
           showToast('error', 'File Too Large', 'Please select a file smaller than 10MB');
@@ -170,7 +171,7 @@ const VehicleBreakdown = ({navigation}) => {
           name: pickResult.name,
           type: pickResult.type,
         }]);
-        
+
         showToast('success', 'File Selected', 'Attachment added successfully');
       }
     } catch (error) {
@@ -228,13 +229,13 @@ const VehicleBreakdown = ({navigation}) => {
       const newDate = new Date(selectedDate);
       newDate.setHours(date.getHours());
       newDate.setMinutes(date.getMinutes());
-      
+
       // Validate date is not in future
       if (moment(newDate).isAfter(moment())) {
         showToast('error', 'Invalid Date', 'Cannot select future dates');
         return;
       }
-      
+
       setDate(newDate);
       clearError('date');
       setShowTimePicker(true);
@@ -249,13 +250,13 @@ const VehicleBreakdown = ({navigation}) => {
       const newDate = new Date(date);
       newDate.setHours(selectedDate.getHours());
       newDate.setMinutes(selectedDate.getMinutes());
-      
+
       // Validate date is not in future
       if (moment(newDate).isAfter(moment())) {
         showToast('error', 'Invalid Time', 'Cannot select future time');
         return;
       }
-      
+
       setDate(newDate);
       clearError('date');
       showToast('success', 'Time Selected', moment(newDate).format('hh:mm A'));
@@ -281,7 +282,7 @@ const VehicleBreakdown = ({navigation}) => {
 
     setIsSubmitting(true);
     setLoading(true);
-    
+
     try {
       const loginRes = await getObjByKey('loginResponse');
       const token = loginRes?.data?.access_token;
@@ -334,7 +335,7 @@ const VehicleBreakdown = ({navigation}) => {
       // Success handling
       setIsSubmitting(false);
       setLoading(false);
-      
+
       Alert.alert(
         'Success!',
         `Breakdown reported successfully! Incident Number: ${result.incident_number}`,
@@ -360,7 +361,7 @@ const VehicleBreakdown = ({navigation}) => {
       console.error('Submission error:', error);
       setIsSubmitting(false);
       setLoading(false);
-      
+
       // More specific error handling
       if (error.message.includes('Network request failed')) {
         showToast('error', 'Network Error', 'Please check your internet connection and try again.');
@@ -393,21 +394,21 @@ const VehicleBreakdown = ({navigation}) => {
       description: '',
       general: ''
     });
-    
+
     // Re-fetch necessary data
     GetVehicle();
     GetIncidentId();
     GetTrip();
     getCurrentLocation();
     GetDrivers();
-    
+
     showToast('info', 'Form Reset', 'All fields have been cleared');
   };
 
   useFocusEffect(
     React.useCallback(() => {
       resetForm();
-      return () => {};
+      return () => { };
     }, []),
   );
 
@@ -424,17 +425,17 @@ const VehicleBreakdown = ({navigation}) => {
     return new Promise((resolve, reject) => {
       Geolocation.getCurrentPosition(
         position => {
-          const {latitude, longitude} = position.coords;
+          const { latitude, longitude } = position.coords;
           setLoading(false);
           console.log('Latitude:', latitude);
           console.log('Longitude:', longitude);
           reverseGeocode(latitude, longitude);
-          resolve({latitude, longitude});
+          resolve({ latitude, longitude });
         },
         error => {
           console.error('Error getting location:', error);
           setLoading(false);
-          
+
           let errorMessage = 'Failed to get location. Please try again.';
           if (error.code === 1) {
             errorMessage = 'Location permission is required to access your location.';
@@ -443,8 +444,8 @@ const VehicleBreakdown = ({navigation}) => {
           } else if (error.code === 3) {
             errorMessage = 'Location request timed out. Please try again.';
           }
-          
-          setErrors(prev => ({...prev, general: errorMessage}));
+
+          setErrors(prev => ({ ...prev, general: errorMessage }));
           showToast('error', 'Location Error', errorMessage);
           reject(error);
         },
@@ -461,7 +462,7 @@ const VehicleBreakdown = ({navigation}) => {
     setlatitude(latitude.toString());
     setLongitude(longitude.toString());
     setLoading(true);
-    
+
     try {
       const response = await fetch(
         `https://api.openrouteservice.org/geocode/reverse?api_key=eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImRhZmY2MTE0ZmNhYzRhZjViYTUyZjY0ZWMyMTRlYTI5IiwiaCI6Im11cm11cjY0In0=&point.lon=${longitude}&point.lat=${latitude}`,
@@ -471,8 +472,8 @@ const VehicleBreakdown = ({navigation}) => {
 
       const firstFeature = result?.features?.[0];
       if (firstFeature?.properties) {
-        const {street, label} = firstFeature.properties;
-        const locationData = {street, label};
+        const { street, label } = firstFeature.properties;
+        const locationData = { street, label };
         setLocation(locationData);
         storeObjByKey('location', locationData);
         showToast('success', 'Location Updated', 'Current location detected successfully');
@@ -535,7 +536,7 @@ const VehicleBreakdown = ({navigation}) => {
     setDriverOpen(false);
     setVehicleOpen(false);
     setTripOpen(false);
-    
+
     // Open the selected dropdown
     if (dropdownType === 'driver') {
       setDriverOpen(true);
@@ -551,7 +552,7 @@ const VehicleBreakdown = ({navigation}) => {
 
   return (
     <>
-      <StatusBar backgroundColor="#0284c7" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <Header
         onMenuPress={() => navigation.openDrawer()}
         title="Vehicle Breakdown"
@@ -565,15 +566,15 @@ const VehicleBreakdown = ({navigation}) => {
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
-          
-  
+
+
 
           {/* Incident ID & Trip ID */}
           <View style={styles.row}>
             <View style={styles.inputItem}>
               <Text style={styles.label}>Incident ID</Text>
               <TextInput
-                placeholderTextColor={'#9ca3af'}
+                placeholderTextColor={theme.colors.textPlaceholder}
                 editable={false}
                 style={styles.input}
                 placeholder="Auto-generated Incident ID"
@@ -581,7 +582,7 @@ const VehicleBreakdown = ({navigation}) => {
                 onChangeText={setIncidentId}
               />
             </View>
-            <View style={[styles.inputItem, {zIndex: tripOpen ? zIndexCounter.current + 300 : 1}]}>
+            <View style={[styles.inputItem, { zIndex: tripOpen ? zIndexCounter.current + 300 : 1 }]}>
               <Text style={styles.label}>Trip ID *</Text>
               <DropDownPicker
                 open={tripOpen}
@@ -599,7 +600,7 @@ const VehicleBreakdown = ({navigation}) => {
                 dropDownContainerStyle={styles.dropdownContainer}
                 textStyle={styles.dropdownText}
                 placeholderStyle={styles.dropdownPlaceholder}
-                modalProps={{animationType: 'slide'}}
+                modalProps={{ animationType: 'slide' }}
                 listMode="MODAL"
                 modalContentContainerStyle={styles.modalContent}
                 modalTitle="Select Trip"
@@ -612,7 +613,7 @@ const VehicleBreakdown = ({navigation}) => {
 
           {/* Vehicle ID & Date */}
           <View style={styles.row}>
-            <View style={[styles.inputItem, {zIndex: vehicleOpen ? zIndexCounter.current + 200 : 1}]}>
+            <View style={[styles.inputItem, { zIndex: vehicleOpen ? zIndexCounter.current + 200 : 1 }]}>
               <Text style={styles.label}>Vehicle *</Text>
               <DropDownPicker
                 open={vehicleOpen}
@@ -630,7 +631,7 @@ const VehicleBreakdown = ({navigation}) => {
                 dropDownContainerStyle={styles.dropdownContainer}
                 textStyle={styles.dropdownText}
                 placeholderStyle={styles.dropdownPlaceholder}
-                modalProps={{animationType: 'slide'}}
+                modalProps={{ animationType: 'slide' }}
                 listMode="MODAL"
                 modalContentContainerStyle={styles.modalContent}
                 modalTitle="Select Vehicle"
@@ -659,8 +660,8 @@ const VehicleBreakdown = ({navigation}) => {
                   onChange={onChangeDate}
                   maximumDate={new Date()} // Prevent future dates
                   {...(Platform.OS === 'android' && {
-                    positiveButton: {label: 'OK', textColor: '#0284c7'},
-                    negativeButton: {label: 'Cancel', textColor: '#ef4444'},
+                    positiveButton: { label: 'OK', textColor: theme.colors.primary },
+                    negativeButton: { label: 'Cancel', textColor: theme.colors.error },
                   })}
                 />
               )}
@@ -674,8 +675,8 @@ const VehicleBreakdown = ({navigation}) => {
                   onChange={onChangeTime}
                   is24Hour={true}
                   {...(Platform.OS === 'android' && {
-                    positiveButton: {label: 'OK', textColor: '#0284c7'},
-                    negativeButton: {label: 'Cancel', textColor: '#ef4444'},
+                    positiveButton: { label: 'OK', textColor: theme.colors.primary },
+                    negativeButton: { label: 'Cancel', textColor: theme.colors.error },
                   })}
                 />
               )}
@@ -688,14 +689,14 @@ const VehicleBreakdown = ({navigation}) => {
               <Text style={styles.label}>Location</Text>
               <TextInput
                 style={styles.input}
-                placeholderTextColor={'#9ca3af'}
+                placeholderTextColor={theme.colors.textPlaceholder}
                 placeholder="Auto-detected location"
                 value={location?.label || ''}
-                onChangeText={text => setLocation({...location, label: text})}
+                onChangeText={text => setLocation({ ...location, label: text })}
                 editable={false}
               />
             </View>
-            <View style={[styles.inputItem, {zIndex: driverOpen ? zIndexCounter.current + 100 : 1}]}>
+            <View style={[styles.inputItem, { zIndex: driverOpen ? zIndexCounter.current + 100 : 1 }]}>
               <Text style={styles.label}>Driver *</Text>
               <DropDownPicker
                 open={driverOpen}
@@ -727,7 +728,7 @@ const VehicleBreakdown = ({navigation}) => {
               <TextInput
                 style={[styles.input, styles.multilineInput, errors.description ? styles.errorBorder : null]}
                 placeholder="Describe the issue (minimum 10 characters)"
-                placeholderTextColor={'#9ca3af'}
+                placeholderTextColor={theme.colors.textPlaceholder}
                 value={description}
                 onChangeText={(text) => {
                   setDescription(text);
@@ -745,19 +746,19 @@ const VehicleBreakdown = ({navigation}) => {
           </View>
 
           {/* Attachment */}
-          <View style={{...styles.inputItem, marginBottom: 16}}>
+          <View style={{ ...styles.inputItem, marginBottom: 16 }}>
             <Text style={styles.label}>Attachments</Text>
             {attachments?.length > 0 ? (
               <View style={styles.attachmentPreviewContainer}>
                 {attachments[0].type?.startsWith('image/') ? (
                   <Image
-                    source={{uri: attachments[0].uri}}
+                    source={{ uri: attachments[0].uri }}
                     style={styles.attachmentImage}
                     resizeMode="contain"
                   />
                 ) : (
                   <View style={styles.filePreview}>
-                    <Icon name="insert-drive-file" size={40} color="#0284c7" />
+                    <Icon name="insert-drive-file" size={40} color={theme.colors.primary} />
                     <Text style={styles.fileName} numberOfLines={1}>
                       {attachments[0].name}
                     </Text>
@@ -767,7 +768,7 @@ const VehicleBreakdown = ({navigation}) => {
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={removeAttachment}>
-                    <Icon name="close" size={20} color="#ef4444" />
+                    <Icon name="close" size={20} color={theme.colors.error} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -783,32 +784,32 @@ const VehicleBreakdown = ({navigation}) => {
           {/* General Error */}
           {errors.general ? (
             <View style={styles.generalErrorContainer}>
-              <Icon name="warning" size={20} color="#ef4444" />
+              <Icon name="warning" size={20} color={theme.colors.error} />
               <Text style={styles.generalErrorText}>{errors.general}</Text>
             </View>
           ) : null}
 
           {/* Action Buttons */}
           <View style={styles.buttonRow}>
-            <TouchableOpacity 
-              style={[styles.button, styles.resetButton]} 
+            <TouchableOpacity
+              style={[styles.button, styles.resetButton]}
               onPress={resetForm}
               disabled={isSubmitting}
             >
               <Text style={styles.resetButtonText}>Reset</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[
-                styles.button, 
-                styles.submitButton, 
+                styles.button,
+                styles.submitButton,
                 isSubmitting && styles.disabledButton
-              ]} 
+              ]}
               onPress={handleSubmit}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={theme.colors.white} size="small" />
               ) : (
                 <Text style={styles.submitButtonText}>Save </Text>
               )}
@@ -852,231 +853,256 @@ const VehicleBreakdown = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.background,
   },
   scrollContainer: {
-    padding: 16,
-    paddingBottom: 30,
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.xxl,
   },
   progressContainer: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
+    marginBottom: theme.spacing.lg,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderLeftWidth: 4,
-    borderLeftColor: '#0284c7',
+    borderLeftColor: theme.colors.primary,
+    ...theme.shadows.sm,
   },
   progressTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0284c7',
-    marginBottom: 4,
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.bold,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
   },
   progressText: {
-    fontSize: 14,
-    color: '#6b7280',
+    fontSize: theme.typography.sm,
+    color: theme.colors.textMuted,
   },
   row: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   inputItem: {
     flex: 1,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
   },
   input: {
-    color: '#111827',
-    height: 45,
+    color: theme.colors.text,
+    minHeight: 52,
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
-    fontSize: 14,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    fontSize: theme.typography.base,
+    ...theme.shadows.sm,
   },
   multilineInput: {
-    height: 100,
+    minHeight: 120,
     textAlignVertical: 'top',
-    paddingTop: 10,
-    paddingBottom: 25,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
   },
   commentsContainer: {
     position: 'relative',
   },
   charCount: {
     position: 'absolute',
-    bottom: 8,
-    right: 12,
-    fontSize: 12,
-    color: '#6b7280',
+    bottom: theme.spacing.xs,
+    right: theme.spacing.sm,
+    fontSize: theme.typography.xs,
+    color: theme.colors.textMuted,
   },
   dropdown: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1.5,
-    borderRadius: 6,
-    height: 45,
+    borderRadius: theme.radius.md,
+    height: 52,
+    ...theme.shadows.sm,
   },
   dropdownContainer: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1.5,
     marginTop: 2,
+    borderRadius: theme.radius.md,
+    ...theme.shadows.md,
   },
   dropdownText: {
-    fontSize: 14,
-    color: '#111827',
+    fontSize: theme.typography.sm,
+    color: theme.colors.text,
   },
   dropdownPlaceholder: {
-    color: '#9ca3af',
+    color: theme.colors.textPlaceholder,
+    fontSize: theme.typography.sm,
   },
   modalContent: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: theme.spacing.lg,
   },
   modalTitle: {
-    fontWeight: '600',
+    fontWeight: theme.typography.bold,
   },
   dateButton: {
-    height: 45,
+    height: 52,
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    backgroundColor: '#fff',
-    paddingHorizontal: 12,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: theme.spacing.md,
+    ...theme.shadows.sm,
   },
   dateButtonText: {
-    color: '#374151',
+    color: theme.colors.text,
     textAlign: 'center',
+    fontSize: theme.typography.sm,
   },
   attachmentButton: {
-    height: 45,
+    height: 52,
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    backgroundColor: '#fff',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
+    ...theme.shadows.sm,
   },
   attachmentButtonText: {
-    color: '#374151',
-    fontWeight: '500',
+    color: theme.colors.text,
+    fontWeight: theme.typography.medium,
+    fontSize: theme.typography.sm,
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-    marginBottom: 10,
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
   button: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 6,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: 52,
   },
   resetButton: {
-    backgroundColor: '#6b7280',
+    backgroundColor: theme.colors.borderDark,
+    ...theme.shadows.sm,
   },
   submitButton: {
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
+    ...theme.shadows.glow,
   },
   disabledButton: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
   resetButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.text,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
   },
   submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
   },
   attachmentPreviewContainer: {
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: '#fff',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     position: 'relative',
+    ...theme.shadows.sm,
   },
   attachmentImage: {
     width: '100%',
     height: 200,
-    borderRadius: 4,
+    borderRadius: theme.radius.sm,
   },
   filePreview: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    padding: theme.spacing.sm,
   },
   fileName: {
-    marginLeft: 10,
-    color: '#374151',
+    marginLeft: theme.spacing.sm,
+    color: theme.colors.text,
     flex: 1,
+    fontSize: theme.typography.sm,
   },
   attachmentActions: {
     position: 'absolute',
-    top: 5,
-    right: 5,
+    top: theme.spacing.xs,
+    right: theme.spacing.xs,
   },
   removeButton: {
-    padding: 5,
+    padding: theme.spacing.xs,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: theme.radius.full,
+    ...theme.shadows.sm,
   },
   errorBorder: {
-    borderColor: '#ef4444',
+    borderColor: theme.colors.error,
   },
   errorText: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-    fontWeight: '500',
+    color: theme.colors.error,
+    fontSize: theme.typography.xs,
+    marginTop: theme.spacing.xxs,
+    marginLeft: theme.spacing.xxs,
+    fontWeight: theme.typography.medium,
   },
   generalErrorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef2f2',
-    padding: 12,
-    borderRadius: 6,
-    marginBottom: 16,
+    backgroundColor: theme.colors.errorLight,
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
+    marginBottom: theme.spacing.lg,
     borderLeftWidth: 4,
-    borderLeftColor: '#ef4444',
+    borderLeftColor: theme.colors.error,
   },
   generalErrorText: {
-    color: '#ef4444',
-    marginLeft: 8,
+    color: theme.colors.error,
+    marginLeft: theme.spacing.sm,
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.medium,
   },
   summaryContainer: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderLeftWidth: 4,
-    borderLeftColor: '#0284c7',
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 10,
+    borderLeftColor: theme.colors.primary,
+    padding: theme.spacing.lg,
+    borderRadius: theme.radius.lg,
+    marginTop: theme.spacing.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.md,
   },
   summaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0284c7',
-    marginBottom: 8,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
+    color: theme.colors.primaryDark,
+    marginBottom: theme.spacing.sm,
   },
   summaryText: {
-    fontSize: 14,
-    color: '#374151',
-    marginBottom: 4,
+    fontSize: theme.typography.sm,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
+    fontWeight: theme.typography.medium,
   },
 });
 

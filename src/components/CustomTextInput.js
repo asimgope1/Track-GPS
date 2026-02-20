@@ -74,8 +74,8 @@ const styles = StyleSheet.create({
   label: {
     fontSize: typography.sm,
     fontWeight: typography.semibold,
-    color: colors.textSecondary,
-    marginBottom: spacing.xxs,
+    color: colors.text,
+    marginBottom: spacing.xs,
   },
   mandatory: {
     color: colors.error,
@@ -83,21 +83,27 @@ const styles = StyleSheet.create({
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: spacing.md,
+    minHeight: 52,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   inputDisabled: {
     opacity: 0.7,
-    backgroundColor: colors.borderLight,
+    backgroundColor: 'rgba(243, 244, 246, 0.85)', // Very light gray indicating disabled
   },
   phonePrefix: {
-    paddingRight: spacing.xs,
-    borderRightWidth: 1,
-    borderRightColor: colors.border,
-    marginRight: spacing.xs,
+    paddingRight: spacing.sm,
+    borderRightWidth: 1.5,
+    borderRightColor: 'rgba(255, 255, 255, 0.2)',
+    marginRight: spacing.sm,
     justifyContent: 'center',
   },
   phonePrefixText: {
@@ -109,7 +115,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: typography.base,
     color: colors.text,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     paddingLeft: 0,
   },
 });

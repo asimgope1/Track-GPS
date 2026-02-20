@@ -1,11 +1,11 @@
-import React, {useState, useEffect} from 'react';
-import {View, StyleSheet, FlatList, Text} from 'react-native';
-import {WIDTH} from '../../constants/config';
-import {BOLD, SEMIBOLD} from '../../constants/fontfamily';
-import {RFValue} from 'react-native-responsive-fontsize';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, FlatList, Text } from 'react-native';
+import { WIDTH } from '../../constants/config';
+import { BOLD, SEMIBOLD } from '../../constants/fontfamily';
+import { RFValue } from 'react-native-responsive-fontsize';
 import LinearGradient from 'react-native-linear-gradient';
 
-const TripDetailsGrid = ({data}) => {
+const TripDetailsGrid = ({ data }) => {
   const [statusData, setStatusData] = useState([]);
 
   useEffect(() => {
@@ -49,23 +49,23 @@ const TripDetailsGrid = ({data}) => {
           overspeedCount +
           unreachableCount,
       },
-      {id: '1', status: 'Running', data: runningCount},
-      {id: '2', status: 'Idle', data: idleCount},
-      {id: '3', status: 'Stopped', data: stoppedCount},
-      {id: '4', status: 'Overspeed', data: overspeedCount},
-      {id: '5', status: 'Unreachable', data: unreachableCount},
+      { id: '1', status: 'Running', data: runningCount },
+      { id: '2', status: 'Idle', data: idleCount },
+      { id: '3', status: 'Stopped', data: stoppedCount },
+      { id: '4', status: 'Overspeed', data: overspeedCount },
+      { id: '5', status: 'Unreachable', data: unreachableCount },
     ];
 
     setStatusData(updatedStatusData);
   }, [data]);
 
-  const renderGridItem = ({item}) => (
+  const renderGridItem = ({ item }) => (
     <View style={styles.itemContainer}>
       <LinearGradient
         colors={['#87CEEB', '#1E90FF']} // Uniform color for all items
         style={styles.circle}
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 1}}>
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}>
         <Text style={styles.itemData}>{item.data}</Text>
       </LinearGradient>
       <Text style={styles.itemLabel}>{item.status}</Text>
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     // elevation: 4,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
   },

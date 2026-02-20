@@ -15,33 +15,33 @@ import {
   Alert,
   ImageBackground,
 } from 'react-native';
-import React, {useState, useEffect, useRef, useCallback} from 'react';
-import {Avatar, Icon} from '@rneui/themed';
-import {BOLD, LIGHT, REGULAR, SEMIBOLD} from '../../constants/fontfamily';
-import {HEIGHT, STYLES, WIDTH} from '../../constants/config';
-import {clearAll} from '../../utils/Storage';
-import {checkuserToken} from '../../redux/actions/auth';
-import {useDispatch} from 'react-redux';
-import {GETNETWORK, POSTNETWORK} from '../../utils/Network';
-import {BASE_URL, ws_baseurl} from '../../constants/url';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Avatar, Icon } from '@rneui/themed';
+import { BOLD, LIGHT, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
+import { HEIGHT, STYLES, WIDTH } from '../../constants/config';
+import { clearAll } from '../../utils/Storage';
+import { checkuserToken } from '../../redux/actions/auth';
+import { useDispatch } from 'react-redux';
+import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
+import { BASE_URL, ws_baseurl } from '../../constants/url';
 import TripDetailsGrid from '../VehicleMap/TripDetailsGrid';
-import {BLACK} from '../../constants/color';
-import {RFValue} from 'react-native-responsive-fontsize';
+import { BLACK } from '../../constants/color';
+import { RFValue } from 'react-native-responsive-fontsize';
 import moment from 'moment';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import Track from '../Track/Track';
 import LinearGradient from 'react-native-linear-gradient';
 import HistoryModal from '../History/HistoryModal';
-import {FlatList, GestureHandlerRootView} from 'react-native-gesture-handler';
-import {Loader} from '../../components/Loader';
-import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
+import { FlatList, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Loader } from '../../components/Loader';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import BottomSheet, {
   BottomSheetFlatList,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 
-const Dash = ({}) => {
+const Dash = ({ }) => {
   const [vehicleData, setVehicleData] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true); // Loading state
@@ -58,7 +58,7 @@ const Dash = ({}) => {
   const [showTrack, setShowTrack] = React.useState([]);
   const websocket = useRef(null);
   const [User, setUser] = useState([]);
-  const [dates, setDates] = useState({fromDate: '', toDate: ''});
+  const [dates, setDates] = useState({ fromDate: '', toDate: '' });
   const [Log, SetLog] = useState();
   const [refreshing, setRefreshing] = useState(false);
   const [lastTimestamp, setLastTimestamp] = useState(null);
@@ -112,7 +112,7 @@ const Dash = ({}) => {
   }, [initialData]); // Depend on `initialData` for updates
 
   const handleDateSelect = (type, date) => {
-    setDates(prev => ({...prev, [type]: date}));
+    setDates(prev => ({ ...prev, [type]: date }));
   };
   const onRefresh = () => {
     setRefreshing(true);
@@ -132,7 +132,7 @@ const Dash = ({}) => {
         console.error('Geolocation error:', error.message);
         Alert.alert('Error', 'Failed to get location. Please try again.');
       },
-      {maximumAge: 10000},
+      { maximumAge: 10000 },
     );
   };
 
@@ -204,7 +204,7 @@ const Dash = ({}) => {
           };
 
           fetchedData.forEach(latestItem => {
-            const {thing_id, updated_on} = latestItem;
+            const { thing_id, updated_on } = latestItem;
 
             // Calculate the time difference in minutes
             const timeDifference = (currentTime - updated_on) / (1000 * 60); // Convert ms to minutes
@@ -223,7 +223,7 @@ const Dash = ({}) => {
 
           // console.log('Number of Unreachable Vehicles:', unreachableCount);
           // console.log('Vehicle Status Map:', statusUpdates);
-          setStatusMap(prev => ({...prev, ...statusUpdates}));
+          setStatusMap(prev => ({ ...prev, ...statusUpdates }));
 
           return fetchedData; // Update the latest data
         });
@@ -268,7 +268,7 @@ const Dash = ({}) => {
         // Get the last element from the array
         const latestData = response.data[response.data.length - 1];
         // Extract relevant details
-        const {derived_data, timestamp} = latestData;
+        const { derived_data, timestamp } = latestData;
         const {
           location,
           speed,
@@ -280,7 +280,7 @@ const Dash = ({}) => {
 
         // Update state or variables with the latest details, including the timestamp
         const vehicleDetails = {
-          location: {latitude: location[0], longitude: location[1]},
+          location: { latitude: location[0], longitude: location[1] },
           speed,
           status,
           current_distance: today_distance,
@@ -297,7 +297,7 @@ const Dash = ({}) => {
         // Update the polyline state
         const locationData = response.data.map(item => {
           const [lat, lon] = item.derived_data.location; // Extract latitude and longitude
-          return {latitude: lat, longitude: lon};
+          return { latitude: lat, longitude: lon };
         });
 
         console.log('inside the map api data', locationData);
@@ -336,7 +336,7 @@ const Dash = ({}) => {
       // console.log('Parsed data:', json_data);
 
       // Extract derived values from the message
-      const {derived_values, timestamp} = json_data?.message || {};
+      const { derived_values, timestamp } = json_data?.message || {};
       const {
         location,
         speed,
@@ -348,7 +348,7 @@ const Dash = ({}) => {
 
       // Update the datalog state with the extracted data
       const updatedDatalog = {
-        location: {latitude: location[0], longitude: location[1]},
+        location: { latitude: location[0], longitude: location[1] },
         speed,
         status,
         current_distance: today_distance,
@@ -409,7 +409,7 @@ const Dash = ({}) => {
     </SafeAreaView>
   );
 
-  const renderVehicleCard = ({item}) => (
+  const renderVehicleCard = ({ item }) => (
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={() => {
@@ -424,7 +424,7 @@ const Dash = ({}) => {
       style={styles.cardContainer}>
       {/* Card Header */}
       <View style={styles.cardHeader}>
-        <View style={{...styles.row}}>
+        <View style={{ ...styles.row }}>
           <View style={styles.row}>
             <Icon
               name="directions-car"
@@ -433,17 +433,17 @@ const Dash = ({}) => {
                 statusMap[item.thing_id] === 'Running'
                   ? '#28A745'
                   : statusMap[item.thing_id] === 'Stopped'
-                  ? '#DC3545'
-                  : statusMap[item.thing_id] === 'Unreachable'
-                  ? '#6C757D'
-                  : '#4db6b3'
+                    ? '#DC3545'
+                    : statusMap[item.thing_id] === 'Unreachable'
+                      ? '#6C757D'
+                      : '#4db6b3'
               }
               size={30}
               style={styles.icon}
             />
 
             <View>
-              <Text style={{...styles.cardTitle}}>{item.thing_name}</Text>
+              <Text style={{ ...styles.cardTitle }}>{item.thing_name}</Text>
             </View>
           </View>
           <View style={styles.row}>
@@ -480,9 +480,9 @@ const Dash = ({}) => {
               size={23}
               style={styles.icon}
             />
-            <Text style={{...styles.cardLabel}}>Status: </Text>
+            <Text style={{ ...styles.cardLabel }}>Status: </Text>
           </View>
-          <Text style={{...styles.cardValue}}>
+          <Text style={{ ...styles.cardValue }}>
             {item.derived_live_config.status}
           </Text>
         </View>
@@ -585,7 +585,7 @@ const Dash = ({}) => {
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor="#1E90FF" />
+      <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
 
       {/* <LinearGradient
         colors={['#1D3557', '#457B9D']} // Light pink to dark red gradient
@@ -596,7 +596,7 @@ const Dash = ({}) => {
       > */}
       {/* <MapView provider={PROVIDER_GOOGLE} style={STYLES.map}> */}
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         {/* Header Container */}
 
@@ -677,7 +677,7 @@ const Dash = ({}) => {
                     // backgroundColor: '#4db6b3',
                     alignSelf: 'center',
                   }}>
-                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     {User && (
                       <View
                         style={{
@@ -766,7 +766,7 @@ const Dash = ({}) => {
                     width: WIDTH,
                     alignSelf: 'centerß',
                     shadowColor: '#000',
-                    shadowOffset: {width: 0, height: 2},
+                    shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: 0.25,
                     shadowRadius: 3.5,
                   }}>
@@ -813,11 +813,11 @@ const Dash = ({}) => {
       </KeyboardAvoidingView>
 
       {showMap &&
-      Array.isArray(Location) &&
-      Location.length > 0 &&
-      Location[0] !== undefined &&
-      Location[1] !== undefined ? (
-        <View style={{flex: 1}}>
+        Array.isArray(Location) &&
+        Location.length > 0 &&
+        Location[0] !== undefined &&
+        Location[1] !== undefined ? (
+        <View style={{ flex: 1 }}>
           <Track
             showTrack={showTrack}
             projectedTrack={projectedTrackData}
@@ -831,7 +831,7 @@ const Dash = ({}) => {
         Alert.alert(
           'Invalid Location',
           'Location data is not available. Cannot track.',
-          [{text: 'OK'}],
+          [{ text: 'OK' }],
         )
       )}
       <Modal
@@ -991,8 +991,8 @@ const Dash = ({}) => {
                 <Text style={styles.detailValue}>
                   {selectedValue?.generated_datetime
                     ? moment(selectedValue.generated_datetime).format(
-                        'DD/MM/YYYY h:mm a',
-                      )
+                      'DD/MM/YYYY h:mm a',
+                    )
                     : 'N/A'}
                 </Text>
               </View>
@@ -1019,6 +1019,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
   },
 
   errorContainer: {
@@ -1026,82 +1027,95 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
   },
 
   errorText: {
-    color: 'red',
+    color: '#EF4444',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: SEMIBOLD,
   },
 
   cardContainer: {
     width: WIDTH * 0.94,
-    height: HEIGHT * 0.39,
+    minHeight: HEIGHT * 0.35,
     alignSelf: 'center',
-    backgroundColor: '#F7F7F7',
-    borderRadius: 10,
-    padding: 12,
-    marginVertical: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 24,
+    padding: 20,
+    marginVertical: 10,
     marginHorizontal: 12,
-    elevation: 4,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
   },
   cardHeader: {
-    marginBottom: 10,
+    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 4,
+    marginVertical: 6,
   },
   rowWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   icon: {
-    margin: 4,
+    margin: 6,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: BOLD,
-    color: '#1E90FF',
+    color: '#4F46E5', // vibrant premium indigo
+    letterSpacing: -0.3,
   },
   cardLabel: {
     fontSize: 14,
     fontFamily: SEMIBOLD,
-
-    color: '#333',
+    color: '#E2E8F0', // muted text
     margin: 2,
   },
   cardValue: {
-    fontSize: 16,
-    color: 'black',
-    fontFamily: REGULAR,
-    // marginLeft: 8,
+    fontSize: 15,
+    color: '#FFFFFF',
+    fontFamily: SEMIBOLD,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(100, 100, 100, 0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)', // deeper dark blur
   },
   modalCard: {
-    width: '90%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 16,
-    elevation: 5,
+    width: '92%',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 28,
+    padding: 24,
+    elevation: 20,
+    shadowColor: '#1E1B4B',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 30,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1E90FF',
+    fontSize: 22,
+    fontFamily: BOLD,
+    color: '#1E1B4B',
+    letterSpacing: -0.5,
   },
   headerActions: {
     flexDirection: 'row',
@@ -1109,17 +1123,22 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1E90FF',
+    fontFamily: BOLD,
+    color: '#4F46E5',
     marginLeft: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   separator: {
     height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 10,
+    backgroundColor: 'rgba(226, 232, 240, 0.8)',
+    marginVertical: 14,
   },
   modalContent: {
-    marginTop: 10,
+    marginTop: 8,
   },
   detailRow: {
     flexDirection: 'row',
@@ -1127,22 +1146,32 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
     marginVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(248, 250, 252, 0.8)',
+    borderRadius: 16,
+    paddingVertical: 12,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   detailLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontFamily: SEMIBOLD,
+    color: '#E2E8F0',
   },
   detailValue: {
     fontSize: 16,
-    fontWeight: '400',
-    color: '#555',
+    fontFamily: BOLD,
+    color: '#FFFFFF',
   },
   contentContainer: {
     flex: 1,
     height: HEIGHT * 0.5,
     width: WIDTH,
     alignItems: 'center',
+    backgroundColor: 'rgba(248, 250, 252, 0.9)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
 });
 

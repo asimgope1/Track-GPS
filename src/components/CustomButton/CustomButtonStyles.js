@@ -4,21 +4,21 @@ import { colors, radius, spacing, shadows, typography } from '../../theme';
 
 export const customButtonStyles = StyleSheet.create({
   buttonview: {
-    minHeight: 48,
-    borderRadius: radius.sm,
+    minHeight: 52,
+    borderRadius: radius.md,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
     alignSelf: 'center',
     paddingHorizontal: spacing.xl,
-    ...shadows.sm,
+    ...shadows.glow,
   },
   text: {
     fontSize: RFValue(typography.base),
-    fontWeight: typography.semibold,
+    fontWeight: typography.bold,
   },
   iconview: {
-    marginRight: spacing.xs,
+    marginRight: spacing.sm,
     justifyContent: 'center',
     alignItems: 'center',
   },

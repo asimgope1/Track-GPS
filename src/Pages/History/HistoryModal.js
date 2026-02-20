@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   View,
@@ -10,16 +10,16 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import PropTypes from 'prop-types';
-import {Calendar} from 'react-native-calendars';
-import {BLACK, WHITE} from '../../constants/color';
-import {BASE_URL} from '../../constants/url';
-import {POSTNETWORK} from '../../utils/Network';
+import { Calendar } from 'react-native-calendars';
+import { BLACK, WHITE } from '../../constants/color';
+import { BASE_URL } from '../../constants/url';
+import { POSTNETWORK } from '../../utils/Network';
 import moment from 'moment';
-import MapView, {Circle, Marker, Polyline} from 'react-native-maps';
-import {HEIGHT, WIDTH} from '../../constants/config';
-import {Icon} from '@rneui/themed';
+import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
+import { HEIGHT, WIDTH } from '../../constants/config';
+import { Icon } from '@rneui/themed';
 
-const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
+const HistoryModal = ({ visible, onClose, onDateSelect, log }) => {
   console.log('props:', visible, '-----------', onClose, onDateSelect, log);
   const [selectedDateType, setSelectedDateType] = useState(null);
   const [fromDate, setFromDate] = useState(null);
@@ -50,7 +50,7 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
   const fetchVehicleData = async id => {
     console.log('idd log ', id);
     if (!fromDate || !toDate) {
-      setSelectedValue({error: 'Please select both from and to dates.'});
+      setSelectedValue({ error: 'Please select both from and to dates.' });
       return;
     }
 
@@ -94,7 +94,7 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
         } = latestData.derived_data;
 
         const vehicleDetails = {
-          location: {latitude: location[0], longitude: location[1]}, // Ensure location is parsed correctly
+          location: { latitude: location[0], longitude: location[1] }, // Ensure location is parsed correctly
           speed,
           status,
           current_distance: today_distance,
@@ -119,10 +119,10 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
           setShowModalContent(false);
         }
       } else {
-        setSelectedValue({error: 'No data found for the selected range.'});
+        setSelectedValue({ error: 'No data found for the selected range.' });
       }
     } catch (error) {
-      setSelectedValue({error: 'Error fetching data. Please try again later.'});
+      setSelectedValue({ error: 'Error fetching data. Please try again later.' });
     } finally {
       setIsLoading(false); // End loading
     }
@@ -148,7 +148,7 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
             longitudeDelta: 0.0421,
           }}>
           <Circle
-            center={{latitude: 20.3236637, longitude: 85.8217621}}
+            center={{ latitude: 20.3236637, longitude: 85.8217621 }}
             radius={1000}
             strokeWidth={2}
             strokeColor="rgba(255, 140, 0, 0.8)"
@@ -186,14 +186,14 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
           <View
             style={[
               styles.parkingIcon,
-              {borderColor: true ? 'lightgreen' : 'red'},
+              { borderColor: true ? 'lightgreen' : 'red' },
             ]}>
             <Text style={styles.parkingText}>P</Text>
           </View>
 
           {/* icon button for genfencing */}
           <TouchableOpacity
-            style={{...styles.toggleButton, marginTop: 20}}
+            style={{ ...styles.toggleButton, marginTop: 20 }}
             onPress={() => {
               // Handle geofencing action here
               console.log('Geofencing button pressed');
@@ -247,7 +247,23 @@ const HistoryModal = ({visible, onClose, onDateSelect, log}) => {
             </Pressable>
 
             {selectedDateType && (
-              <Calendar style={styles.calendar} onDayPress={handleDateSelect} />
+              <Calendar theme={{
+                backgroundColor: 'transparent',
+                calendarBackground: 'transparent',
+                textSectionTitleColor: '#E2E8F0',
+                selectedDayBackgroundColor: '#4F46E5',
+                selectedDayTextColor: '#FFFFFF',
+                todayTextColor: '#818CF8',
+                dayTextColor: '#FFFFFF',
+                textDisabledColor: '#94A3B8',
+                dotColor: '#4F46E5',
+                selectedDotColor: '#FFFFFF',
+                arrowColor: '#4F46E5',
+                monthTextColor: '#FFFFFF',
+                textDayFontWeight: '500',
+                textMonthFontWeight: 'bold',
+                textDayHeaderFontWeight: '600',
+              }} style={styles.calendar} onDayPress={handleDateSelect} />
             )}
 
             <View style={styles.divider} />
