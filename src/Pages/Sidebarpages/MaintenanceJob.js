@@ -15,6 +15,7 @@ import {
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Calendar } from 'react-native-calendars';
 import Header from '../../components/Header';
+import { useStatusBarHeight } from '../../constants/config';
 import { BASE_URL } from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
@@ -25,6 +26,7 @@ import Toast from 'react-native-toast-message';
 const { width } = Dimensions.get('window');
 
 const MaintenanceJobScreen = ({ navigation }) => {
+  const statusBarHeight = useStatusBarHeight();
   // State variables
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const [vehicleValue, setVehicleValue] = useState(null);
@@ -87,9 +89,9 @@ const MaintenanceJobScreen = ({ navigation }) => {
       text2: message,
       visibilityTime: type === 'error' ? 4000 : 3000,
       autoHide: true,
-      topOffset: StatusBar.currentHeight || 40,
+      topOffset: statusBarHeight,
     });
-  }, []);
+  }, [statusBarHeight]);
 
   // Clear specific error
   const clearError = useCallback((field) => {

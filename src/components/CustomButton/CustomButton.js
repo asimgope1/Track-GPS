@@ -1,8 +1,8 @@
-import { View, Text, TouchableOpacity, Image, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import React from 'react';
 import { customButtonStyles } from './CustomButtonStyles';
 import { WIDTH } from '../../constants/config';
-import { BLACK, BRAND, GREEN, WHITE } from '../../constants/color';
+import { colors } from '../../theme';
 
 const CustomButton = ({
   width = '90%',
@@ -10,34 +10,35 @@ const CustomButton = ({
   onPress,
   icon,
   disabled,
-  activeOpacity,
-  backgroundColor = GREEN,
-  borderColor = BLACK,
-  textColor = WHITE,
+  activeOpacity = 0.7,
+  backgroundColor = colors.primary,
+  borderColor = 'transparent',
+  textColor = colors.white,
 }) => {
   return (
     <TouchableOpacity
       disabled={disabled}
       activeOpacity={activeOpacity}
       onPress={onPress}
-      style={{
-        ...customButtonStyles.buttonview,
-        width: width ? width : WIDTH,
-        backgroundColor: backgroundColor,
-        borderWidth: 1,
-        borderColor: borderColor,
-      }}>
+      style={[
+        customButtonStyles.buttonview,
+        {
+          width: width || WIDTH * 0.9,
+          backgroundColor: disabled ? colors.border : backgroundColor,
+          borderWidth: borderColor !== 'transparent' ? 1 : 0,
+          borderColor,
+        },
+      ]}>
       {icon && (
         <View style={customButtonStyles.iconview}>
           <Image
-            // tintColor={WHITE}
             style={customButtonStyles.iconimage}
-            resizeMode="center"
+            resizeMode="contain"
             source={icon}
           />
         </View>
       )}
-      <Text style={{ ...customButtonStyles.text, color: textColor }}>
+      <Text style={[customButtonStyles.text, { color: textColor }]}>
         {title}
       </Text>
     </TouchableOpacity>

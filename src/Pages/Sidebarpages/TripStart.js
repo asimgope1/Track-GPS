@@ -24,12 +24,16 @@ import moment from 'moment';
 import Toast from 'react-native-toast-message';
 import Header from '../../components/Header';
 import { GETNETWORK } from '../../utils/Network';
+import { useStatusBarHeight } from '../../constants/config';
 import { BASE_URL } from '../../constants/url';
 import { getObjByKey, storeObjByKey } from '../../utils/Storage';
 import { Icon } from '@rneui/themed';
 import { pick } from '@react-native-documents/picker';
+import theme from '../../theme';
+import { formStyles } from '../../styles/FormStyles';
 
 const TripStart = ({ navigation, route, onClose }) => {
+  const statusBarHeight = useStatusBarHeight();
   // Form state
   const [startDatetime, setStartDatetime] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
@@ -64,7 +68,7 @@ const TripStart = ({ navigation, route, onClose }) => {
       text2: message,
       visibilityTime: type === 'error' ? 4000 : 3000,
       autoHide: true,
-      topOffset: StatusBar.currentHeight || 40,
+      topOffset: statusBarHeight,
     });
   };
 
@@ -256,6 +260,7 @@ const TripStart = ({ navigation, route, onClose }) => {
 
   // Form Submission
   const handleSubmit = async () => {
+    console.log('handleSubmit: for start trip',route.params?.trip?.trip_assignment_id);
     if (!validateForm()) {
       showToast('error', 'Validation Error', 'Please fix all errors before submitting');
       return;
@@ -267,50 +272,101 @@ const TripStart = ({ navigation, route, onClose }) => {
       const token = loginRes?.data?.access_token;
       if (!token) throw new Error('Authentication token not available');
 
-      const formdata = new FormData();
-      formdata.append('start_address', startAddress);
-      formdata.append('start_datetime', moment(startDatetime).format('YYYY-MM-DDTHH:mm:ss'));
-      formdata.append('start_km', parseFloat(startKm));
-      formdata.append('start_lat', parseFloat(startLat));
-      formdata.append('start_lng', parseFloat(startLng));
-      formdata.append('checklist', JSON.stringify(
-        inspectionItems.map(item => ({
-          checklist_master_id: item.id,
-          selected_value: inspectionResults[item.id].toLowerCase().replace(' ', '_'),
-        }))
-      ));
-
-      if (attachments.length > 0) {
-        formdata.append('uploaded_proof', {
-          uri: attachments[0].uri,
-          name: attachments[0].name,
-          type: attachments[0].type,
-        });
+      const startKmNum = Number(startKm);
+      const startLatNum = Number(startLat);
+      const startLngNum = Number(startLng);
+      if (Number.isNaN(startKmNum) || Number.isNaN(startLatNum) || Number.isNaN(startLngNum)) {
+        showToast('error', 'Validation Error', 'Please enter valid numbers for odometer and location');
+        setIsSubmitting(false);
+        return;
       }
 
-      const response = await fetch(
-        `${BASE_URL}trips/trip_start/${route.params?.trip?.trip_assignment_id}/`,
-        {
+      const checklistPayload = inspectionItems
+        .filter(item => inspectionResults[item.id] != null && String(inspectionResults[item.id]).trim() !== '')
+        .map(item => ({
+          checklist_master_id: item.id,
+          selected_value: String(inspectionResults[item.id]).toLowerCase().replace(/\s+/g, '_'),
+        }));
+
+      const tripAssignmentId = route.params?.trip?.trip_assignment_id;
+      const url = `${BASE_URL}trips/trip_start/${tripAssignmentId}/`;
+      let response;
+
+      if (attachments.length > 0) {
+        const formdata = new FormData();
+        formdata.append('start_address', String(startAddress).trim());
+        formdata.append('start_datetime', moment(startDatetime).format('YYYY-MM-DDTHH:mm:ss'));
+        formdata.append('start_km', startKmNum);
+        formdata.append('start_lat', startLatNum);
+        formdata.append('start_lng', startLngNum);
+        formdata.append('checklist', JSON.stringify(checklistPayload));
+        const file = attachments[0];
+        formdata.append('uploaded_proof', {
+          uri: file.uri,
+          name: file.name || 'proof',
+          type: file.type || 'image/jpeg',
+        });
+        response = await fetch(url, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
           body: formdata,
+        });
+      } else {
+        const jsonBody = {
+          start_address: String(startAddress).trim(),
+          start_datetime: moment(startDatetime).format('YYYY-MM-DDTHH:mm:ss'),
+          start_km: startKmNum,
+          start_lat: startLatNum,
+          start_lng: startLngNum,
+          checklist: checklistPayload,
+        };
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(jsonBody),
+        });
+      }
+
+      let result;
+      const contentType = response.headers.get('content-type');
+      const text = await response.text();
+      if (contentType && contentType.includes('application/json') && text && text.trim().length > 0) {
+        try {
+          result = JSON.parse(text);
+        } catch {
+          result = { status: 'failed', msg: 'Invalid response from server' };
         }
-      );
+      } else {
+        result = { status: 'failed', msg: response.ok ? 'Invalid response from server' : (text || `Request failed (${response.status})`) };
+      }
 
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.msg || 'Failed to start trip');
+      if (!response.ok) {
+        throw new Error(result.msg || `Request failed (${response.status})`);
+      }
+      if (result.status === 'failed') {
+        throw new Error(result.msg || 'Failed to start trip');
+      }
 
+      const dismiss = () => {
+        if (onClose) onClose();
+        else if (navigation?.goBack) navigation.goBack();
+      };
       Alert.alert('Success', 'Trip started successfully!', [
-        { text: 'OK', onPress: () => navigation.goBack() },
+        { text: 'OK', onPress: dismiss },
       ]);
       showToast('success', 'Trip Started', 'Trip started successfully');
     } catch (error) {
-      console.error('Error:', error);
-      let errorMessage = 'Failed to start trip. Please try again.';
-      if (error.message.includes('Network request failed')) {
+      if (__DEV__) console.error('Trip start error:', error);
+      let errorMessage = error?.message || 'Failed to start trip. Please try again.';
+      if (errorMessage.includes('Network request failed')) {
         errorMessage = 'Network error. Please check your internet connection.';
-      } else if (error.message.includes('401')) {
+      } else if (errorMessage.includes('401')) {
         errorMessage = 'Authentication failed. Please login again.';
+      } else if (errorMessage.includes('Expecting value') || errorMessage.includes('JSON')) {
+        errorMessage = 'Server could not process the request. Please check your data and try again.';
       }
       showToast('error', 'Submission Failed', errorMessage);
     } finally {
@@ -330,7 +386,7 @@ const TripStart = ({ navigation, route, onClose }) => {
     }
   };
 
-  // Render Checklist Item
+  // Render Checklist Item – stacked layout so dropdown has full width and doesn’t look collapsed
   const renderItem = ({ item }) => {
     const selectedStatus = inspectionResults[item.id];
     const selectedStatusObj = statusOptions.find(opt => opt.value === selectedStatus);
@@ -339,14 +395,12 @@ const TripStart = ({ navigation, route, onClose }) => {
 
     return (
       <View style={[styles.tableRow, { zIndex }]}>
-        <View style={styles.itemNameContainer}>
-          <Text style={styles.itemName}>{item.name}</Text>
-          {selectedStatus && (
-            <Text style={[styles.selectedStatusText, { color: selectedStatusObj?.color }]}>
-              {selectedStatusObj?.label}
-            </Text>
-          )}
-        </View>
+        <Text style={styles.itemName}>{item.name}</Text>
+        {selectedStatus && (
+          <Text style={[styles.selectedStatusText, { color: selectedStatusObj?.color, marginBottom: theme.spacing.xs }]}>
+            {selectedStatusObj?.label}
+          </Text>
+        )}
         <View style={[styles.statusDropdownContainer, { zIndex: isOpen ? zIndex + 1 : 1 }]}>
           <DropDownPicker
             open={isOpen}
@@ -366,7 +420,7 @@ const TripStart = ({ navigation, route, onClose }) => {
             textStyle={styles.statusDropdownText}
             placeholderStyle={styles.statusDropdownPlaceholder}
             labelStyle={selectedStatusObj && { color: selectedStatusObj.color }}
-            listItemLabelStyle={item => ({ color: item.color, fontWeight: '600' })}
+            listItemLabelStyle={opt => ({ color: opt.color, fontWeight: '600' })}
             searchable={true}
             showTickIcon={false}
             listMode="MODAL"
@@ -383,21 +437,21 @@ const TripStart = ({ navigation, route, onClose }) => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0284c7" />
-        <Text style={styles.loadingText}>Loading trip start data...</Text>
+      <View style={formStyles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={formStyles.loadingText}>Loading trip start data...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Icon name="error-outline" size={48} color="#dc2626" />
-        <Text style={styles.errorText}>Error loading data</Text>
-        <Text style={styles.errorSubText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchChecklistAndStatus}>
-          <Text style={styles.retryButtonText}>Try Again</Text>
+      <View style={formStyles.errorContainer}>
+        <Icon name="error-outline" size={48} color={theme.colors.error} />
+        <Text style={[formStyles.modalTitle, { marginTop: theme.spacing.sm }]}>Error loading data</Text>
+        <Text style={formStyles.errorSubText}>{error}</Text>
+        <TouchableOpacity style={formStyles.retryButton} onPress={fetchChecklistAndStatus}>
+          <Text style={formStyles.retryButtonText}>Try Again</Text>
         </TouchableOpacity>
       </View>
     );
@@ -405,23 +459,25 @@ const TripStart = ({ navigation, route, onClose }) => {
 
   return (
     <>
-      <StatusBar backgroundColor="#0284c7" barStyle="light-content" />
+      <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
+        style={formStyles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <Header title="Trip Start" onMenuPress={handleMenuPress} />
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {/* Date & Time Picker */}
-          <View style={styles.inputItem}>
-            <Text style={styles.label}>Date & Time *</Text>
-            <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>
-              <Text style={styles.dateButtonText}>
-                {moment(startDatetime).format('DD MMM YYYY, hh:mm A')}
-              </Text>
-            </TouchableOpacity>
-            {formErrors.date && <Text style={styles.errorText}>{formErrors.date}</Text>}
+        <Header title="Trip Start" onMenuPress={handleMenuPress} showCloseButton={!!onClose} />
+        <ScrollView contentContainerStyle={formStyles.scrollContainer}>
+          <View style={formStyles.sectionCard}>
+            <Text style={formStyles.sectionHeader}>Trip details</Text>
+            {/* Date & Time Picker */}
+            <View style={formStyles.inputItem}>
+              <Text style={formStyles.label}>Date & Time *</Text>
+              <TouchableOpacity style={formStyles.dateButton} onPress={showDatePicker}>
+                <Text style={formStyles.dateButtonText}>
+                  {moment(startDatetime).format('DD MMM YYYY, hh:mm A')}
+                </Text>
+              </TouchableOpacity>
+              {formErrors.date && <Text style={formStyles.errorText}>{formErrors.date}</Text>}
             {Platform.OS === 'android' && showPicker && (
               <DateTimePicker
                 value={startDatetime}
@@ -430,8 +486,8 @@ const TripStart = ({ navigation, route, onClose }) => {
                 onChange={onChangeDateTime}
                 is24Hour={true}
                 maximumDate={new Date()}
-                positiveButton={{ label: 'OK', textColor: '#0284c7' }}
-                negativeButton={{ label: 'Cancel', textColor: '#ef4444' }}
+                positiveButton={{ label: 'OK', textColor: theme.colors.primary }}
+                negativeButton={{ label: 'Cancel', textColor: theme.colors.error }}
               />
             )}
             {Platform.OS === 'ios' && (
@@ -462,43 +518,43 @@ const TripStart = ({ navigation, route, onClose }) => {
             )}
           </View>
 
-          {/* Location */}
-          <View style={styles.inputItem}>
-            <Text style={styles.label}>Location *</Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={[styles.input, { flex: 1 }, formErrors.address && styles.errorInput]}
-                placeholderTextColor="#9ca3af"
-                placeholder="Enter or fetch location"
-                value={startAddress}
-                onChangeText={text => {
-                  setStartAddress(text);
-                  setFormErrors(prev => ({ ...prev, address: null }));
-                }}
-              />
-              <TouchableOpacity style={styles.locationButton} onPress={getCurrentLocation}>
-                <Text style={styles.locationButtonText}>Get Current</Text>
-              </TouchableOpacity>
+            {/* Location */}
+            <View style={formStyles.inputItem}>
+              <Text style={formStyles.label}>Location *</Text>
+              <View style={formStyles.inputRow}>
+                <TextInput
+                  style={[formStyles.input, { flex: 1 }, formErrors.address && formStyles.errorInput]}
+                  placeholderTextColor={theme.colors.textPlaceholder}
+                  placeholder="Enter or fetch location"
+                  value={startAddress}
+                  onChangeText={text => {
+                    setStartAddress(text);
+                    setFormErrors(prev => ({ ...prev, address: null }));
+                  }}
+                />
+                <TouchableOpacity style={styles.locationButton} onPress={getCurrentLocation}>
+                  <Text style={styles.locationButtonText}>Get Current</Text>
+                </TouchableOpacity>
+              </View>
+              {formErrors.address && <Text style={formStyles.errorText}>{formErrors.address}</Text>}
             </View>
-            {formErrors.address && <Text style={styles.errorText}>{formErrors.address}</Text>}
-          </View>
 
-          {/* Odometer */}
-          <View style={styles.inputItem}>
-            <Text style={styles.label}>Odometer (km) *</Text>
-            <TextInput
-              style={[styles.input, formErrors.startKm && styles.errorInput]}
-              value={startKm}
-              onChangeText={text => {
-                setStartKm(text);
-                setFormErrors(prev => ({ ...prev, startKm: null }));
-              }}
-              placeholder="Enter odometer reading"
-              keyboardType="numeric"
-              placeholderTextColor="#9ca3af"
-            />
-            {formErrors.startKm && <Text style={styles.errorText}>{formErrors.startKm}</Text>}
-          </View>
+            {/* Odometer */}
+            <View style={formStyles.inputItem}>
+              <Text style={formStyles.label}>Odometer (km) *</Text>
+              <TextInput
+                style={[formStyles.input, formErrors.startKm && formStyles.errorInput]}
+                value={startKm}
+                onChangeText={text => {
+                  setStartKm(text);
+                  setFormErrors(prev => ({ ...prev, startKm: null }));
+                }}
+                placeholder="Enter odometer reading"
+                keyboardType="numeric"
+                placeholderTextColor={theme.colors.textPlaceholder}
+              />
+              {formErrors.startKm && <Text style={formStyles.errorText}>{formErrors.startKm}</Text>}
+            </View>
 
           {/* Coordinates */}
           {/* <View style={styles.coordinateContainer}>
@@ -528,64 +584,67 @@ const TripStart = ({ navigation, route, onClose }) => {
             </View>
           </View> */}
 
-          {/* Attachments */}
-          <View style={styles.inputItem}>
-            <Text style={styles.label}>Attachments</Text>
-            {attachments.length > 0 ? (
-              <View style={styles.attachmentPreviewContainer}>
-                {attachments[0].type?.startsWith('image/') ? (
-                  <Image
-                    source={{ uri: attachments[0].uri }}
-                    style={styles.attachmentImage}
-                    resizeMode="contain"
-                  />
-                ) : (
-                  <View style={styles.filePreview}>
-                    <Icon name="insert-drive-file" size={40} color="#0284c7" />
-                    <Text style={styles.fileName} numberOfLines={1}>
-                      {attachments[0].name}
-                    </Text>
+            {/* Attachments */}
+            <View style={formStyles.inputItem}>
+              <Text style={formStyles.label}>Attachments</Text>
+              {attachments.length > 0 ? (
+                <View style={styles.attachmentPreviewContainer}>
+                  {attachments[0].type?.startsWith('image/') ? (
+                    <Image
+                      source={{ uri: attachments[0].uri }}
+                      style={styles.attachmentImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <View style={styles.filePreview}>
+                      <Icon name="insert-drive-file" size={40} color={theme.colors.primary} />
+                      <Text style={styles.fileName} numberOfLines={1}>
+                        {attachments[0].name}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={styles.attachmentActions}>
+                    <TouchableOpacity style={styles.removeButton} onPress={removeAttachment}>
+                      <Icon name="close" size={20} color={theme.colors.error} />
+                    </TouchableOpacity>
                   </View>
-                )}
-                <View style={styles.attachmentActions}>
-                  <TouchableOpacity style={styles.removeButton} onPress={removeAttachment}>
-                    <Icon name="close" size={20} color="#ef4444" />
-                  </TouchableOpacity>
                 </View>
-              </View>
-            ) : (
-              <TouchableOpacity style={styles.attachmentButton} onPress={handleAttachment}>
-                <Text style={styles.attachmentButtonText}>Choose File (Max 10MB)</Text>
-              </TouchableOpacity>
-            )}
+              ) : (
+                <TouchableOpacity style={styles.attachmentButton} onPress={handleAttachment}>
+                  <Text style={styles.attachmentButtonText}>Choose File (Max 10MB)</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {/* Checklist Section */}
-          <Text style={styles.sectionHeader}>Pre-Trip Checklist *</Text>
-          {inspectionItems.length === 0 ? (
-            <Text style={styles.noChecklistText}>No checklist items available</Text>
-          ) : (
-            <View style={styles.tableContainer}>
+          <View style={formStyles.sectionCard}>
+            <Text style={formStyles.sectionHeader}>Pre-Trip Checklist *</Text>
+            {inspectionItems.length === 0 ? (
+              <Text style={styles.noChecklistText}>No checklist items available</Text>
+            ) : (
+              <View style={formStyles.tableContainer}>
               <FlatList
                 data={inspectionItems}
                 renderItem={renderItem}
                 keyExtractor={item => item.id.toString()}
                 scrollEnabled={false}
               />
-              {formErrors.checklist && <Text style={styles.errorText}>{formErrors.checklist}</Text>}
-            </View>
-          )}
+              {formErrors.checklist && <Text style={formStyles.errorText}>{formErrors.checklist}</Text>}
+              </View>
+            )}
+          </View>
 
           {/* Submit Button */}
           <TouchableOpacity
-            style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+            style={[formStyles.primaryButton, isSubmitting && formStyles.primaryButtonDisabled]}
             onPress={handleSubmit}
             disabled={isSubmitting}
           >
             {isSubmitting ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={theme.colors.white} size="small" />
             ) : (
-              <Text style={styles.submitButtonText}>Start Trip</Text>
+              <Text style={formStyles.primaryButtonText}>Start Trip</Text>
             )}
           </TouchableOpacity>
         </ScrollView>
@@ -596,277 +655,137 @@ const TripStart = ({ navigation, route, onClose }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  scrollContainer: {
-    padding: 16,
-    paddingBottom: 30,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    gap: 10,
-  },
-  inputItem: {
-    flex: 1,
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
-  },
-  input: {
-    color: '#111827',
-    height: 45,
-    borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
-    fontSize: 16,
-  },
-  errorInput: {
-    borderColor: '#ef4444',
-  },
-  errorText: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: '500',
-  },
-  dateButton: {
-    height: 45,
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    backgroundColor: '#fff',
-  },
-  dateButtonText: {
-    color: '#374151',
-    textAlign: 'center',
-    fontSize: 16,
-  },
   locationButton: {
-    backgroundColor: '#0284c7',
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.sm,
+    minHeight: 48,
+    borderRadius: theme.radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
   },
   locationButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  coordinateContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  sectionHeader: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 12,
-    marginTop: 10,
-  },
-  tableContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-    paddingBottom: 10,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    color: theme.colors.white,
+    fontWeight: theme.typography.semibold,
+    fontSize: theme.typography.sm,
   },
   tableRow: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-    alignItems: 'center',
-    minHeight: 60,
-  },
-  itemNameContainer: {
-    width: Dimensions.get('window').width * 0.5,
+    flexDirection: 'column',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.border,
+    minHeight: 72,
   },
   itemName: {
-    fontSize: 14,
-    color: '#111827',
-    fontWeight: '600',
+    fontSize: theme.typography.sm,
+    color: theme.colors.text,
+    fontWeight: theme.typography.semibold,
+    marginBottom: theme.spacing.xxs,
   },
   selectedStatusText: {
-    marginTop: 4,
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: theme.typography.xs,
+    fontWeight: theme.typography.medium,
   },
   statusDropdownContainer: {
-    flex: 1,
+    width: '100%',
+    marginTop: theme.spacing.xs,
   },
   statusDropdown: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
-    borderWidth: 1.5,
-    borderRadius: 6,
-    height: 40,
-    minHeight: 40,
-    paddingHorizontal: 10,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderRadius: theme.radius.sm,
+    minHeight: 48,
+    height: 48,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 0,
   },
   statusDropdownText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#111827',
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.medium,
+    color: theme.colors.text,
   },
   statusDropdownPlaceholder: {
-    color: '#9ca3af',
+    color: theme.colors.textPlaceholder,
   },
   statusIndicator: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    marginRight: 8,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginRight: theme.spacing.xs,
   },
   iosOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   iosPickerContainer: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    padding: 20,
+    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: theme.radius.lg,
+    borderTopRightRadius: theme.radius.lg,
+    padding: theme.spacing.lg,
     paddingBottom: 0,
   },
   iosDoneButton: {
-    padding: 15,
+    padding: theme.spacing.md,
     alignItems: 'flex-end',
   },
   iosDoneButtonText: {
-    color: '#0284c7',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  submitButton: {
-    backgroundColor: '#0284c7',
-    paddingVertical: 14,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  submitButtonDisabled: {
-    backgroundColor: '#81a8b8',
-    opacity: 0.6,
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
-  },
-  loadingText: {
-    marginTop: 12,
-    color: '#6b7280',
-    fontSize: 16,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f9fafb',
-  },
-  errorText: {
-    color: '#dc2626',
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 12,
-  },
-  errorSubText: {
-    color: '#6b7280',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  retryButton: {
-    backgroundColor: '#0284c7',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 6,
-    marginTop: 16,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.primary,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.semibold,
   },
   attachmentPreviewContainer: {
-    borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    padding: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
     position: 'relative',
   },
   attachmentImage: {
     width: '100%',
     height: 200,
-    borderRadius: 4,
+    borderRadius: theme.radius.xs,
   },
   filePreview: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    padding: theme.spacing.sm,
   },
   fileName: {
-    marginLeft: 10,
-    color: '#374151',
+    marginLeft: theme.spacing.sm,
+    color: theme.colors.textSecondary,
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sm,
   },
   attachmentActions: {
     position: 'absolute',
-    top: 5,
-    right: 5,
+    top: theme.spacing.xs,
+    right: theme.spacing.xs,
   },
   removeButton: {
-    padding: 5,
+    padding: theme.spacing.xxs,
   },
   attachmentButton: {
-    height: 45,
-    borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    backgroundColor: '#fff',
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   attachmentButtonText: {
-    color: '#374151',
-    fontWeight: '500',
-    fontSize: 14,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.typography.medium,
+    fontSize: theme.typography.sm,
   },
   noChecklistText: {
-    color: '#9ca3af',
+    color: theme.colors.textMuted,
     fontStyle: 'italic',
     textAlign: 'center',
-    padding: 16,
-    fontSize: 14,
+    padding: theme.spacing.md,
+    fontSize: theme.typography.sm,
   },
 });
 

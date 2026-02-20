@@ -17,6 +17,7 @@ import {Calendar} from 'react-native-calendars';
 import Header from '../../components/Header';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { useStatusBarHeight } from '../../constants/config';
 import {BASE_URL} from '../../constants/url';
 import {GETNETWORK} from '../../utils/Network';
 import moment from 'moment';
@@ -26,6 +27,7 @@ import Toast from 'react-native-toast-message';
 const {height} = Dimensions.get('window');
 
 const MaintenanceCalendarScreen = () => {
+  const statusBarHeight = useStatusBarHeight();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [markedDates, setMarkedDates] = useState({});
@@ -141,7 +143,7 @@ const MaintenanceCalendarScreen = () => {
       text2: message,
       visibilityTime: type === 'error' ? 4000 : 3000,
       autoHide: true,
-      topOffset: StatusBar.currentHeight || 40,
+      topOffset: statusBarHeight,
     });
   };
 

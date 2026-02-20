@@ -15,6 +15,7 @@ import {
 import React, {useEffect, useState, useRef, useCallback} from 'react';
 import Header from '../../components/Header';
 import {GETNETWORK, POSTNETWORK} from '../../utils/Network';
+import { useStatusBarHeight } from '../../constants/config';
 import {BASE_URL} from '../../constants/url';
 import DropDownPicker from 'react-native-dropdown-picker';
 import StarRating from 'react-native-star-rating-widget';
@@ -23,6 +24,7 @@ import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
 
 const DriverRating = ({navigation}) => {
+  const statusBarHeight = useStatusBarHeight();
   // State for dropdowns
   const [tripNameOpen, setTripNameOpen] = useState(false);
   const [tripNameValue, setTripNameValue] = useState(null);
@@ -65,7 +67,7 @@ const DriverRating = ({navigation}) => {
       text2: message,
       visibilityTime: type === 'error' ? 4000 : 3000,
       autoHide: true,
-      topOffset: StatusBar.currentHeight || 40,
+      topOffset: statusBarHeight,
     });
   };
 
@@ -74,7 +76,7 @@ const DriverRating = ({navigation}) => {
     useCallback(() => {
       const fetchData = async () => {
         await Promise.all([GetTrip(), GetDrivers(), GetChecklist()]);
-        resetForm();
+        resetForm(true);
       };
 
       fetchData();
@@ -217,34 +219,32 @@ const DriverRating = ({navigation}) => {
         remarks: comment,
       };
 
-      console.log('Final payload to be sent:', ratingData);
-
       const Url = `${BASE_URL}trips/driver_rating/`;
       const response = await POSTNETWORK(Url, ratingData, true);
-      console.log('response',response)
 
-      if (response.status === 'success') {
-        const driverName = driverItems.find(item => item.value === driverValue)?.label || 'Driver';
-        showToast('success', 'Rating Submitted', `Rating submitted for ${driverName} successfully`);
-        resetForm();
+      if (response?.status === 'success') {
+        showToast('success', 'Success', response.msg || 'Driver rating updated successfully');
+        resetForm(true);
       } else {
-        throw new Error(response.message || 'Failed to submit rating');
+        throw new Error(response?.msg || response?.message || 'Failed to submit rating');
       }
     } catch (error) {
-      console.error('Submit rating error:', error);
-      showToast('error', 'Submission Failed', error.message || 'Failed to submit rating');
+      if (__DEV__) console.error('Submit rating error:', error);
+      showToast('error', 'Submission Failed', error?.message || 'Failed to submit rating');
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
+  const resetForm = (skipToast = false) => {
     setRatings({});
     setOpenDropdowns({});
     setTripNameValue(null);
     setDriverValue(null);
     setComment('');
-    showToast('info', 'Form Reset', 'Form has been reset successfully');
+    if (!skipToast) {
+      showToast('info', 'Form Reset', 'Form has been reset successfully');
+    }
   };
 
   // Optimized dropdown handlers

@@ -19,14 +19,18 @@ import Header from '../../components/Header';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {pick} from '@react-native-documents/picker';
 import {Icon} from '@rneui/themed';
+import { useStatusBarHeight } from '../../constants/config';
 import {BASE_URL} from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import { getObjByKey } from '../../utils/Storage';
 import { Calendar } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
 import moment from 'moment';
+import theme from '../../theme';
+import { formStyles } from '../../styles/FormStyles';
 
 const TripExpenses = ({navigation, onClose}) => {
+  const statusBarHeight = useStatusBarHeight();
   const [trips, setTrips] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +64,7 @@ const TripExpenses = ({navigation, onClose}) => {
       text2: message,
       visibilityTime: type === 'error' ? 4000 : 3000,
       autoHide: true,
-      topOffset: StatusBar.currentHeight || 40,
+      topOffset: statusBarHeight,
     });
   };
 
@@ -89,8 +93,8 @@ const TripExpenses = ({navigation, onClose}) => {
     setMarkedDates({
       [dateString]: {
         selected: true,
-        selectedColor: '#0284c7',
-        selectedTextColor: '#ffffff',
+        selectedColor: theme.colors.primary,
+        selectedTextColor: theme.colors.white,
       },
     });
     
@@ -382,21 +386,21 @@ const TripExpenses = ({navigation, onClose}) => {
 
   if (loading || categoriesLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0284c7" />
-        <Text style={styles.loadingText}>Loading trip expenses...</Text>
+      <View style={formStyles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={formStyles.loadingText}>Loading trip expenses...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Icon name="error-outline" size={48} color="#dc2626" />
-        <Text style={styles.errorText}>Error loading data</Text>
-        <Text style={styles.errorSubText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => fetchData()}>
-          <Text style={styles.retryButtonText}>Try Again</Text>
+      <View style={formStyles.errorContainer}>
+        <Icon name="error-outline" size={48} color={theme.colors.error} />
+        <Text style={[formStyles.modalTitle, { marginTop: theme.spacing.sm }]}>Error loading data</Text>
+        <Text style={formStyles.errorSubText}>{error}</Text>
+        <TouchableOpacity style={formStyles.retryButton} onPress={() => fetchData()}>
+          <Text style={formStyles.retryButtonText}>Try Again</Text>
         </TouchableOpacity>
       </View>
     );
@@ -404,7 +408,7 @@ const TripExpenses = ({navigation, onClose}) => {
 
   return (
     <>
-      <StatusBar backgroundColor={'#0284c7'} barStyle="light-content" />
+      <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
       <Header 
         title="Trip Expenses" 
         onMenuPress={handleMenuPress}
@@ -424,15 +428,15 @@ const TripExpenses = ({navigation, onClose}) => {
           refreshControl={null} // Custom refresh handled in header
         >
           <View style={styles.headerContainer}>
-            <Text style={styles.title}>Trip Expenses Overview</Text>
-            <Text style={styles.subtitle}>
+            <Text style={styles.pageTitle}>Trip Expenses Overview</Text>
+            <Text style={styles.pageSubtitle}>
               {trips.length} trip(s) found • Total expenses: ₹{expenses.reduce((total, expense) => total + parseFloat(expense.amount), 0).toFixed(2)}
             </Text>
           </View>
 
           {trips.length === 0 ? (
             <View style={styles.emptyState}>
-              <Icon name="receipt-long" size={64} color="#9ca3af" />
+              <Icon name="receipt-long" size={64} color={theme.colors.textMuted} />
               <Text style={styles.emptyStateText}>No trips available</Text>
               <Text style={styles.emptyStateSubText}>
                 There are no trips assigned to you at the moment.
@@ -462,19 +466,19 @@ const TripExpenses = ({navigation, onClose}) => {
 
                   <View style={styles.tripDetails}>
                     <View style={styles.detailRow}>
-                      <Icon name="directions-car" size={16} color="#6b7280" />
+                      <Icon name="directions-car" size={16} color={theme.colors.textMuted} />
                       <Text style={styles.detailText}>{trip.thing_name}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Icon name="person" size={16} color="#6b7280" />
+                      <Icon name="person" size={16} color={theme.colors.textMuted} />
                       <Text style={styles.detailText}>{trip.driver}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Icon name="schedule" size={16} color="#6b7280" />
+                      <Icon name="schedule" size={16} color={theme.colors.textMuted} />
                       <Text style={styles.detailText}>{trip.scheduled_datetime}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Icon name="speed" size={16} color="#6b7280" />
+                      <Icon name="speed" size={16} color={theme.colors.textMuted} />
                       <Text style={styles.detailText}>{trip.estimated_distance} km</Text>
                     </View>
                   </View>
@@ -500,7 +504,7 @@ const TripExpenses = ({navigation, onClose}) => {
                           )}
                           {expense.receipt && (
                             <View style={styles.receiptContainer}>
-                              <Icon name="receipt" size={14} color="#0284c7" />
+                              <Icon name="receipt" size={14} color={theme.colors.primary} />
                               <Text style={styles.receiptText}>Receipt attached</Text>
                             </View>
                           )}
@@ -532,20 +536,20 @@ const TripExpenses = ({navigation, onClose}) => {
         transparent
         animationType="slide"
         onRequestClose={() => !isSubmitting && setModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Expense</Text>
+        <View style={[formStyles.modalOverlay, { justifyContent: 'center' }]}>
+          <View style={[formStyles.modalContainer, { margin: theme.spacing.lg, maxHeight: Dimensions.get('window').height * 0.85 }]}>
+            <View style={formStyles.modalHeader}>
+              <Text style={formStyles.modalTitle}>Add Expense</Text>
               <TouchableOpacity 
                 onPress={() => !isSubmitting && setModalVisible(false)}
                 disabled={isSubmitting}
               >
-                <Icon name="close" size={24} color="#374151" />
+                <Icon name="close" size={24} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView
-              contentContainerStyle={styles.modalContent}
+              contentContainerStyle={formStyles.modalContent}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
               
@@ -558,7 +562,7 @@ const TripExpenses = ({navigation, onClose}) => {
               )}
 
               <View style={[styles.dropdownWrapper, {zIndex: categoryOpen ? zIndexCounter.current + 100 : 1}]}>
-                <Text style={styles.label}>Category *</Text>
+                <Text style={formStyles.label}>Category *</Text>
                 <DropDownPicker
                   open={categoryOpen}
                   value={category}
@@ -567,30 +571,30 @@ const TripExpenses = ({navigation, onClose}) => {
                   setValue={setCategory}
                   setItems={setCategoryItems}
                   placeholder="Select category"
-                  style={[styles.dropdown, formErrors.category && styles.errorInput]}
-                  dropDownContainerStyle={styles.dropdownContainer}
-                  textStyle={styles.dropdownText}
-                  placeholderStyle={styles.dropdownPlaceholder}
+                  style={[formStyles.dropdown, formErrors.category && formStyles.errorInput]}
+                  dropDownContainerStyle={formStyles.dropdownContainer}
+                  textStyle={formStyles.dropdownText}
+                  placeholderStyle={formStyles.dropdownPlaceholder}
                   listMode="MODAL"
                   searchable={true}
                   searchablePlaceholder="Search category..."
                   onSelectItem={() => setFormErrors(prev => ({...prev, category: null}))}
                 />
                 {formErrors.category && (
-                  <Text style={styles.errorText}>{formErrors.category}</Text>
+                  <Text style={formStyles.errorText}>{formErrors.category}</Text>
                 )}
               </View>
 
-              <View style={styles.inputItem}>
-                <Text style={styles.label}>Date *</Text>
+              <View style={formStyles.inputItem}>
+                <Text style={formStyles.label}>Date *</Text>
                 <Calendar
                   markedDates={markedDates}
                   onDayPress={handleDayPress}
                   theme={{
-                    selectedDayBackgroundColor: '#0284c7',
-                    selectedDayTextColor: '#ffffff',
-                    todayTextColor: '#0284c7',
-                    arrowColor: '#0284c7',
+                    selectedDayBackgroundColor: theme.colors.primary,
+                    selectedDayTextColor: theme.colors.white,
+                    todayTextColor: theme.colors.primary,
+                    arrowColor: theme.colors.primary,
                     textDisabledColor: '#d1d5db',
                   }}
                   hideExtraDays={true}
@@ -600,37 +604,37 @@ const TripExpenses = ({navigation, onClose}) => {
                   style={styles.calendar}
                 />
                 {formErrors.date && (
-                  <Text style={styles.errorText}>{formErrors.date}</Text>
+                  <Text style={formStyles.errorText}>{formErrors.date}</Text>
                 )}
               </View>
 
-              <View style={styles.inputItem}>
-                <Text style={styles.label}>Amount *</Text>
+              <View style={formStyles.inputItem}>
+                <Text style={formStyles.label}>Amount *</Text>
                 <TextInput
                   placeholder="Enter amount"
-                  placeholderTextColor={'#9ca3af'}
+                  placeholderTextColor={theme.colors.textPlaceholder}
                   keyboardType="decimal-pad"
                   value={amount}
                   onChangeText={(text) => {
                     setAmount(text);
                     setFormErrors(prev => ({...prev, amount: null}));
                   }}
-                  style={[styles.input, formErrors.amount && styles.errorInput]}
+                  style={[formStyles.input, formErrors.amount && formStyles.errorInput]}
                 />
                 {formErrors.amount && (
-                  <Text style={styles.errorText}>{formErrors.amount}</Text>
+                  <Text style={formStyles.errorText}>{formErrors.amount}</Text>
                 )}
               </View>
 
-              <View style={styles.inputItem}>
-                <Text style={styles.label}>Remarks</Text>
+              <View style={formStyles.inputItem}>
+                <Text style={formStyles.label}>Remarks</Text>
                 <View style={styles.commentsContainer}>
                   <TextInput
                     placeholder="Remarks (optional)"
-                    placeholderTextColor={'#9ca3af'}
+                    placeholderTextColor={theme.colors.textPlaceholder}
                     value={remarks}
                     onChangeText={setRemarks}
-                    style={[styles.input, styles.multilineInput]}
+                    style={[formStyles.input, formStyles.multilineInput]}
                     multiline
                     numberOfLines={3}
                     maxLength={200}
@@ -641,8 +645,8 @@ const TripExpenses = ({navigation, onClose}) => {
                 </View>
               </View>
 
-              <View style={styles.inputItem}>
-                <Text style={styles.label}>Attachments</Text>
+              <View style={formStyles.inputItem}>
+                <Text style={formStyles.label}>Attachments</Text>
                 {attachments?.length > 0 ? (
                   <View style={styles.attachmentPreviewContainer}>
                     {attachments[0].type?.startsWith('image/') ? (
@@ -653,7 +657,7 @@ const TripExpenses = ({navigation, onClose}) => {
                       />
                     ) : (
                       <View style={styles.filePreview}>
-                        <Icon name="insert-drive-file" size={40} color="#0284c7" />
+                        <Icon name="insert-drive-file" size={40} color={theme.colors.primary} />
                         <Text style={styles.fileName} numberOfLines={1}>
                           {attachments[0].name}
                         </Text>
@@ -664,7 +668,7 @@ const TripExpenses = ({navigation, onClose}) => {
                         style={styles.removeButton}
                         onPress={removeAttachment}
                         disabled={isSubmitting}>
-                        <Icon name="close" size={20} color="#ef4444" />
+                        <Icon name="close" size={20} color={theme.colors.error} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -694,7 +698,7 @@ const TripExpenses = ({navigation, onClose}) => {
                     (isSubmitting || categoryItems.length === 0) && styles.disabledButton
                   ]}>
                   {isSubmitting ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                    <ActivityIndicator color={theme.colors.white} size="small" />
                   ) : (
                     <Text style={styles.submitButtonText}>Add Expense</Text>
                   )}
@@ -713,95 +717,93 @@ const TripExpenses = ({navigation, onClose}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.background,
   },
   scrollContainer: {
-    padding: 16,
-    paddingBottom: 30,
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.xxl,
   },
   headerContainer: {
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
+  pageTitle: {
+    fontSize: theme.typography.xxl,
+    fontWeight: theme.typography.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xxs,
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#6b7280',
+  pageSubtitle: {
+    fontSize: theme.typography.sm,
+    color: theme.colors.textMuted,
   },
   tripCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
+    ...theme.shadows.sm,
   },
   tripHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: theme.spacing.sm,
   },
   tripTitleContainer: {
     flex: 1,
   },
   tripName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 6,
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xxs,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: theme.spacing.xxs,
+    borderRadius: theme.radius.full,
     alignSelf: 'flex-start',
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: theme.typography.xs,
+    fontWeight: theme.typography.semibold,
   },
   totalExpenses: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0284c7',
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.bold,
+    color: theme.colors.primary,
   },
   tripDetails: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: theme.spacing.xxs,
   },
   detailText: {
-    fontSize: 14,
-    color: '#374151',
-    marginLeft: 8,
+    fontSize: theme.typography.sm,
+    color: theme.colors.textSecondary,
+    marginLeft: theme.spacing.xs,
   },
   expenseSection: {
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.border,
+    paddingTop: theme.spacing.sm,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
   },
   expenseItem: {
-    backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+    backgroundColor: theme.colors.borderLight,
+    padding: theme.spacing.sm,
+    borderRadius: theme.radius.sm,
+    marginBottom: theme.spacing.xs,
   },
   expenseRow: {
     flexDirection: 'row',
@@ -812,297 +814,180 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   expenseName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
   },
   expenseDate: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 2,
+    fontSize: theme.typography.xs,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.xxs,
   },
   amount: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#059669',
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.bold,
+    color: theme.colors.success,
   },
   remarks: {
-    fontSize: 13,
-    color: '#6b7280',
-    marginTop: 4,
+    fontSize: theme.typography.sm,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.xxs,
     fontStyle: 'italic',
   },
   receiptContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: theme.spacing.xxs,
   },
   receiptText: {
-    fontSize: 12,
-    color: '#0284c7',
-    marginLeft: 4,
+    fontSize: theme.typography.xs,
+    color: theme.colors.primary,
+    marginLeft: theme.spacing.xxs,
   },
   noExpense: {
-    color: '#9ca3af',
+    color: theme.colors.textMuted,
     fontStyle: 'italic',
     textAlign: 'center',
-    padding: 16,
+    padding: theme.spacing.md,
   },
   addButton: {
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 12,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.sm,
+    marginTop: theme.spacing.sm,
   },
   addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-  },
-  modalContainer: {
-    backgroundColor: '#fff',
-    margin: 20,
-    borderRadius: 12,
-    maxHeight: Dimensions.get('window').height * 0.8,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  modalContent: {
-    padding: 16,
+    color: theme.colors.white,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.semibold,
+    marginLeft: theme.spacing.xs,
   },
   selectedTripInfo: {
-    backgroundColor: '#f0f9ff',
-    padding: 12,
-    borderRadius: 6,
-    marginBottom: 16,
+    backgroundColor: theme.colors.infoLight,
+    padding: theme.spacing.sm,
+    borderRadius: theme.radius.sm,
+    marginBottom: theme.spacing.md,
     borderLeftWidth: 4,
-    borderLeftColor: '#0284c7',
+    borderLeftColor: theme.colors.primary,
   },
   selectedTripText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0284c7',
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.primary,
   },
   dropdownWrapper: {
-    marginBottom: 16,
-  },
-  dropdown: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
-    borderWidth: 1.5,
-    borderRadius: 6,
-  },
-  dropdownContainer: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
-  },
-  dropdownText: {
-    fontSize: 14,
-    color: '#111827',
-  },
-  dropdownPlaceholder: {
-    color: '#9ca3af',
-  },
-  inputItem: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
-  },
-  input: {
-    borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    padding: 12,
-    fontSize: 16,
-    color: '#111827',
-    backgroundColor: '#fff',
-  },
-  multilineInput: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-    paddingTop: 10,
+    marginBottom: theme.spacing.md,
   },
   commentsContainer: {
     position: 'relative',
   },
   charCount: {
     position: 'absolute',
-    bottom: 8,
-    right: 12,
-    fontSize: 12,
-    color: '#6b7280',
+    bottom: theme.spacing.xs,
+    right: theme.spacing.sm,
+    fontSize: theme.typography.xs,
+    color: theme.colors.textMuted,
   },
   calendar: {
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: '#d1d5db',
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   modalActions: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.lg,
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 6,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
   },
   cancelButton: {
-    backgroundColor: '#6b7280',
+    backgroundColor: theme.colors.textMuted,
   },
   submitButton: {
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
   },
   disabledButton: {
     opacity: 0.6,
   },
   cancelButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.semibold,
   },
   submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.semibold,
   },
   attachmentPreviewContainer: {
-    borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    padding: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
     position: 'relative',
   },
   attachmentImage: {
     width: '100%',
     height: 200,
-    borderRadius: 4,
+    borderRadius: theme.radius.xs,
   },
   filePreview: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    padding: theme.spacing.sm,
   },
   fileName: {
-    marginLeft: 10,
-    color: '#374151',
+    marginLeft: theme.spacing.sm,
+    color: theme.colors.textSecondary,
     flex: 1,
   },
   attachmentActions: {
     position: 'absolute',
-    top: 5,
-    right: 5,
+    top: theme.spacing.xs,
+    right: theme.spacing.xs,
   },
   removeButton: {
-    padding: 5,
+    padding: theme.spacing.xxs,
   },
   attachmentButton: {
-    height: 45,
-    borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    backgroundColor: '#fff',
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   attachmentButtonText: {
-    color: '#374151',
-    fontWeight: '500',
-  },
-  errorInput: {
-    borderColor: '#ef4444',
-  },
-  errorText: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: '500',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
-  },
-  loadingText: {
-    marginTop: 12,
-    color: '#6b7280',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f9fafb',
-  },
-  errorText: {
-    color: '#dc2626',
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 12,
-  },
-  errorSubText: {
-    color: '#6b7280',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  retryButton: {
-    backgroundColor: '#0284c7',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 6,
-    marginTop: 16,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.textSecondary,
+    fontWeight: theme.typography.medium,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 40,
+    padding: theme.spacing.xl,
   },
   emptyStateText: {
-    fontSize: 18,
-    color: '#6b7280',
-    marginTop: 16,
-    fontWeight: '600',
+    fontSize: theme.typography.lg,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.md,
+    fontWeight: theme.typography.semibold,
   },
   emptyStateSubText: {
-    fontSize: 14,
-    color: '#9ca3af',
+    fontSize: theme.typography.sm,
+    color: theme.colors.textPlaceholder,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: theme.spacing.xs,
   },
 });
 

@@ -1,38 +1,38 @@
-import { StyleSheet } from "react-native";
-import { BLACK, WHITE } from "../constants/color";
-import { HEIGHT, WIDTH } from "../constants/config";
+import { StyleSheet } from 'react-native';
+import { colors, spacing } from '../theme';
+import { WIDTH } from '../constants/config';
+
 export const appStyles = StyleSheet.create({
   safeareacontainer: {
     flex: 1,
-    backgroundColor: WHITE,
+    backgroundColor: colors.background,
   },
   maincontainer: {
     flex: 1,
-    alignItems: "center",
+    alignItems: 'center',
   },
   customButtonWrapper: {
-    width: "100%",
-    position: "absolute",
-    bottom: 20,
-    alignSelf: "center",
-    justifyContent: "center",
-    alignItems: "center",
+    width: '100%',
+    position: 'absolute',
+    bottom: spacing.xl,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   textcolor: {
-    color: BLACK,
+    color: colors.text,
   },
   customTextInputWrapper: {
-    width: "90%",
-    alignSelf: "center",
+    width: '90%',
+    alignSelf: 'center',
   },
   termstextWrapper: {
-    width: "100%",
+    width: '100%',
   },
   rowInputsStyleWrapper: {
-    flexDirection: "row",
-    width: "90%",
-    alignSelf: "center",
-    justifyContent: "space-between",
-    // backgroundColor: "red",
+    flexDirection: 'row',
+    width: '90%',
+    alignSelf: 'center',
+    justifyContent: 'space-between',
   },
 });

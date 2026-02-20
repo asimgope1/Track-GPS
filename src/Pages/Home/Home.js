@@ -18,7 +18,8 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Icon} from '@rneui/themed';
-import {HEIGHT, MyStatusBar, WIDTH} from '../../constants/config';
+import {HEIGHT, MyStatusBar, WIDTH, useStatusBarHeight} from '../../constants/config';
+import {colors as themeColors} from '../../theme';
 import {GETNETWORK} from '../../utils/Network';
 import {BASE_URL} from '../../constants/url';
 import {
@@ -1349,6 +1350,7 @@ Location[1] !== undefined ? (
 };
 
 const FleetDashboard = navigation => {
+  const statusBarHeight = useStatusBarHeight();
   const [statusMap, setStatusMap] = useState({});
   const [fleetData, setFleetData] = useState([]);
   const [total, setTotal] = useState(0);
@@ -1369,7 +1371,7 @@ const FleetDashboard = navigation => {
       text2: message,
       visibilityTime: type === 'error' ? 5000 : 3000,
       autoHide: true,
-      topOffset: StatusBar.currentHeight || 40,
+      topOffset: statusBarHeight,
     });
   };
 
@@ -1427,17 +1429,14 @@ const FleetDashboard = navigation => {
       const url = `${BASE_URL}projects/${projectSl}/things/?page=1&search=&type=gps`;
       setPageLoad(true);
       
-      const response = await GETNETWORK(url, true);
-      console.log('API Response:------------', response);
-  
+const response = await GETNETWORK(url, true);
+
       if (response.data && response.data.things) {
-        console.log('Things from API:--------------', response.data?.things);
   
         const fullThingData = response.data.things.map(item => ({
           ...item,
           updated_on: new Date(item.updated_on),
         }));
-        console.log('Full Things Data:-------', fullThingData);
   
         const currentTime = new Date();
         const statusCounts = {
@@ -1452,7 +1451,6 @@ const FleetDashboard = navigation => {
           else if (timeDiff <= 5) statusCounts.Stopped += 1;
           else statusCounts.Unreachable += 1;
         });
-        console.log('Status Counts:-------', statusCounts);
   
         setStatusMap(statusCounts);
         setTotal(fullThingData.length);
@@ -1545,7 +1543,6 @@ const FleetDashboard = navigation => {
   const GetUserType = async () => {
     try {
       const loginRes = await getObjByKey('loginResponse');
-      console.log('UserType', loginRes);
       setUserType(loginRes?.data?.user_type);
       showToast('success', 'Session Loaded', 'User session initialized');
     } catch (error) {
@@ -1560,13 +1557,12 @@ const FleetDashboard = navigation => {
 
   return (
     <Fragment>
-      <StatusBar backgroundColor={'#0284c7'} barStyle="dark-content" />
-      <SafeAreaView style={styles.safeareacontainer}>
+      <StatusBar backgroundColor={themeColors.primary} barStyle="light-content" />
+      <SafeAreaView style={styles.safeareacontainer} edges={['left', 'right', 'bottom']}>
         <Header 
           onMenuPress={() => {
             console.log('here i want drawer navigation open', navigation);
             navigation.navigation.openDrawer();
-            showToast('info', 'Navigation', 'Drawer opened');
           }} 
           title="Dashboard" 
         />
@@ -1586,6 +1582,11 @@ const FleetDashboard = navigation => {
                 />
               }
               data={fleetData}
+              keyExtractor={item => item.title}
+              initialNumToRender={6}
+              maxToRenderPerBatch={4}
+              windowSize={5}
+              removeClippedSubviews={Platform.OS === 'android'}
               renderItem={({item}) => (
                 <FleetCard
                   title={item.title}
@@ -1613,7 +1614,6 @@ const FleetDashboard = navigation => {
                   }
                 />
               )}
-              keyExtractor={item => item.title}
               contentContainerStyle={styles.listContainer}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

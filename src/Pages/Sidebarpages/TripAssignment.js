@@ -15,6 +15,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Header from '../../components/Header';
 import { Calendar } from 'react-native-calendars';
+import { useStatusBarHeight } from '../../constants/config';
 import { BASE_URL } from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import moment from 'moment';
@@ -25,6 +26,7 @@ import Toast from 'react-native-toast-message';
 import { Icon } from '@rneui/themed';
 
 const TripAssignment = ({ navigation }) => {
+  const statusBarHeight = useStatusBarHeight();
   const [tripTime, setTripTime] = useState(new Date());
   const [driverName, setDriverName] = useState('');
   const [distance, setDistance] = useState('');
@@ -88,7 +90,7 @@ const TripAssignment = ({ navigation }) => {
       position: 'top',
       visibilityTime: type === 'error' ? 4000 : 3000,
       autoHide: true,
-      topOffset: StatusBar.currentHeight || 40,
+      topOffset: statusBarHeight,
     });
   };
 
@@ -304,35 +306,42 @@ const TripAssignment = ({ navigation }) => {
         estimated_time: estTime || '00:00:00',
         load_details: loadDetails || '',
       };
-    
-      console.log('Trip data:', tripData);
-    
+
       const apiUrl = `${BASE_URL}trips/trip_assignment/`;
       const response = await POSTNETWORK(apiUrl, tripData, true);
-      console.log('response', response);
-    
+
       if (response?.status === 'success') {
         showToast('success', 'Success', response.msg || 'Trip assigned successfully!');
         resetForm();
+      } else if (response?.status === 'failed') {
+        const serverMsg = response?.msg || 'Could not assign trip. Please try again.';
+        const isAlreadyExists = /already exists/i.test(serverMsg);
+        showToast(
+          'error',
+          isAlreadyExists ? 'Trip already assigned' : 'Trip assignment failed',
+          serverMsg
+        );
+        // Don't reset form so user can change trip/vehicle/driver and retry
       } else {
-        throw new Error(response?.msg || 'Failed to assign trip');
-        
+        showToast('error', 'Error', response?.msg || 'Failed to assign trip. Please try again.');
       }
     } catch (error) {
-      console.error('Error assigning trip:', error.message || error);
-      resetForm();
+      if (__DEV__) console.error('Error assigning trip:', error?.message || error);
       setIsSubmitting(false);
       setLoading(false);
-    
-      if (error.message.includes('Network request failed')) {
+
+      if (error?.message?.includes('Network request failed')) {
         showToast('error', 'Network Error', 'Please check your internet connection and try again.');
-      } else if (error.message.includes('401')) {
+      } else if (error?.message?.includes('401')) {
         showToast('error', 'Authentication Error', 'Session expired. Please login again.');
-      } else if (error.message.includes('500')) {
+      } else if (error?.message?.includes('500')) {
         showToast('error', 'Server Error', 'Server is temporarily unavailable. Please try again later.');
       } else {
-        showToast('error', 'Submission Failed', error.message || 'Failed to assign trip. Please try again.');
+        showToast('error', 'Submission Failed', error?.message || 'Failed to assign trip. Please try again.');
       }
+    } finally {
+      setIsSubmitting(false);
+      setLoading(false);
     }
     
   };

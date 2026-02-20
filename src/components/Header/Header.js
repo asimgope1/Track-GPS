@@ -1,46 +1,52 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import LogIcon from 'react-native-vector-icons/FontAwesome';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { headerStyles } from './HeaderStyles';
-import LogIcon from 'react-native-vector-icons/FontAwesome'; // Import FontAwesome for the logout icon
 import { clearAll } from '../../utils/Storage';
 import { useDispatch } from 'react-redux';
 import { checkuserToken } from '../../redux/actions/auth';
+import { colors } from '../../theme';
 
-const Header = ({title, onMenuPress, rightIcon = null}) => {
+const Header = ({ title, onMenuPress, rightIcon = null, showCloseButton = false }) => {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
 
   return (
-    <LinearGradient
-      colors={['#38bdf8', '#0ea5e9', '#0284c7']}
-      start={{x: 0, y: 0}}
-      end={{x: 1, y: 0}}
-      style={headerStyles.enhancedHeaderContainer}>
-      <TouchableOpacity style={headerStyles.iconButton} onPress={onMenuPress}>
-        <Icon name="menu" size={28} color="#fff" />
+    <View
+      style={[
+        headerStyles.enhancedHeaderContainer,
+        { paddingTop: insets.top + 12, backgroundColor: colors.primary },
+      ]}>
+      <TouchableOpacity
+        style={headerStyles.iconButton}
+        onPress={onMenuPress}
+        activeOpacity={0.7}>
+        <Icon name={showCloseButton ? 'close' : 'menu'} size={24} color={colors.white} />
       </TouchableOpacity>
 
       <View style={headerStyles.titleWrapper}>
-        <Text style={headerStyles.enhancedHeaderTitle}>{title}</Text>
+        <Text style={headerStyles.enhancedHeaderTitle} numberOfLines={1}>
+          {title}
+        </Text>
       </View>
 
-      {rightIcon && (
-        <TouchableOpacity style={headerStyles.iconButton}>
-          <LogIcon
-            name="sign-out"
-            size={26}
-            color="#fff"
-            onPress={() => {
-              clearAll();
-              dispatch(checkuserToken());
-            }}
-          />
+      {rightIcon ? (
+        <TouchableOpacity
+          style={headerStyles.iconButton}
+          activeOpacity={0.7}
+          onPress={() => {
+            clearAll();
+            dispatch(checkuserToken());
+          }}>
+          <LogIcon name="sign-out" size={22} color={colors.white} />
         </TouchableOpacity>
+      ) : (
+        <View style={{ minWidth: 44, minHeight: 44 }} />
       )}
-    </LinearGradient>
+    </View>
   );
 };
-
 
 export default Header;

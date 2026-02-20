@@ -1,30 +1,29 @@
-import {StyleSheet} from 'react-native';
-import {BRAND, WHITE} from '../../constants/color';
-import {BOLD, MEDIUM} from '../../constants/fontfamily';
-import {RFValue} from 'react-native-responsive-fontsize';
-import {WIDTH} from '../../constants/config';
+import { StyleSheet } from 'react-native';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { colors, radius, spacing, shadows, typography } from '../../theme';
+
 export const customButtonStyles = StyleSheet.create({
   buttonview: {
-    height: 47,
-    borderRadius: 7,
-    elevation: 3,
+    minHeight: 48,
+    borderRadius: radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
     alignSelf: 'center',
+    paddingHorizontal: spacing.xl,
+    ...shadows.sm,
   },
   text: {
-    fontFamily: BOLD,
-    fontSize: RFValue(15),
+    fontSize: RFValue(typography.base),
+    fontWeight: typography.semibold,
   },
   iconview: {
-    width: WIDTH * 0.1,
-    height: '100%',
+    marginRight: spacing.xs,
     justifyContent: 'center',
     alignItems: 'center',
   },
   iconimage: {
-    height: '50%',
-    width: '90%',
+    height: 20,
+    width: 20,
   },
 });

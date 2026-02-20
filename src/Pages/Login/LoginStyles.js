@@ -1,74 +1,105 @@
-/* eslint-disable prettier/prettier */
-import {StyleSheet} from 'react-native';
-import {BLACK, BRAND, LIGHTGRAY, WHITE} from '../../constants/color';
-import {BOLD, EXTRABOLD, MEDIUM} from '../../constants/fontfamily';
-import {RFValue} from 'react-native-responsive-fontsize';
-import {HEIGHT, WIDTH} from '../../constants/config';
+import { StyleSheet } from 'react-native';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { HEIGHT, WIDTH } from '../../constants/config';
+import { colors, spacing, radius, typography, shadows } from '../../theme';
+
 export const loginStyles = StyleSheet.create({
   safeareacontainer: {
-    height: '100%',
-    width: '100%',
-    backgroundColor: WHITE,
-  },
-  maincontainer: {
     flex: 1,
-    alignItems: 'center',
+    backgroundColor: colors.background,
   },
-  text: {
-    fontWeight: 'bold',
-    fontSize: RFValue(12),
-    color: BLACK,
-  },
-  verificationText: {
-    fontFamily: MEDIUM,
-    color: LIGHTGRAY,
-    paddingLeft: 5,
-    paddingTop: 5,
-    fontSize: RFValue(11.8),
-  },
-  msgcontainer: {
-    width: '90%',
+  scroll: {
+    flexGrow: 1,
     justifyContent: 'center',
-    paddingTop: HEIGHT * 0.07,
-    paddingBottom: HEIGHT * 0.05,
+    paddingVertical: spacing.xxl,
+  },
+  card: {
+    width: WIDTH * 0.9,
+    maxWidth: 400,
     alignSelf: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.xxl,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+    ...shadows.md,
   },
-  logincontainer: {
-    width: '90%',
-    height: HEIGHT * 0.4,
-  },
-  loginheader: {
-    marginTop: HEIGHT * 0.01,
-    width: '90%',
-    alignSelf: 'center',
-  },
-  msgtext: {
-    color: BLACK,
-    fontSize: RFValue(25),
-    textAlign: 'left',
-    fontFamily: EXTRABOLD,
-    fontWeight: 'bold',
-  },
-  btn: {
-    width: WIDTH * 0.5,
-  },
-  imageContainer: {
-    width: WIDTH * 0.5,
-    height: WIDTH * 0.3,
-    alignSelf: 'center',
-    justifyContent: 'center',
+  logoBox: {
     alignItems: 'center',
-    // backgroundColor: 'red',
+    marginBottom: spacing.xl,
   },
-  image: {
+  logo: {
+    width: 72,
+    height: 72,
+    marginBottom: spacing.sm,
+  },
+  title: {
+    fontSize: RFValue(24),
+    fontWeight: typography.bold,
+    color: colors.primary,
+    letterSpacing: 0.5,
+  },
+  subtitle: {
+    fontSize: RFValue(13),
+    color: colors.textMuted,
+    marginTop: spacing.xxs,
+  },
+  inputWrap: {
     width: '100%',
-    height: '100%',
-    // tintColor: BRAND,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.borderLight,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
   },
-  credentialView: {
+  input: {
+    backgroundColor: 'transparent',
+    fontSize: RFValue(typography.base),
+  },
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  rememberLabel: {
+    fontSize: RFValue(typography.sm),
+    color: colors.textSecondary,
+  },
+  forgotLink: {
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.xs,
+  },
+  forgotText: {
+    fontSize: RFValue(typography.sm),
+    color: colors.primary,
+    fontWeight: typography.semibold,
+  },
+  loginButton: {
     width: '100%',
-    alignSelf: 'center',
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: spacing.md,
+    ...shadows.sm,
+  },
+  loginButtonText: {
+    fontSize: RFValue(typography.base),
+    fontWeight: typography.semibold,
+    color: colors.white,
+  },
+  footer: {
+    marginTop: spacing.xxl,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: RFValue(11),
+    color: colors.textMuted,
+  },
+  footerBrand: {
+    fontWeight: typography.bold,
+    color: colors.textSecondary,
   },
 });

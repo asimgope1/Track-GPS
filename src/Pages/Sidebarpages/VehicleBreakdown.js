@@ -15,6 +15,7 @@ import {
 import React, {useEffect, useState, useCallback, useRef} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Header from '../../components/Header';
+import { useStatusBarHeight } from '../../constants/config';
 import { BASE_URL } from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import { pick } from '@react-native-documents/picker';
@@ -28,6 +29,7 @@ import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
 
 const VehicleBreakdown = ({navigation}) => {
+  const statusBarHeight = useStatusBarHeight();
   const [incidentId, setIncidentId] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [date, setDate] = useState(new Date());
@@ -75,7 +77,7 @@ const VehicleBreakdown = ({navigation}) => {
       position: 'top',
       visibilityTime: type === 'error' ? 4000 : 3000,
       autoHide: true,
-      topOffset: StatusBar.currentHeight || 40,
+      topOffset: statusBarHeight,
     });
   };
 
@@ -296,7 +298,7 @@ const VehicleBreakdown = ({navigation}) => {
 
       const formData = new FormData();
       formData.append('thing_id', vehicleValue);
-      formData.append('driver_name', selectedDriver?.label || '');
+      formData.append('driver_master_id', selectedDriver?.value || '');
       formData.append('reported_issue', description);
       formData.append('latitude', latitude);
       formData.append('longitude', longitude);

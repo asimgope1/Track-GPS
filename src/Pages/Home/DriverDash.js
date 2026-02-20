@@ -1,9 +1,10 @@
-import React, {useState, useEffect, Fragment} from 'react';
+import React, {useState, useEffect, Fragment, useCallback, useMemo} from 'react';
 import {
   StyleSheet,
   Text,
   View,
   ScrollView,
+  FlatList,
   TextInput,
   TouchableOpacity,
   StatusBar,
@@ -23,6 +24,7 @@ import {getObjByKey} from '../../utils/Storage';
 import TripStart from '../Sidebarpages/TripStart';
 import TripStop from '../Sidebarpages/TripStop';
 import TripExpenses from '../Sidebarpages/TripExpenses';
+import theme from '../../theme';
 
 const Dashboard = ({navigation}) => {
   const [showTripStartModal, setShowTripStartModal] = useState(false);
@@ -50,14 +52,12 @@ const Dashboard = ({navigation}) => {
 
     try {
       const response = await GETNETWORK(url, true);
-      console.log('Trip Data:', response.data);
-
       const tripsData = response.data || [];
       setTrips(tripsData);
       setFilteredTrips(tripsData);
       setPageLoad(false);
     } catch (error) {
-      console.error('Error fetching trips:', error);
+      if (__DEV__) console.error('Error fetching trips:', error);
       alert('Failed to fetch trip data. Please try again.');
       setPageLoad(false);
     }
@@ -66,7 +66,6 @@ const Dashboard = ({navigation}) => {
   useEffect(() => {
     const init = async () => {
       const loginRes = await getObjByKey('loginResponse');
-      console.log('login rwsp in driverdash', loginRes);
       const driverId = loginRes?.data?.driver_id;
       setDriverId(driverId);
 
@@ -109,69 +108,57 @@ const Dashboard = ({navigation}) => {
     setRefreshing(false);
   };
 
-  const formatDateTime = datetimeStr => {
+  const formatDateTime = useCallback(datetimeStr => {
     if (!datetimeStr) return 'N/A';
-
     const date = new Date(datetimeStr);
     return date.toLocaleString();
-  };
+  }, []);
 
-  const getStatusColor = status => {
+  const getStatusColor = useCallback(status => {
     switch (status) {
-      case 'scheduled':
-        return '#3498db';
-      case 'in_progress':
-        return '#f39c12';
-      case 'completed':
-        return '#2ecc71';
-      case 'cancelled':
-        return '#e74c3c';
-      default:
-        return '#7f8c8d';
+      case 'scheduled': return theme.colors.info;
+      case 'in_progress': return theme.colors.warning;
+      case 'completed': return theme.colors.success;
+      case 'cancelled': return theme.colors.error;
+      default: return theme.colors.textMuted;
     }
-  };
+  }, []);
 
-  const getStatusText = status => {
+  const getStatusText = useCallback(status => {
     switch (status) {
-      case 'scheduled':
-        return 'Scheduled';
-      case 'in_progress':
-        return 'In Progress';
-      case 'completed':
-        return 'Completed';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return status;
+      case 'scheduled': return 'Scheduled';
+      case 'in_progress': return 'In Progress';
+      case 'completed': return 'Completed';
+      case 'cancelled': return 'Cancelled';
+      default: return status || '';
     }
-  };
+  }, []);
 
-  const handleTripPress = trip => {
+  const handleTripPress = useCallback(trip => {
     setSelectedTrip(trip);
     setModalVisible(true);
-  };
+  }, []);
 
-  const handleStartTrip = trip => {
+  const handleStartTrip = useCallback(trip => {
     setTripToStart(trip);
     setShowTripStartModal(true);
     setModalVisible(false);
-  };
+  }, []);
 
-  const handleStopTrip = trip => {
+  const handleStopTrip = useCallback(trip => {
     setTripToStop(trip);
     setShowTripStopModal(true);
     setModalVisible(false);
-  };
+  }, []);
 
-  const handleAddExpense = trip => {
+  const handleAddExpense = useCallback(trip => {
     setTripForExpense(trip);
     setShowAddExpenseModal(true);
     setModalVisible(false);
-  };
+  }, []);
 
-  const renderTripCard = trip => (
+  const renderTripCard = useCallback(({ item: trip }) => (
     <TouchableOpacity
-      key={trip.trip_assignment_id}
       style={styles.tripCard}
       onPress={() => handleTripPress(trip)}>
       <View style={styles.tripHeader}>
@@ -224,7 +211,7 @@ const Dashboard = ({navigation}) => {
             <>
               <TouchableOpacity
                 style={styles.startButton}
-                onPress={() => handleStartTrip(trip.trip_assignment_id)}>
+                onPress={() => handleStartTrip(trip)}>
                 <Icon source="play" size={16} color="#fff" />
                 <Text style={styles.buttonText}>Start</Text>
               </TouchableOpacity>
@@ -255,10 +242,23 @@ const Dashboard = ({navigation}) => {
         </View>
       </View>
     </TouchableOpacity>
-  );
+  ), [handleTripPress, handleStartTrip, handleStopTrip, handleAddExpense, getStatusColor, getStatusText, formatDateTime]);
 
+  const keyExtractor = useCallback(item => String(item.trip_assignment_id), []);
 
-  const renderFilterButtons = () => (
+  const emptyComponent = useMemo(() => (
+    <View style={styles.emptyState}>
+      <Icon source="car" size={56} color={theme.colors.border} />
+      <Text style={styles.emptyStateText}>No trips found</Text>
+      <Text style={styles.emptyStateSubtext}>
+        {searchQuery || statusFilter !== 'all'
+          ? 'Try adjusting your search or filter'
+          : 'No trips available at the moment'}
+      </Text>
+    </View>
+  ), [searchQuery, statusFilter]);
+
+  const renderFilterButtons = useCallback(() => (
   <ScrollView
     horizontal
     showsHorizontalScrollIndicator={false}
@@ -338,59 +338,53 @@ const Dashboard = ({navigation}) => {
       </Text>
     </TouchableOpacity>
   </ScrollView>
-);
-
-  console.log('data', trips);
+  ), [statusFilter]);
 
   return (
     <Fragment>
       <StatusBar backgroundColor={'#0284c7'} barStyle="dark-content" />
       <SafeAreaView style={styles.safeareacontainer}>
         <KeyboardAvoidingView
-          style={{flex: 1}}
+          style={styles.mainContent}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <View style={styles.searchContainer}>
-            <Icon
-              source="magnify"
-              size={20}
-              color="#777"
-              style={styles.searchIcon}
-            />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search by trip name or vehicle..."
-              placeholderTextColor="#777"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery ? (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Icon source="close-circle" size={20} color="#777" />
-              </TouchableOpacity>
-            ) : null}
+          <View style={styles.topBar}>
+            <View style={styles.searchContainer}>
+              <Icon
+                source="magnify"
+                size={20}
+                color={theme.colors.textPlaceholder}
+                style={styles.searchIcon}
+              />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search by trip name or vehicle..."
+                placeholderTextColor={theme.colors.textPlaceholder}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery ? (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Icon source="close-circle" size={20} color={theme.colors.textMuted} />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+            {renderFilterButtons()}
           </View>
 
-          {renderFilterButtons()}
-
-          <ScrollView
+          <FlatList
             style={styles.tripsContainer}
+            data={filteredTrips}
+            renderItem={renderTripCard}
+            keyExtractor={keyExtractor}
+            ListEmptyComponent={emptyComponent}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }>
-            {filteredTrips.length > 0 ? (
-              filteredTrips.map(renderTripCard)
-            ) : (
-              <View style={styles.emptyState}>
-                <Icon source="car" size={60} color="#ddd" />
-                <Text style={styles.emptyStateText}>No trips found</Text>
-                <Text style={styles.emptyStateSubtext}>
-                  {searchQuery || statusFilter !== 'all'
-                    ? 'Try adjusting your search or filter'
-                    : 'No trips available at the moment'}
-                </Text>
-              </View>
-            )}
-          </ScrollView>
+            }
+            initialNumToRender={10}
+            maxToRenderPerBatch={8}
+            windowSize={6}
+            removeClippedSubviews={Platform.OS === 'android'}
+          />
 
           <Modal
             animationType="slide"
@@ -409,7 +403,7 @@ const Dashboard = ({navigation}) => {
                           </Text>
                           <TouchableOpacity
                             onPress={() => setModalVisible(false)}>
-                            <Icon source="close" size={24} color="#333" />
+                            <Icon source="close" size={24} color={theme.colors.text} />
                           </TouchableOpacity>
                         </View>
 
@@ -601,152 +595,179 @@ const Dashboard = ({navigation}) => {
 const styles = StyleSheet.create({
   safeareacontainer: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.background,
+  },
+  mainContent: {
+    flex: 1,
+  },
+  topBar: {
+    flexDirection: 'column',
+    flexGrow: 0,
+    flexShrink: 0,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    margin: 16,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    height: 40,
+    maxHeight: 40,
+    backgroundColor: theme.colors.surface,
+    marginHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.xs,
+    marginBottom: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.radius.sm,
+    ...theme.shadows.sm,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: theme.spacing.xxs,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#333',
+    paddingVertical: 0,
+    fontSize: theme.typography.sm,
+    color: theme.colors.text,
   },
   filterContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 8,
-    maxHeight: 35,
+    height: 36,
+    marginBottom: theme.spacing.xxs,
+  },
+  filterContent: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xxs,
   },
   filterButton: {
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.spacing.md,
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    marginRight: 8,
+    height: 34,
+    minHeight: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: theme.radius.full,
+    backgroundColor: theme.colors.borderLight,
   },
   activeFilter: {
-    backgroundColor: '#3498db',
+    backgroundColor: theme.colors.primary,
   },
   filterText: {
-    color: '#7f8c8d',
-    fontWeight: '500',
+    fontSize: theme.typography.sm,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.typography.medium,
   },
   activeFilterText: {
-    color: '#fff',
+    fontSize: theme.typography.sm,
+    color: theme.colors.white,
+    fontWeight: theme.typography.semibold,
   },
   tripsContainer: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.xs,
+    paddingBottom: theme.spacing.lg,
   },
   tripCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.primary,
+    ...theme.shadows.sm,
   },
   tripHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: theme.spacing.sm,
   },
   tripName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2c3e50',
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
+    flex: 1,
   },
   statusBadge: {
-    paddingHorizontal: 10,
+    paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: theme.radius.full,
   },
   statusText: {
-    color: '#fff',
+    color: theme.colors.white,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: theme.typography.semibold,
   },
   tripDetails: {
-    marginTop: 8,
+    marginTop: theme.spacing.xs,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: theme.spacing.xs,
   },
   detailText: {
-    marginLeft: 8,
-    color: '#555',
-    fontSize: 14,
+    marginLeft: theme.spacing.sm,
+    color: theme.colors.textSecondary,
+    fontSize: theme.typography.sm,
   },
   metricsContainer: {
     flexDirection: 'row',
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.border,
   },
   metric: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: theme.spacing.md,
   },
   metricText: {
-    marginLeft: 6,
-    color: '#555',
-    fontWeight: '500',
+    marginLeft: theme.spacing.xxs,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.typography.medium,
   },
   actionButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    marginTop: 16,
-    gap: 10,
+    marginTop: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   startButton: {
-    backgroundColor: '#2ecc71',
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: theme.colors.success,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radius.full,
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 5,
-    minWidth: 80,
+    gap: theme.spacing.xxs,
+    minWidth: 76,
   },
   stopButton: {
-    backgroundColor: '#e74c3c',
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: theme.colors.error,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radius.full,
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 5,
-    minWidth: 80,
+    gap: theme.spacing.xxs,
+    minWidth: 76,
   },
   expenseButton: {
-    backgroundColor: '#3498db',
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radius.full,
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 5,
-    minWidth: 80,
+    gap: theme.spacing.xxs,
+    minWidth: 76,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
+    color: theme.colors.white,
+    fontWeight: theme.typography.semibold,
+    fontSize: theme.typography.sm,
   },
   emptyState: {
     alignItems: 'center',
@@ -754,15 +775,15 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyStateText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#bdc3c7',
-    marginTop: 16,
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.sm,
   },
   emptyStateSubtext: {
-    fontSize: 14,
-    color: '#ddd',
-    marginTop: 8,
+    fontSize: theme.typography.sm,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.xxs,
     textAlign: 'center',
   },
   modalOverlay: {
@@ -770,57 +791,59 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: theme.spacing.md,
   },
   modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxHeight: '80%',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.xl,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '85%',
+    ...theme.shadows.lg,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: theme.spacing.md,
   },
   modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#2c3e50',
+    fontSize: theme.typography.xl,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
   },
   modalBody: {
-    marginTop: 10,
+    marginTop: theme.spacing.xs,
   },
   modalDetail: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.sm,
   },
   modalLabel: {
-    fontSize: 14,
-    color: '#7f8c8d',
-    marginBottom: 4,
+    fontSize: theme.typography.sm,
+    color: theme.colors.textMuted,
+    marginBottom: theme.spacing.xxs,
   },
   modalValue: {
-    fontSize: 16,
-    color: '#2c3e50',
+    fontSize: theme.typography.md,
+    color: theme.colors.text,
   },
   modalStatus: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xxs,
+    borderRadius: theme.radius.full,
   },
   modalStatusText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+    color: theme.colors.white,
+    fontWeight: theme.typography.semibold,
+    fontSize: theme.typography.sm,
   },
   modalActionButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    marginTop: 20,
-    gap: 10,
+    marginTop: theme.spacing.sm,
+    gap: theme.spacing.xs,
   },
 });
 

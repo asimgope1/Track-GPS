@@ -18,12 +18,14 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import {Calendar} from 'react-native-calendars';
 import Header from '../../components/Header';
 import {GETNETWORK, POSTNETWORK} from '../../utils/Network';
+import { useStatusBarHeight } from '../../constants/config';
 import {BASE_URL} from '../../constants/url';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
 import moment from 'moment';
 
 const MaintenanceScheduleScreen = () => {
+  const statusBarHeight = useStatusBarHeight();
   const navigation = useNavigation();
   const [selectedDate, setSelectedDate] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
@@ -60,7 +62,7 @@ const MaintenanceScheduleScreen = () => {
       text2: message,
       visibilityTime: type === 'error' ? 4000 : 3000,
       autoHide: true,
-      topOffset: StatusBar.currentHeight || 40,
+      topOffset: statusBarHeight,
     });
   };
 

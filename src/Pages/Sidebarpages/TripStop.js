@@ -24,12 +24,14 @@ import moment from 'moment';
 import Toast from 'react-native-toast-message';
 import Header from '../../components/Header';
 import { GETNETWORK } from '../../utils/Network';
+import { useStatusBarHeight } from '../../constants/config';
 import { BASE_URL } from '../../constants/url';
 import { getObjByKey, storeObjByKey } from '../../utils/Storage';
 import { Icon } from '@rneui/themed';
 import { pick } from '@react-native-documents/picker';
 
 const TripStop = ({ navigation, route, onClose }) => {
+  const statusBarHeight = useStatusBarHeight();
   // Form state
   const [stopDatetime, setStopDatetime] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
@@ -66,7 +68,7 @@ const TripStop = ({ navigation, route, onClose }) => {
       text2: message,
       visibilityTime: type === 'error' ? 4000 : 3000,
       autoHide: true,
-      topOffset: StatusBar.currentHeight || 40,
+      topOffset: statusBarHeight,
     });
   };
 
@@ -306,8 +308,12 @@ const TripStop = ({ navigation, route, onClose }) => {
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || 'Failed to end trip');
 
+      const dismiss = () => {
+        if (onClose) onClose();
+        else if (navigation?.goBack) navigation.goBack();
+      };
       Alert.alert('Success', 'Trip ended successfully!', [
-        { text: 'OK', onPress: () => navigation.goBack() },
+        { text: 'OK', onPress: dismiss },
       ]);
       showToast('success', 'Trip Ended', 'Trip ended successfully');
     } catch (error) {
@@ -417,7 +423,7 @@ const TripStop = ({ navigation, route, onClose }) => {
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <Header title="Trip Stop" onMenuPress={handleMenuPress} />
+        <Header title="Trip Stop" onMenuPress={handleMenuPress} showCloseButton={!!onClose} />
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           {/* Date & Time Picker */}
           <View style={styles.inputItem}>

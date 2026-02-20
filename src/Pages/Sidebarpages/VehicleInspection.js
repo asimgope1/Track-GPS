@@ -18,12 +18,14 @@ import {
 import DropDownPicker from 'react-native-dropdown-picker';
 import Header from '../../components/Header';
 import {Calendar} from 'react-native-calendars';
+import { useStatusBarHeight } from '../../constants/config';
 import { BASE_URL } from '../../constants/url';
 import { GETNETWORK, POSTNETWORK } from '../../utils/Network';
 import { useFocusEffect } from '@react-navigation/native';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
 import moment from 'moment';
+import theme from '../../theme';
 
 const DEFAULT_STATUS_OPTIONS = [
   {label: 'OK', value: 'OK', color: '#22c55e'},
@@ -43,6 +45,7 @@ const DEFAULT_INSPECTION_ITEMS = [
 ];
 
 const VehicleInspection = ({ navigation }) => {
+  const statusBarHeight = useStatusBarHeight();
   const [inspectorName, setInspectorName] = useState('');
   const [comments, setComments] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -73,7 +76,7 @@ const VehicleInspection = ({ navigation }) => {
       text2: message,
       visibilityTime: type === 'error' ? 4000 : 3000,
       autoHide: true,
-      topOffset: StatusBar.currentHeight || 40,
+      topOffset: statusBarHeight,
     });
   };
 
@@ -482,7 +485,7 @@ const VehicleInspection = ({ navigation }) => {
 
   return (
     <>
-      <StatusBar backgroundColor={'#0284c7'} barStyle="light-content" />
+      <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
       <Header
         onMenuPress={() => navigation.openDrawer()}
         title="Vehicle Inspection"
@@ -650,17 +653,17 @@ const VehicleInspection = ({ navigation }) => {
                   markedDates={{
                     [selectedDate]: {
                       selected: true, 
-                      selectedColor: '#0284c7',
-                      selectedTextColor: '#fff'
+                      selectedColor: theme.colors.primary,
+                      selectedTextColor: theme.colors.white
                     },
                   }}
                   minDate={moment().format('YYYY-MM-DD')} // Only allow today and future dates
                   theme={{
-                    todayTextColor: '#0284c7',
-                    arrowColor: '#0284c7',
-                    selectedDayBackgroundColor: '#0284c7',
-                    selectedDayTextColor: '#fff',
-                    textDisabledColor: '#d1d5db', // Gray out past dates
+                    todayTextColor: theme.colors.primary,
+                    arrowColor: theme.colors.primary,
+                    selectedDayBackgroundColor: theme.colors.primary,
+                    selectedDayTextColor: theme.colors.white,
+                    textDisabledColor: theme.colors.border,
                   }}
                   // Disable past dates
                   disableAllTouchEventsForDisabledDays={true}
@@ -739,7 +742,7 @@ const VehicleInspection = ({ navigation }) => {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={theme.colors.white} size="small" />
               ) : (
                 <Text style={styles.submitButtonText}>
                   Submit Inspection ({completedItemsCount}/{totalItemsCount})
@@ -784,344 +787,340 @@ const VehicleInspection = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.background,
   },
   scrollContainer: {
-    padding: 16,
-    paddingBottom: 30,
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.xxl,
   },
   progressContainer: {
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.sm,
+    borderRadius: theme.radius.sm,
+    marginBottom: theme.spacing.md,
     borderLeftWidth: 4,
-    borderLeftColor: '#0284c7',
+    borderLeftColor: theme.colors.primary,
+    ...theme.shadows.sm,
   },
   progressText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
   },
   progressBar: {
     height: 6,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: theme.colors.border,
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
     borderRadius: 3,
   },
   inputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
-    gap: 10,
+    marginBottom: theme.spacing.sm,
+    gap: theme.spacing.sm,
   },
   inputItem: {
     flex: 1,
-    marginBottom: 15,
+    marginBottom: theme.spacing.md,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 4,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xxs,
   },
   input: {
-    color: '#111827',
-    height: 45,
-    borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    backgroundColor: '#fff',
-    fontSize: 14,
+    color: theme.colors.text,
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    paddingHorizontal: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
+    fontSize: theme.typography.sm,
   },
   multilineInput: {
-    height: 100,
+    minHeight: 100,
     textAlignVertical: 'top',
-    paddingTop: 10,
-    paddingBottom: 25,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: theme.spacing.lg,
   },
   commentsContainer: {
     position: 'relative',
   },
   charCount: {
     position: 'absolute',
-    bottom: 8,
-    right: 12,
-    fontSize: 12,
-    color: '#6b7280',
+    bottom: theme.spacing.xs,
+    right: theme.spacing.sm,
+    fontSize: theme.typography.xs,
+    color: theme.colors.textMuted,
   },
   dropdown: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
-    borderWidth: 1.5,
-    borderRadius: 6,
-    height: 45,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderRadius: theme.radius.sm,
+    minHeight: 48,
   },
   dropdownContainer: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
-    borderWidth: 1.5,
-    marginTop: 2,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    marginTop: theme.spacing.xxs,
   },
   dropdownText: {
-    fontSize: 14,
-    color: '#111827',
+    fontSize: theme.typography.sm,
+    color: theme.colors.text,
   },
   dropdownPlaceholder: {
-    color: '#9ca3af',
+    color: theme.colors.textPlaceholder,
   },
   modalContent: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: theme.spacing.lg,
   },
   modalTitle: {
-    fontWeight: '600',
+    fontWeight: theme.typography.semibold,
   },
   dateButton: {
-    height: 45,
+    minHeight: 48,
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: theme.spacing.sm,
   },
   dateButtonText: {
-    color: '#374151',
+    color: theme.colors.text,
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: theme.typography.sm,
   },
   placeholderText: {
-    color: '#9ca3af',
+    color: theme.colors.textPlaceholder,
   },
   sectionHeaderContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-    marginTop: 10,
+    marginBottom: theme.spacing.sm,
+    marginTop: theme.spacing.sm,
   },
   sectionHeader: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.text,
   },
   sectionSubHeader: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '600',
+    fontSize: theme.typography.sm,
+    color: theme.colors.textMuted,
+    fontWeight: theme.typography.semibold,
   },
   tableContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-    paddingBottom: 10,
-    marginBottom: 10,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.border,
     alignItems: 'center',
-    minHeight: 60,
+    minHeight: 56,
   },
   itemNameContainer: {
     width: Dimensions.get('window').width * 0.5,
   },
   itemName: {
-    fontSize: 14,
-    color: '#111827',
-    fontWeight: '500',
+    fontSize: theme.typography.sm,
+    color: theme.colors.text,
+    fontWeight: theme.typography.medium,
   },
   selectedStatusText: {
-    marginTop: 4,
-    fontSize: 12,
-    fontWeight: '500',
+    marginTop: theme.spacing.xxs,
+    fontSize: theme.typography.xs,
+    fontWeight: theme.typography.medium,
   },
   statusDropdownContainer: {
     flex: 1,
   },
   statusDropdown: {
-    backgroundColor: '#fff',
-    borderColor: '#d1d5db',
-    borderWidth: 1.5,
-    borderRadius: 6,
-    height: 40,
-    minHeight: 40,
-    paddingHorizontal: 10,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderRadius: theme.radius.sm,
+    minHeight: 44,
+    paddingHorizontal: theme.spacing.sm,
   },
   statusDropdownText: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.medium,
   },
   statusDropdownPlaceholder: {
-    color: '#9ca3af',
+    color: theme.colors.textPlaceholder,
   },
   statusIndicator: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    marginRight: 8,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginRight: theme.spacing.xs,
   },
   legendContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    marginBottom: 10,
-    gap: 16,
+    marginBottom: theme.spacing.sm,
+    gap: theme.spacing.md,
     flexWrap: 'wrap',
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.sm,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   legendTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginRight: 8,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.textSecondary,
+    marginRight: theme.spacing.xs,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: theme.spacing.xxs,
   },
   legendCircle: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
   },
   legendLabel: {
-    fontSize: 13,
-    color: '#374151',
+    fontSize: theme.typography.sm,
+    color: theme.colors.textSecondary,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
   calendarContainer: {
-    backgroundColor: '#fff',
-    margin: 20,
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    backgroundColor: theme.colors.surface,
+    margin: theme.spacing.lg,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.lg,
+    ...theme.shadows.lg,
   },
   calendarTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#0284c7',
+    fontSize: theme.typography.lg,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.primary,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   calendarButtons: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 16,
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
   },
   calendarButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.sm,
     alignItems: 'center',
   },
   closeCalendarButton: {
-    backgroundColor: '#6b7280',
+    backgroundColor: theme.colors.textMuted,
   },
   confirmCalendarButton: {
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
   },
   closeCalendarButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
   },
   confirmCalendarButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 10,
-    marginBottom: 20,
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
   },
   button: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 6,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
   },
   resetButton: {
-    backgroundColor: '#6b7280',
+    backgroundColor: theme.colors.textMuted,
   },
   submitButton: {
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
   },
   disabledButton: {
     opacity: 0.6,
   },
   resetButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
   },
   submitButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.white,
+    fontSize: theme.typography.sm,
+    fontWeight: theme.typography.semibold,
   },
   summaryContainer: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: theme.colors.infoLight,
     borderLeftWidth: 4,
-    borderLeftColor: '#0284c7',
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 10,
+    borderLeftColor: theme.colors.primary,
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.sm,
+    marginTop: theme.spacing.sm,
   },
   summaryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0284c7',
-    marginBottom: 8,
+    fontSize: theme.typography.base,
+    fontWeight: theme.typography.semibold,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
   },
   summaryText: {
-    fontSize: 14,
-    color: '#374151',
-    marginBottom: 4,
+    fontSize: theme.typography.sm,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xxs,
   },
-  // Error styles
   errorInput: {
-    borderColor: '#ef4444',
+    borderColor: theme.colors.error,
   },
   errorRow: {
     borderLeftWidth: 4,
-    borderLeftColor: '#ef4444',
-    backgroundColor: '#fef2f2',
+    borderLeftColor: theme.colors.error,
+    backgroundColor: theme.colors.errorLight,
   },
   errorText: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: '500',
+    color: theme.colors.error,
+    fontSize: theme.typography.xs,
+    marginTop: theme.spacing.xxs,
+    fontWeight: theme.typography.medium,
   },
 });
 

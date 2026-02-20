@@ -30,6 +30,7 @@ import { checkuserToken } from '../redux/actions/auth';
 import MaintenanceJob from '../Pages/Sidebarpages/MaintenanceJob';
 import TripStart from '../Pages/Sidebarpages/TripStart';
 import TripStop from '../Pages/Sidebarpages/TripStop';
+import { colors, spacing, typography } from '../theme';
 
 // Create both navigators
 const Drawer = createDrawerNavigator();
@@ -268,20 +269,24 @@ const CustomDrawerContent = props => {
     );
   };
 
-  // Get available menu items based on permissions
+  // Get available menu items based on permissions (drivers always get Trip Start & Trip Stop)
   const getAvailableMenuItems = () => {
     if (!userData) return [];
-    
-    // If user has "all" permission, return all menu items
+
     if (hasAllPermission()) {
       return Object.values(menuConfig);
     }
-    
-    const availableMenus = Object.keys(menuConfig).filter(menuKey => 
+
+    const permissionKeys = Object.keys(menuConfig).filter(menuKey =>
       hasPermission(menuKey)
     );
-    
-    return availableMenus.map(menuKey => menuConfig[menuKey]);
+
+    // Drivers always see Trip Start and Trip Stop in the drawer
+    const isDriver = userData.user_type === 'driver';
+    const driverMenuKeys = isDriver ? ['trip_start', 'trip_stop'] : [];
+    const allKeys = [...new Set([...permissionKeys, ...driverMenuKeys])];
+
+    return allKeys.map(menuKey => menuConfig[menuKey]);
   };
 
   if (!userData) {
@@ -321,18 +326,18 @@ const CustomDrawerContent = props => {
         icon={({color, size}) => (
           <Icon
             name="home"
-            color={currentRouteName === 'HomeStack' ? '#0284c7' : color}
+            color={currentRouteName === 'HomeStack' ? colors.primary : color}
             size={size}
           />
         )}
         focused={currentRouteName === 'HomeStack'}
         labelStyle={{
-          color: currentRouteName === 'HomeStack' ? '#0284c7' : '#333',
+          color: currentRouteName === 'HomeStack' ? colors.primary : colors.text,
           fontWeight: currentRouteName === 'HomeStack' ? 'bold' : 'normal',
         }}
         style={{
           backgroundColor:
-            currentRouteName === 'HomeStack' ? '#e0f2fe' : 'transparent',
+            currentRouteName === 'HomeStack' ? colors.infoLight : 'transparent',
           borderRadius: 6,
           marginHorizontal: 4,
         }}
@@ -350,17 +355,17 @@ const CustomDrawerContent = props => {
             icon={({color, size}) => (
               <Icon
                 name="analytics"
-                color={currentRouteName === 'DashBoard' ? '#0284c7' : color}
+                color={currentRouteName === 'DashBoard' ? colors.primary : color}
                 size={size}
               />
             )}
             focused={currentRouteName === 'DashBoard'}
             labelStyle={{
-              color: currentRouteName === 'DashBoard' ? '#0284c7' : '#333',
+              color: currentRouteName === 'DashBoard' ? colors.primary : colors.text,
               fontWeight: currentRouteName === 'DashBoard' ? 'bold' : 'normal',
             }}
             style={{
-              backgroundColor: currentRouteName === 'DashBoard' ? '#e0f2fe' : 'transparent',
+              backgroundColor: currentRouteName === 'DashBoard' ? colors.infoLight : 'transparent',
               borderRadius: 6,
               marginHorizontal: 4,
             }}
@@ -388,22 +393,22 @@ const CustomDrawerContent = props => {
               <DrawerItem
                 key={index}
                 label={item.label}
-                icon={({color, size}) => (
+                icon={({ color, size }) => (
                   <Icon
                     name={item.icon}
-                    color={isFocused ? '#0284c7' : color}
+                    color={isFocused ? colors.primary : color}
                     size={size}
                   />
                 )}
                 focused={isFocused}
                 labelStyle={{
-                  color: isFocused ? '#0284c7' : '#333',
-                  fontWeight: isFocused ? 'bold' : 'normal',
+                  color: isFocused ? colors.primary : colors.text,
+                  fontWeight: isFocused ? typography.bold : typography.regular,
                 }}
                 style={{
-                  backgroundColor: isFocused ? '#e0f2fe' : 'transparent',
-                  borderRadius: 6,
-                  marginHorizontal: 4,
+                  backgroundColor: isFocused ? colors.infoLight : 'transparent',
+                  borderRadius: 8,
+                  marginHorizontal: spacing.xxs,
                 }}
                 onPress={() => props.navigation.navigate(item.screen)}
               />
@@ -448,11 +453,11 @@ function AppNavigator() {
         headerShown: false,
         drawerPosition: 'left',
         drawerType: 'front',
-        drawerActiveTintColor: '#0284c7',
-        drawerInactiveTintColor: '#333',
+        drawerActiveTintColor: colors.primary,
+        drawerInactiveTintColor: colors.text,
         drawerLabelStyle: {
           marginLeft: -15,
-          fontSize: 16,
+          fontSize: typography.md,
         },
       }}>
       <Drawer.Screen
@@ -494,69 +499,69 @@ function getScreenComponent(screenName) {
 
 const styles = StyleSheet.create({
   header: {
-    padding: 20,
-    backgroundColor: '#0284c7',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.primary,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
   },
   headerTitle: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: colors.white,
+    fontSize: typography.xl,
+    fontWeight: typography.bold,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: spacing.xs,
+    letterSpacing: 0.5,
   },
   userInfo: {
-    color: 'white',
-    fontSize: 14,
+    color: 'rgba(255,255,255,0.95)',
+    fontSize: typography.sm,
     textAlign: 'center',
-    marginBottom: 5,
+    marginBottom: spacing.xxs,
   },
   allPermissionsBadge: {
-    color: '#ffeb3b',
-    fontWeight: 'bold',
-    fontSize: 12,
+    color: '#fef08a',
+    fontWeight: typography.bold,
+    fontSize: typography.xs,
   },
   permissionInfo: {
     color: 'rgba(255,255,255,0.8)',
-    fontSize: 12,
+    fontSize: typography.xs,
     textAlign: 'center',
   },
   loadingText: {
-    color: 'white',
-    fontSize: 14,
+    color: colors.white,
+    fontSize: typography.sm,
     textAlign: 'center',
   },
   sectionHeader: {
-    padding: 15,
-    backgroundColor: '#f5f5f5',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    padding: spacing.sm,
+    backgroundColor: colors.borderLight,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#666',
+    fontSize: typography.sm,
+    fontWeight: typography.bold,
+    color: colors.textSecondary,
   },
   allAccessText: {
-    color: '#4caf50',
-    fontSize: 12,
-    fontWeight: 'normal',
+    color: colors.success,
+    fontSize: typography.xs,
+    fontWeight: typography.regular,
   },
   noPermissions: {
-    padding: 20,
+    padding: spacing.xl,
     alignItems: 'center',
   },
   noPermissionsText: {
-    color: '#666',
-    fontSize: 14,
+    color: colors.textMuted,
+    fontSize: typography.sm,
     textAlign: 'center',
-    fontStyle: 'italic',
   },
   footer: {
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    marginTop: 15,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    marginTop: spacing.md,
+    paddingTop: spacing.xs,
   },
 });
 

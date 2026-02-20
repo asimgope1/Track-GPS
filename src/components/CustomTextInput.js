@@ -1,18 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { HEIGHT, STYLES, WIDTH } from '../constants/config';
-import {
-  BLACK,
-  GRAY,
-  LIGHTGRAY,
-  RED,
-  TEXTINPUTBACKGROUND,
-  TEXTINPUTTITLE,
-  WHITE,
-} from '../constants/color';
-import { RFValue } from 'react-native-responsive-fontsize';
-import LinearGradient from 'react-native-linear-gradient';
-import { EXTRABOLD, MEDIUM, REGULAR } from '../constants/fontfamily';
+import { WIDTH } from '../constants/config';
+import { colors, spacing, radius, typography } from '../theme';
 
 export const CustomTextInput = ({
   title = '',
@@ -40,114 +29,87 @@ export const CustomTextInput = ({
   multiline,
 }) => {
   return (
-    <View
-      style={{
-        width: width ? width : WIDTH,
-      }}>
-      <View style={{ marginVertical: '1%' }}>
-        <Text
-          style={{
-            color: WHITE,
-            fontFamily: EXTRABOLD,
-            fontSize: RFValue(15),
-            paddingLeft: HEIGHT * 0.0059,
-            fontWeight: 'bold',
-          }}>
-          {title} <Text style={{ color: RED }}>{mandatory && '*'}</Text>
+    <View style={[styles.wrapper, width ? { width } : null]}>
+      {title ? (
+        <Text style={styles.label}>
+          {title} {mandatory && <Text style={styles.mandatory}>*</Text>}
         </Text>
-      </View>
-      <View
-        style={{
-          borderRadius: 7,
-          borderWidth: 0.6,
-          borderColor: '#C8C8C8',
-          marginTop: 1,
-          marginBottom: HEIGHT * 0.005,
-          borderWidth: 1,
-        }}>
-        <LinearGradient
-          end={{ x: 1, y: 1 }}
-          start={{ x: 1, y: 1 }}
-          colors={[WHITE, WHITE]}
-          style={{
-            opacity: editable ? 1 : 0.5,
-            borderRadius: 7,
-            height: height,
-            flexDirection: 'row',
-            borderColor: GRAY,
-          }}>
-          {isPhonenumber && (
-            <View
-              style={{
-                width: WIDTH * 0.13,
-                height: '100%',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
-              <Text
-                style={{
-                  fontSize: RFValue(14),
-                  color: BLACK,
-                  fontFamily: EXTRABOLD,
-                  fontWeight: 'bold',
-                }}>
-                +91
-              </Text>
-            </View>
-          )}
-          <TextInput
-            onPressIn={hasActionOnFocus ? onPressIn : null}
-            autoFocus={autoFocus}
-            secureTextEntry={secureTextEntry}
-            editable={editable}
-            textAlignVertical={textAlignVertical}
-            numberOfLines={numberOfLines}
-            multiline={multiline}
-            onChangeText={txt => {
-              // if (!/[0-9,.*-@]/.test(txt.slice(-1))) {
-              if (hasCallback) {
-                callbackMethod(txt);
-              }
-              if (hasExtraCallback) {
-                extraCallbackMethod(txt);
-              }
-              onChangeText(txt);
-              // } else {
-              // }
-            }}
-            autoCapitalize={autoCapitalize}
-            value={value}
-            placeholder={placeholder}
-            placeholderTextColor={'#787878'}
-            style={{
-              ...Styles.inputTextStyle,
-            }}
-            keyboardType={keyboardType}
-            maxLength={maxLength}
-          />
-        </LinearGradient>
+      ) : null}
+      <View style={[styles.inputWrap, { height }, !editable && styles.inputDisabled]}>
+        {isPhonenumber && (
+          <View style={styles.phonePrefix}>
+            <Text style={styles.phonePrefixText}>+91</Text>
+          </View>
+        )}
+        <TextInput
+          onPressIn={hasActionOnFocus ? onPressIn : null}
+          autoFocus={autoFocus}
+          secureTextEntry={secureTextEntry}
+          editable={editable}
+          textAlignVertical={textAlignVertical}
+          numberOfLines={numberOfLines}
+          multiline={multiline}
+          onChangeText={txt => {
+            if (hasCallback) callbackMethod(txt);
+            if (hasExtraCallback) extraCallbackMethod(txt);
+            onChangeText(txt);
+          }}
+          autoCapitalize={autoCapitalize}
+          value={value}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textPlaceholder}
+          style={styles.input}
+          keyboardType={keyboardType}
+          maxLength={maxLength}
+        />
       </View>
     </View>
   );
 };
-const Styles = StyleSheet.create({
-  viewForTextInput: {
-    ...STYLES.elevation,
-    height: 60,
-    alignSelf: 'center',
-    borderRadius: 7,
-    borderWidth: 0.6,
-    borderColor: GRAY,
-    marginTop: 5,
-    // backgroundColor: 'red',
+
+const styles = StyleSheet.create({
+  wrapper: {
+    marginBottom: spacing.md,
   },
-  inputTextStyle: {
-    fontSize: RFValue(13),
-    color: BLACK,
-    fontFamily: EXTRABOLD,
-    fontWeight: 'bold',
-    marginLeft: 5,
+  label: {
+    fontSize: typography.sm,
+    fontWeight: typography.semibold,
+    color: colors.textSecondary,
+    marginBottom: spacing.xxs,
+  },
+  mandatory: {
+    color: colors.error,
+  },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+  },
+  inputDisabled: {
+    opacity: 0.7,
+    backgroundColor: colors.borderLight,
+  },
+  phonePrefix: {
+    paddingRight: spacing.xs,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+    marginRight: spacing.xs,
+    justifyContent: 'center',
+  },
+  phonePrefixText: {
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+    fontWeight: typography.medium,
+  },
+  input: {
     flex: 1,
-    paddingLeft: 10,
+    fontSize: typography.base,
+    color: colors.text,
+    paddingVertical: spacing.sm,
+    paddingLeft: 0,
   },
 });

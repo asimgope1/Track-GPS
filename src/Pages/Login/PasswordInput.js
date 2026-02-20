@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TextInput } from 'react-native-paper';
-import { HEIGHT, WIDTH } from '../../constants/config';
-import { GRAY, GREEN } from '../../constants/color';
+import { colors } from '../../theme';
+import { loginStyles } from './LoginStyles';
 
 const PasswordInput = ({ password, setPassword }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -9,23 +9,19 @@ const PasswordInput = ({ password, setPassword }) => {
   return (
     <TextInput
       label="Password"
-      style={{
-        width: WIDTH * 0.8,
-        marginTop: HEIGHT * 0.02,
-        backgroundColor: 'white',
-      }}
+      style={loginStyles.inputWrap}
       mode="outlined"
-      outlineColor={GREEN}
-      activeOutlineColor={GREEN}
-      placeholder="Password"
+      outlineColor={colors.border}
+      activeOutlineColor={colors.primary}
+      placeholder="Enter password"
       secureTextEntry={!showPassword}
-      placeholderTextColor={GRAY}
+      placeholderTextColor={colors.textPlaceholder}
       value={password}
-      onChangeText={text => setPassword(text)}
+      onChangeText={setPassword}
       right={
         <TextInput.Icon
           icon={showPassword ? 'eye-off' : 'eye'}
-          color={GRAY}
+          color={colors.textMuted}
           onPress={() => setShowPassword(!showPassword)}
         />
       }
