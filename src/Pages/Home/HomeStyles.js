@@ -57,7 +57,7 @@ export const styles = StyleSheet.create({
     bottom: 50,
     right: spacing.sm,
     padding: spacing.md,
-    backgroundColor: colors.surface,
+    backgroundColor: 'transparent',
     borderRadius: radius.sm,
     ...shadows.sm,
   },
