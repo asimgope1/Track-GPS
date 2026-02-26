@@ -194,16 +194,17 @@ const FleetDashboard = (navigation) => {
     setRefreshing(false);
   };
 
-  // ─── Card gradient presets ────────────────────────────────────────────────
+  // ─── Card gradient presets (opaque enough for light AND dark backgrounds) ──
+  const gOpacity = c.isDark ? [0.30, 0.12] : [0.18, 0.08];
   const G = {
-    indigo:   ['rgba(79,70,229,0.30)', 'rgba(99,102,241,0.12)'],
-    green:    ['rgba(52,211,153,0.28)', 'rgba(16,185,129,0.10)'],
-    amber:    ['rgba(251,191,36,0.28)', 'rgba(245,158,11,0.10)'],
-    red:      ['rgba(248,113,113,0.28)', 'rgba(239,68,68,0.10)'],
-    blue:     ['rgba(96,165,250,0.28)', 'rgba(59,130,246,0.10)'],
-    purple:   ['rgba(167,139,250,0.28)', 'rgba(139,92,246,0.10)'],
-    teal:     ['rgba(45,212,191,0.28)', 'rgba(20,184,166,0.10)'],
-    orange:   ['rgba(251,146,60,0.28)', 'rgba(249,115,22,0.10)'],
+    indigo:   [`rgba(79,70,229,${gOpacity[0]})`,  `rgba(99,102,241,${gOpacity[1]})`],
+    green:    [`rgba(52,211,153,${gOpacity[0]})`,  `rgba(16,185,129,${gOpacity[1]})`],
+    amber:    [`rgba(251,191,36,${gOpacity[0]})`,  `rgba(245,158,11,${gOpacity[1]})`],
+    red:      [`rgba(248,113,113,${gOpacity[0]})`, `rgba(239,68,68,${gOpacity[1]})`],
+    blue:     [`rgba(96,165,250,${gOpacity[0]})`,  `rgba(59,130,246,${gOpacity[1]})`],
+    purple:   [`rgba(167,139,250,${gOpacity[0]})`, `rgba(139,92,246,${gOpacity[1]})`],
+    teal:     [`rgba(45,212,191,${gOpacity[0]})`,  `rgba(20,184,166,${gOpacity[1]})`],
+    orange:   [`rgba(251,146,60,${gOpacity[0]})`,  `rgba(249,115,22,${gOpacity[1]})`],
     glass:    [c.cardBg, c.surface],
   };
 

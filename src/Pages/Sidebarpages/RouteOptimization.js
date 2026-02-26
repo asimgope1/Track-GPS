@@ -21,9 +21,12 @@ import Slider from '@react-native-community/slider';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import Toast from 'react-native-toast-message';
-import theme from '../../theme';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 const RouteOptimization = ({ navigation }) => {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => makeStyles(theme), [theme]);
+  const placesStyles = React.useMemo(() => makePlacesStyles(theme), [theme]);
   // API Configuration - Store these securely in environment variables
   const ORS_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImRhZmY2MTE0ZmNhYzRhZjViYTUyZjY0ZWMyMTRlYTI5IiwiaCI6Im11cm11cjY0In0=';
   const GOOGLE_PLACES_API_KEY = 'AIzaSyDjCX0hCACCUVwfOsI5uWVouJv7rJtGgn0';
@@ -469,7 +472,7 @@ const RouteOptimization = ({ navigation }) => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle={isDark ? 'light-content' : 'dark-content'} />
       <Header
         title="Route Optimization"
         onMenuPress={() => navigation.openDrawer()}
@@ -823,33 +826,33 @@ const RouteOptimization = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  vehicleBar: { flexDirection: 'row', padding: theme.spacing.md, backgroundColor: theme.colors.background },
+const makeStyles = (theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: 'transparent' },
+  vehicleBar: { flexDirection: 'row', padding: theme.spacing.md, backgroundColor: 'transparent' },
   vehicleOption: {
     flex: 1, alignItems: 'center', padding: theme.spacing.sm, borderRadius: theme.radius.md, marginHorizontal: 4,
-    borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1.5, borderColor: theme.colors.inputBorder, backgroundColor: theme.colors.inputBg,
     ...theme.shadows.sm
   },
   vehicleOptionSelected: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
   vehicleText: { fontSize: theme.typography.xs, marginTop: 4, color: theme.colors.textSecondary, fontWeight: theme.typography.semibold },
   vehicleTextSelected: { color: theme.colors.white },
-  mapContainer: { height: 350, margin: theme.spacing.md, borderRadius: theme.radius.xl, overflow: 'hidden', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', ...theme.shadows.lg },
+  mapContainer: { height: 350, margin: theme.spacing.md, borderRadius: theme.radius.xl, overflow: 'hidden', borderWidth: 1.5, borderColor: theme.colors.inputBorder, ...theme.shadows.lg },
   map: { flex: 1 },
   mapControl: {
     position: 'absolute',
     bottom: theme.spacing.md,
     right: theme.spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.colors.cardBg,
     padding: theme.spacing.sm,
     borderRadius: theme.radius.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     ...theme.shadows.md,
   },
   statsContainer: {
-    flexDirection: 'row', backgroundColor: 'rgba(255, 255, 255, 0.12)', margin: theme.spacing.md, padding: theme.spacing.lg, borderRadius: theme.radius.xl,
-    borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)',
+    flexDirection: 'row', backgroundColor: theme.colors.cardBg, margin: theme.spacing.md, padding: theme.spacing.lg, borderRadius: theme.radius.xl,
+    borderWidth: 1.5, borderColor: theme.colors.inputBorder,
     ...theme.shadows.md
   },
   statItem: { flex: 1, alignItems: 'center' },
@@ -863,8 +866,8 @@ const styles = StyleSheet.create({
   stopsScrollView: { maxHeight: 120 },
   stopsContainer: { flexDirection: 'row', paddingVertical: theme.spacing.xs },
   stopCard: {
-    width: 160, backgroundColor: 'rgba(255, 255, 255, 0.12)', padding: theme.spacing.md, marginRight: theme.spacing.md, borderRadius: theme.radius.lg,
-    borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)',
+    width: 160, backgroundColor: theme.colors.cardBg, padding: theme.spacing.md, marginRight: theme.spacing.md, borderRadius: theme.radius.lg,
+    borderWidth: 1.5, borderColor: theme.colors.inputBorder,
     ...theme.shadows.sm
   },
   stopHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
@@ -884,7 +887,7 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.md,
   },
   addStopText: { color: theme.colors.primary, marginTop: 4, fontSize: theme.typography.sm, fontWeight: theme.typography.semibold },
-  placesContainer: { margin: theme.spacing.md, backgroundColor: 'rgba(255, 255, 255, 0.12)', borderRadius: theme.radius.xl, padding: theme.spacing.sm, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', ...theme.shadows.md },
+  placesContainer: { margin: theme.spacing.md, backgroundColor: theme.colors.cardBg, borderRadius: theme.radius.xl, padding: theme.spacing.sm, borderWidth: 1.5, borderColor: theme.colors.inputBorder, ...theme.shadows.md },
   searchHeader: {
     flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingHorizontal: 5
   },
@@ -894,34 +897,34 @@ const styles = StyleSheet.create({
   actionButtons: { flexDirection: 'row', margin: theme.spacing.md, gap: theme.spacing.md },
   button: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: theme.spacing.md, borderRadius: theme.radius.md, gap: 8 },
   primaryButton: { backgroundColor: theme.colors.primary, ...theme.shadows.glow },
-  secondaryButton: { backgroundColor: 'rgba(255, 255, 255, 0.08)', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)' },
+  secondaryButton: { backgroundColor: theme.colors.inputBg, borderWidth: 1.5, borderColor: theme.colors.inputBorder },
   disabledButton: { opacity: 0.6 },
   primaryButtonText: { color: theme.colors.white, fontWeight: theme.typography.bold, fontSize: theme.typography.base },
   secondaryButtonText: { color: theme.colors.primary, fontWeight: theme.typography.bold, fontSize: theme.typography.base },
   savedRoute: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.12)', padding: theme.spacing.lg,
-    borderRadius: theme.radius.lg, marginBottom: theme.spacing.sm, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', ...theme.shadows.sm
+    flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.cardBg, padding: theme.spacing.lg,
+    borderRadius: theme.radius.lg, marginBottom: theme.spacing.sm, borderWidth: 1.5, borderColor: theme.colors.inputBorder, ...theme.shadows.sm
   },
   routeInfo: { flex: 1, marginLeft: theme.spacing.md },
   routeName: { fontSize: theme.typography.base, fontWeight: theme.typography.semibold, color: theme.colors.text },
   routeDetails: { fontSize: theme.typography.sm, color: theme.colors.textSecondary, marginTop: 2 },
   routeDate: { fontSize: theme.typography.xs, color: theme.colors.textMuted },
-  modalContainer: { flex: 1, backgroundColor: theme.colors.background },
+  modalContainer: { flex: 1, backgroundColor: 'transparent' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: theme.spacing.lg, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
   modalTitle: { fontSize: theme.typography.xl, fontWeight: theme.typography.bold, color: theme.colors.text },
   settingGroup: { padding: theme.spacing.lg, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
   settingGroupTitle: { fontSize: theme.typography.lg, fontWeight: theme.typography.semibold, color: theme.colors.text, marginBottom: theme.spacing.md },
   settingLabel: { fontSize: theme.typography.sm, color: theme.colors.textSecondary, marginBottom: theme.spacing.sm, fontWeight: theme.typography.medium },
-  input: { backgroundColor: 'rgba(255, 255, 255, 0.08)', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', borderRadius: theme.radius.md, padding: theme.spacing.md, fontSize: theme.typography.base, color: theme.colors.text, ...theme.shadows.sm },
+  input: { backgroundColor: theme.colors.inputBg, borderWidth: 1.5, borderColor: theme.colors.inputBorder, borderRadius: theme.radius.md, padding: theme.spacing.md, fontSize: theme.typography.base, color: theme.colors.text, ...theme.shadows.sm },
   switchSetting: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: theme.spacing.sm },
   switchLabel: { fontSize: theme.typography.base, color: theme.colors.text, fontWeight: theme.typography.medium },
   sliderValue: { textAlign: 'center', color: theme.colors.textSecondary, marginTop: theme.spacing.sm, fontWeight: theme.typography.medium },
   centerModal: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.7)' },
-  saveModalContent: { backgroundColor: 'rgba(255, 255, 255, 0.12)', padding: theme.spacing.xl, borderRadius: theme.radius.xl, width: '85%', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', ...theme.shadows.lg },
-  textInput: { backgroundColor: 'rgba(255, 255, 255, 0.08)', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)', borderRadius: theme.radius.md, padding: theme.spacing.md, marginVertical: theme.spacing.md, fontSize: theme.typography.base, color: theme.colors.text, ...theme.shadows.sm },
+  saveModalContent: { backgroundColor: theme.colors.cardBg, padding: theme.spacing.xl, borderRadius: theme.radius.xl, width: '85%', borderWidth: 1.5, borderColor: theme.colors.inputBorder, ...theme.shadows.lg },
+  textInput: { backgroundColor: theme.colors.inputBg, borderWidth: 1.5, borderColor: theme.colors.inputBorder, borderRadius: theme.radius.md, padding: theme.spacing.md, marginVertical: theme.spacing.md, fontSize: theme.typography.base, color: theme.colors.text, ...theme.shadows.sm },
   modalButtons: { flexDirection: 'row', gap: theme.spacing.md, marginTop: theme.spacing.sm },
   modalButton: { flex: 1, padding: theme.spacing.md, borderRadius: theme.radius.md, alignItems: 'center', minHeight: 52, justifyContent: 'center' },
-  cancelButton: { backgroundColor: theme.colors.borderLight },
+  cancelButton: { backgroundColor: theme.colors.surface },
   saveModalButton: { backgroundColor: theme.colors.primary, ...theme.shadows.glow },
   cancelButtonText: { color: theme.colors.textSecondary, fontWeight: theme.typography.bold, fontSize: theme.typography.base },
   saveModalButtonText: { color: theme.colors.white, fontWeight: theme.typography.bold, fontSize: theme.typography.base },
@@ -964,19 +967,19 @@ const styles = StyleSheet.create({
   }
 });
 
-const placesStyles = {
+const makePlacesStyles = (theme) => ({
   container: { flex: 0 },
   textInputContainer: {
     backgroundColor: 'transparent',
     borderBottomWidth: 0
   },
   textInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.md,
     fontSize: theme.typography.base,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     height: 52,
     color: theme.colors.text,
   },
@@ -985,12 +988,12 @@ const placesStyles = {
     color: theme.colors.text,
   },
   listView: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.colors.cardBg,
     borderRadius: theme.radius.md,
     maxHeight: 220,
     zIndex: 999,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     marginTop: theme.spacing.xs,
     ...theme.shadows.lg,
   },
@@ -998,7 +1001,7 @@ const placesStyles = {
     padding: theme.spacing.md,
     borderBottomColor: theme.colors.border,
   }
-};
+});
 
 
 export default RouteOptimization;

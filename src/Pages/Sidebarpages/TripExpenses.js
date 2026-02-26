@@ -26,10 +26,13 @@ import { getObjByKey } from '../../utils/Storage';
 import { Calendar } from 'react-native-calendars';
 import Toast from 'react-native-toast-message';
 import moment from 'moment';
-import theme from '../../theme';
-import { formStyles } from '../../styles/FormStyles';
+import { useAppTheme } from '../../theme/ThemeContext';
+import { makeFormStyles } from '../../styles/FormStyles';
 
 const TripExpenses = ({ navigation, onClose }) => {
+  const { theme, isDark } = useAppTheme();
+  const formStyles = makeFormStyles(theme);
+  const styles = React.useMemo(() => makeStyles(theme), [theme]);
   const statusBarHeight = useStatusBarHeight();
   const [trips, setTrips] = useState([]);
   const [expenses, setExpenses] = useState([]);
@@ -408,7 +411,7 @@ const TripExpenses = ({ navigation, onClose }) => {
 
   return (
     <>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle={isDark ? 'light-content' : 'dark-content'} />
       <Header
         title="Trip Expenses"
         onMenuPress={handleMenuPress}
@@ -593,16 +596,16 @@ const TripExpenses = ({ navigation, onClose }) => {
                   theme={{
                 backgroundColor: 'transparent',
                 calendarBackground: 'transparent',
-                textSectionTitleColor: '#E2E8F0',
-                selectedDayBackgroundColor: '#4F46E5',
+                textSectionTitleColor: theme.colors.textSecondary,
+                selectedDayBackgroundColor: theme.colors.primary,
                 selectedDayTextColor: '#FFFFFF',
-                todayTextColor: '#818CF8',
-                dayTextColor: '#FFFFFF',
-                textDisabledColor: '#94A3B8',
-                dotColor: '#4F46E5',
+                todayTextColor: theme.colors.primary,
+                dayTextColor: theme.colors.text,
+                textDisabledColor: theme.colors.textMuted,
+                dotColor: theme.colors.primary,
                 selectedDotColor: '#FFFFFF',
-                arrowColor: '#4F46E5',
-                monthTextColor: '#FFFFFF',
+                arrowColor: theme.colors.primary,
+                monthTextColor: theme.colors.text,
                 textDayFontWeight: '500',
                 textMonthFontWeight: 'bold',
                 textDayHeaderFontWeight: '600',
@@ -724,10 +727,10 @@ const TripExpenses = ({ navigation, onClose }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   scrollContainer: {
     padding: theme.spacing.lg,
@@ -747,12 +750,12 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   tripCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.colors.cardBg,
     borderRadius: theme.radius.xl,
     padding: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
     ...theme.shadows.lg,
   },
   tripHeader: {
@@ -810,10 +813,12 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   expenseItem: {
-    backgroundColor: theme.colors.borderLight,
+    backgroundColor: theme.colors.surface,
     padding: theme.spacing.sm,
     borderRadius: theme.radius.sm,
     marginBottom: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   expenseRow: {
     flexDirection: 'row',

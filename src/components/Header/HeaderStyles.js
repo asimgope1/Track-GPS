@@ -26,7 +26,6 @@ export const headerStyles = StyleSheet.create({
   enhancedHeaderTitle: {
     fontSize: typography.md,
     fontWeight: typography.semibold,
-    color: colors.white,
     letterSpacing: 0.2,
   },
 });

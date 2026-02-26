@@ -47,7 +47,7 @@ const Header = ({ title, onMenuPress, rightIcon = null, showCloseButton = false 
           <Icon
             name={isDark ? 'wb-sunny' : 'nightlight-round'}
             size={22}
-            color={isDark ? '#FBBF24' : '#FCD34D'}
+            color={isDark ? '#FBBF24' : '#6366F1'}
           />
         </TouchableOpacity>
 

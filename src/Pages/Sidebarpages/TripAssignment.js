@@ -24,9 +24,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
 import { Icon } from '@rneui/themed';
-import theme from '../../theme';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 const TripAssignment = ({ navigation }) => {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => makeStyles(theme), [theme]);
   const statusBarHeight = useStatusBarHeight();
   const [tripTime, setTripTime] = useState(new Date());
   const [driverName, setDriverName] = useState('');
@@ -430,7 +432,7 @@ const TripAssignment = ({ navigation }) => {
 
   return (
     <>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle={isDark ? 'light-content' : 'dark-content'} />
       <Header
         title="Trip Assignment"
         onMenuPress={() => navigation.openDrawer()}
@@ -689,16 +691,16 @@ const TripAssignment = ({ navigation }) => {
                   theme={{
                 backgroundColor: 'transparent',
                 calendarBackground: 'transparent',
-                textSectionTitleColor: '#E2E8F0',
+                textSectionTitleColor: theme.colors.textSecondary,
                 selectedDayBackgroundColor: '#4F46E5',
                 selectedDayTextColor: '#FFFFFF',
-                todayTextColor: '#818CF8',
-                dayTextColor: '#FFFFFF',
-                textDisabledColor: '#94A3B8',
+                todayTextColor: theme.colors.primary,
+                dayTextColor: theme.colors.text,
+                textDisabledColor: theme.colors.textMuted,
                 dotColor: '#4F46E5',
                 selectedDotColor: '#FFFFFF',
-                arrowColor: '#4F46E5',
-                monthTextColor: '#FFFFFF',
+                arrowColor: theme.colors.primary,
+                monthTextColor: theme.colors.text,
                 textDayFontWeight: '500',
                 textMonthFontWeight: 'bold',
                 textDayHeaderFontWeight: '600',
@@ -773,10 +775,10 @@ const TripAssignment = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   scrollContainer: {
     padding: theme.spacing.lg,
@@ -800,24 +802,24 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     height: 52,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     fontSize: theme.typography.base,
     ...theme.shadows.sm,
   },
   dropdown: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.colors.inputBg,
+    borderColor: theme.colors.inputBorder,
     borderWidth: 1.5,
     borderRadius: theme.radius.md,
     height: 52,
     ...theme.shadows.sm,
   },
   dropdownContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.colors.cardBg,
+    borderColor: theme.colors.inputBorder,
     borderWidth: 1.5,
     marginTop: 2,
     borderRadius: theme.radius.md,
@@ -842,9 +844,9 @@ const styles = StyleSheet.create({
     height: 52,
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     paddingHorizontal: theme.spacing.md,
     ...theme.shadows.sm,
   },
@@ -857,11 +859,11 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     height: 120,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
     padding: theme.spacing.md,
     textAlignVertical: 'top',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     fontSize: theme.typography.base,
     ...theme.shadows.sm,
   },
@@ -985,14 +987,14 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.medium,
   },
   summaryContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.colors.cardBg,
     borderLeftWidth: 4,
     borderLeftColor: theme.colors.primary,
     padding: theme.spacing.lg,
     borderRadius: theme.radius.lg,
     marginTop: theme.spacing.md,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     ...theme.shadows.md,
   },
   summaryTitle: {

@@ -25,7 +25,6 @@ import TripStart from '../Sidebarpages/TripStart';
 import TripStop from '../Sidebarpages/TripStop';
 import TripExpenses from '../Sidebarpages/TripExpenses';
 import { useAppTheme } from '../../theme/ThemeContext';
-import theme from '../../theme';
 
 const Dashboard = ({ navigation }) => {
   const [showTripStartModal, setShowTripStartModal] = useState(false);
@@ -293,22 +292,22 @@ const Dashboard = ({ navigation }) => {
 
       <View style={styles.tripDetails}>
         <View style={styles.detailRow}>
-          <Icon source="calendar" size={16} color="#555" />
+          <Icon source="calendar" size={16} color={theme.colors.textMuted} />
           <Text style={dynamicStyles.detailText}>
             {formatDateTime(trip.scheduled_datetime)}
           </Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Icon source="car" size={16} color="#555" />
-          <Text style={styles.detailText}>
+          <Icon source="car" size={16} color={theme.colors.textMuted} />
+          <Text style={dynamicStyles.detailText}>
             {trip.thing_name || 'No vehicle assigned'}
           </Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Icon source="account" size={16} color="#555" />
-          <Text style={styles.detailText}>
+          <Icon source="account" size={16} color={theme.colors.textMuted} />
+          <Text style={dynamicStyles.detailText}>
             {trip.driver_name || 'No driver assigned'}
           </Text>
         </View>
@@ -561,26 +560,26 @@ const Dashboard = ({ navigation }) => {
                           </View>
 
                           <View style={styles.modalDetail}>
-                            <Text style={styles.modalLabel}>Driver</Text>
-                            <Text style={styles.modalValue}>
+                            <Text style={dynamicStyles.modalLabel}>Driver</Text>
+                            <Text style={dynamicStyles.modalValue}>
                               {selectedTrip.driver_name || 'Not assigned'}
                             </Text>
                           </View>
 
                           <View style={styles.modalDetail}>
-                            <Text style={styles.modalLabel}>
+                            <Text style={dynamicStyles.modalLabel}>
                               Estimated Distance
                             </Text>
-                            <Text style={styles.modalValue}>
+                            <Text style={dynamicStyles.modalValue}>
                               {selectedTrip.estimated_distance} km
                             </Text>
                           </View>
 
                           <View style={styles.modalDetail}>
-                            <Text style={styles.modalLabel}>
+                            <Text style={dynamicStyles.modalLabel}>
                               Estimated Fuel
                             </Text>
-                            <Text style={styles.modalValue}>
+                            <Text style={dynamicStyles.modalValue}>
                               {selectedTrip.estimated_fuel} L
                             </Text>
                           </View>
@@ -595,7 +594,7 @@ const Dashboard = ({ navigation }) => {
                                     setModalVisible(false);
                                   }}>
                                   <Icon source="play" size={16} color="#fff" />
-                                  <Text style={styles.buttonText}>
+                                  <Text style={dynamicStyles.buttonText}>
                                     Start Trip
                                   </Text>
                                 </TouchableOpacity>
@@ -606,7 +605,7 @@ const Dashboard = ({ navigation }) => {
                                     setModalVisible(false);
                                   }}>
                                   <Icon source="stop" size={16} color="#fff" />
-                                  <Text style={styles.buttonText}>
+                                  <Text style={dynamicStyles.buttonText}>
                                     Stop Trip
                                   </Text>
                                 </TouchableOpacity>
@@ -621,7 +620,7 @@ const Dashboard = ({ navigation }) => {
                                     setModalVisible(false);
                                   }}>
                                   <Icon source="stop" size={16} color="#fff" />
-                                  <Text style={styles.buttonText}>
+                                  <Text style={dynamicStyles.buttonText}>
                                     Stop Trip
                                   </Text>
                                 </TouchableOpacity>
@@ -632,7 +631,7 @@ const Dashboard = ({ navigation }) => {
                                     setModalVisible(false);
                                   }}>
                                   <Icon source="cash" size={16} color="#fff" />
-                                  <Text style={styles.buttonText}>
+                                  <Text style={dynamicStyles.buttonText}>
                                     Add Expense
                                   </Text>
                                 </TouchableOpacity>
@@ -742,14 +741,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   activeFilter: {
     backgroundColor: '#3b82f6',
   },
   filterText: {
     fontSize: 14,
-    color: '#64748b',
     fontWeight: '500',
   },
   activeFilterText: {

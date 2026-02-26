@@ -27,9 +27,11 @@ import Geolocation from '@react-native-community/geolocation';
 import { useFocusEffect } from '@react-navigation/native';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
-import theme from '../../theme';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 const VehicleBreakdown = ({ navigation }) => {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => makeStyles(theme), [theme]);
   const statusBarHeight = useStatusBarHeight();
   const [incidentId, setIncidentId] = useState('');
   const [attachments, setAttachments] = useState([]);
@@ -552,7 +554,7 @@ const VehicleBreakdown = ({ navigation }) => {
 
   return (
     <>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle={isDark ? 'light-content' : 'dark-content'} />
       <Header
         onMenuPress={() => navigation.openDrawer()}
         title="Vehicle Breakdown"
@@ -850,22 +852,22 @@ const VehicleBreakdown = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   scrollContainer: {
     padding: theme.spacing.lg,
     paddingBottom: theme.spacing.xxl,
   },
   progressContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.colors.cardBg,
     padding: theme.spacing.md,
     borderRadius: theme.radius.md,
     marginBottom: theme.spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderLeftWidth: 4,
     borderLeftColor: theme.colors.primary,
     ...theme.shadows.sm,
@@ -898,11 +900,11 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     minHeight: 52,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     fontSize: theme.typography.base,
     ...theme.shadows.sm,
   },
@@ -923,16 +925,16 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   dropdown: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.colors.inputBg,
+    borderColor: theme.colors.inputBorder,
     borderWidth: 1.5,
     borderRadius: theme.radius.md,
     height: 52,
     ...theme.shadows.sm,
   },
   dropdownContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.colors.cardBg,
+    borderColor: theme.colors.inputBorder,
     borderWidth: 1.5,
     marginTop: 2,
     borderRadius: theme.radius.md,
@@ -957,9 +959,9 @@ const styles = StyleSheet.create({
     height: 52,
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     paddingHorizontal: theme.spacing.md,
     ...theme.shadows.sm,
   },
@@ -971,9 +973,9 @@ const styles = StyleSheet.create({
   attachmentButton: {
     height: 52,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     justifyContent: 'center',
     alignItems: 'center',
     ...theme.shadows.sm,
@@ -1020,10 +1022,10 @@ const styles = StyleSheet.create({
   },
   attachmentPreviewContainer: {
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
     padding: theme.spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     position: 'relative',
     ...theme.shadows.sm,
   },
@@ -1082,14 +1084,14 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.medium,
   },
   summaryContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.colors.cardBg,
     borderLeftWidth: 4,
     borderLeftColor: theme.colors.primary,
     padding: theme.spacing.lg,
     borderRadius: theme.radius.lg,
     marginTop: theme.spacing.md,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     ...theme.shadows.md,
   },
   summaryTitle: {

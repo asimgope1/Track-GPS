@@ -22,9 +22,11 @@ import StarRating from 'react-native-star-rating-widget';
 import { useFocusEffect } from '@react-navigation/native';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
-import theme from '../../theme';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 const DriverRating = ({ navigation }) => {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => makeStyles(theme), [theme]);
   const statusBarHeight = useStatusBarHeight();
   // State for dropdowns
   const [tripNameOpen, setTripNameOpen] = useState(false);
@@ -350,7 +352,7 @@ const DriverRating = ({ navigation }) => {
 
   return (
     <>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle={isDark ? 'light-content' : 'dark-content'} />
       <Header
         title="Driver Rating"
         onMenuPress={() => navigation.openDrawer()}
@@ -477,10 +479,10 @@ const DriverRating = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     padding: theme.spacing.lg,
@@ -499,16 +501,16 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   dropdown: {
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.colors.inputBorder,
+    backgroundColor: theme.colors.inputBg,
     borderRadius: theme.radius.md,
     minHeight: 52,
     borderWidth: 1.5,
     ...theme.shadows.sm,
   },
   dropdownContainer: {
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: theme.colors.inputBorder,
+    backgroundColor: theme.colors.cardBg,
     borderWidth: 1.5,
     borderRadius: theme.radius.md,
     maxHeight: 300,
@@ -538,11 +540,11 @@ const styles = StyleSheet.create({
   },
   tableContainer: {
     marginBottom: theme.spacing.lg,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.colors.cardBg,
     borderRadius: theme.radius.lg,
     padding: theme.spacing.md,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     ...theme.shadows.lg,
   },
   tableRow: {
@@ -551,7 +553,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: theme.spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.borderLight,
+    borderBottomColor: theme.colors.surface,
   },
   itemNameContainer: {
     flex: 1,
@@ -584,8 +586,8 @@ const styles = StyleSheet.create({
     width: 120,
   },
   statusDropdown: {
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.colors.inputBorder,
+    backgroundColor: theme.colors.inputBg,
     borderRadius: theme.radius.sm,
     minHeight: 40,
     borderWidth: 1.5,
@@ -608,9 +610,9 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   commentInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
     padding: theme.spacing.md,
     minHeight: 120,

@@ -29,10 +29,13 @@ import { BASE_URL } from '../../constants/url';
 import { getObjByKey, storeObjByKey } from '../../utils/Storage';
 import { Icon } from '@rneui/themed';
 import { pick } from '@react-native-documents/picker';
-import theme from '../../theme';
-import { formStyles } from '../../styles/FormStyles';
+import { useAppTheme } from '../../theme/ThemeContext';
+import { makeFormStyles } from '../../styles/FormStyles';
 
 const TripStart = ({ navigation, route, onClose }) => {
+  const { theme, isDark } = useAppTheme();
+  const formStyles = makeFormStyles(theme);
+  const styles = React.useMemo(() => makeStyles(theme), [theme]);
   const statusBarHeight = useStatusBarHeight();
   // Form state
   const [startDatetime, setStartDatetime] = useState(new Date());
@@ -459,7 +462,7 @@ const TripStart = ({ navigation, route, onClose }) => {
 
   return (
     <>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle={isDark ? 'light-content' : 'dark-content'} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={formStyles.container}
@@ -654,7 +657,7 @@ const TripStart = ({ navigation, route, onClose }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme) => StyleSheet.create({
   locationButton: {
     backgroundColor: theme.colors.primary,
     paddingHorizontal: theme.spacing.sm,
@@ -692,8 +695,8 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
   statusDropdown: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.colors.inputBg,
+    borderColor: theme.colors.inputBorder,
     borderWidth: 1.5,
     borderRadius: theme.radius.md,
     minHeight: 52,
@@ -738,10 +741,10 @@ const styles = StyleSheet.create({
   },
   attachmentPreviewContainer: {
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.border,
     borderRadius: theme.radius.md,
     padding: theme.spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.surface,
     position: 'relative',
     ...theme.shadows.sm,
   },
@@ -772,9 +775,9 @@ const styles = StyleSheet.create({
   attachmentButton: {
     minHeight: 52,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.border,
     borderRadius: theme.radius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     justifyContent: 'center',
     alignItems: 'center',
     ...theme.shadows.sm,

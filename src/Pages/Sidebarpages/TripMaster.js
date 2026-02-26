@@ -20,7 +20,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
 import { useAppTheme } from '../../theme/ThemeContext';
-import theme from '../../theme';
 const TripMaster = ({ navigation }) => {
   const { theme, isDark } = useAppTheme();
   

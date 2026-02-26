@@ -28,10 +28,12 @@ import { useStatusBarHeight } from '../../constants/config';
 import { BASE_URL } from '../../constants/url';
 import { getObjByKey, storeObjByKey } from '../../utils/Storage';
 import { Icon } from '@rneui/themed';
-import theme from '../../theme';
+import { useAppTheme } from '../../theme/ThemeContext';
 import { pick } from '@react-native-documents/picker';
 
 const TripStop = ({ navigation, route, onClose }) => {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => makeStyles(theme), [theme]);
   const statusBarHeight = useStatusBarHeight();
   // Form state
   const [stopDatetime, setStopDatetime] = useState(new Date());
@@ -418,7 +420,7 @@ const TripStop = ({ navigation, route, onClose }) => {
 
   return (
     <>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle={isDark ? 'light-content' : 'dark-content'} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
@@ -647,10 +649,10 @@ const TripStop = ({ navigation, route, onClose }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   scrollContainer: {
     padding: theme.spacing.lg,
@@ -669,18 +671,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: theme.colors.text,
+    color: theme.colors.textSecondary,
     marginBottom: 6,
   },
   input: {
     color: theme.colors.text,
     minHeight: 50,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.sm,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    backgroundColor: theme.colors.borderLight,
+    backgroundColor: theme.colors.inputBg,
     fontSize: theme.typography.base,
   },
   multilineInput: {
@@ -713,9 +715,9 @@ const styles = StyleSheet.create({
     minHeight: 52,
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     paddingHorizontal: theme.spacing.md,
     ...theme.shadows.sm,
   },
@@ -750,13 +752,13 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
   },
   tableContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.xl,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
     paddingBottom: theme.spacing.sm,
     marginBottom: theme.spacing.lg,
-    ...theme.shadows.lg,
+    ...theme.shadows.md,
     overflow: 'hidden',
   },
   tableRow: {
@@ -785,8 +787,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statusDropdown: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.colors.inputBg,
+    borderColor: theme.colors.inputBorder,
     borderWidth: 1.5,
     borderRadius: theme.radius.md,
     height: 48,
@@ -813,7 +815,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
   iosPickerContainer: {
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.surfaceElevated,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     padding: 20,
@@ -824,7 +826,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   iosDoneButtonText: {
-    color: '#0284c7',
+    color: theme.colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -838,7 +840,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.glow,
   },
   submitButtonDisabled: {
-    backgroundColor: '#81a8b8',
+    backgroundColor: theme.colors.textMuted,
     opacity: 0.6,
   },
   submitButtonText: {
@@ -850,7 +852,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   loadingText: {
     marginTop: 12,
@@ -862,10 +864,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   errorText: {
-    color: '#dc2626',
+    color: theme.colors.error,
     fontSize: 10,
     fontWeight: '600',
     marginTop: 12,
@@ -877,7 +879,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   retryButton: {
-    backgroundColor: '#0284c7',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 6,
@@ -890,10 +892,10 @@ const styles = StyleSheet.create({
   },
   attachmentPreviewContainer: {
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.border,
     borderRadius: theme.radius.md,
     padding: theme.spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.surface,
     position: 'relative',
     ...theme.shadows.sm,
   },
@@ -924,15 +926,15 @@ const styles = StyleSheet.create({
   attachmentButton: {
     minHeight: 52,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.border,
     borderRadius: theme.radius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     justifyContent: 'center',
     alignItems: 'center',
     ...theme.shadows.sm,
   },
   attachmentButtonText: {
-    color: theme.colors.text,
+    color: theme.colors.textSecondary,
     fontWeight: '500',
     fontSize: 14,
   },

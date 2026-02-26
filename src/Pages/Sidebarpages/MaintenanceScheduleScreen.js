@@ -23,9 +23,11 @@ import { BASE_URL } from '../../constants/url';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
 import moment from 'moment';
-import theme from '../../theme';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 const MaintenanceScheduleScreen = () => {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => makeStyles(theme), [theme]);
   const statusBarHeight = useStatusBarHeight();
   const navigation = useNavigation();
   const [selectedDate, setSelectedDate] = useState('');
@@ -384,7 +386,7 @@ const MaintenanceScheduleScreen = () => {
 
   return (
     <>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle={isDark ? 'light-content' : 'dark-content'} />
       <Header
         title="Maintenance Schedule"
         onMenuPress={() => navigation.openDrawer()}
@@ -584,16 +586,16 @@ const MaintenanceScheduleScreen = () => {
                 theme={{
                 backgroundColor: 'transparent',
                 calendarBackground: 'transparent',
-                textSectionTitleColor: '#E2E8F0',
+                textSectionTitleColor: theme.colors.textSecondary,
                 selectedDayBackgroundColor: '#4F46E5',
                 selectedDayTextColor: '#FFFFFF',
-                todayTextColor: '#818CF8',
-                dayTextColor: '#FFFFFF',
-                textDisabledColor: '#94A3B8',
+                todayTextColor: theme.colors.primary,
+                dayTextColor: theme.colors.text,
+                textDisabledColor: theme.colors.textMuted,
                 dotColor: '#4F46E5',
                 selectedDotColor: '#FFFFFF',
-                arrowColor: '#4F46E5',
-                monthTextColor: '#FFFFFF',
+                arrowColor: theme.colors.primary,
+                monthTextColor: theme.colors.text,
                 textDayFontWeight: '500',
                 textMonthFontWeight: 'bold',
                 textDayHeaderFontWeight: '600',
@@ -628,10 +630,10 @@ const MaintenanceScheduleScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   scrollContainer: {
     padding: theme.spacing.lg,
@@ -656,10 +658,10 @@ const styles = StyleSheet.create({
   input: {
     color: theme.colors.text,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     fontSize: theme.typography.base,
     minHeight: 52,
     ...theme.shadows.sm,
@@ -688,9 +690,9 @@ const styles = StyleSheet.create({
     height: 52,
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     paddingHorizontal: theme.spacing.sm,
     ...theme.shadows.sm,
   },

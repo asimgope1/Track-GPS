@@ -25,12 +25,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
 import moment from 'moment';
-import theme from '../../theme';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 const DEFAULT_STATUS_OPTIONS = [
   { label: 'OK', value: 'OK', color: '#22c55e' },
   { label: 'Attention', value: 'Attention', color: '#eab308' },
-  { label: 'Replace', value: 'Replace', color: theme.colors.error },
+  { label: 'Replace', value: 'Replace', color: '#EF4444' },
 ];
 
 const DEFAULT_INSPECTION_ITEMS = [
@@ -45,6 +45,8 @@ const DEFAULT_INSPECTION_ITEMS = [
 ];
 
 const VehicleInspection = ({ navigation }) => {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => makeStyles(theme), [theme]);
   const statusBarHeight = useStatusBarHeight();
   const [inspectorName, setInspectorName] = useState('');
   const [comments, setComments] = useState('');
@@ -165,7 +167,7 @@ const VehicleInspection = ({ navigation }) => {
     const lower = key.toLowerCase();
     if (lower === 'ok') return '#22c55e';
     if (lower === 'attention' || lower === 'repair') return '#eab308';
-    if (lower === 'replace') return theme.colors.error;
+    if (lower === 'replace') return '#EF4444';
     return '#94a3b8'; // default gray
   };
 
@@ -485,7 +487,7 @@ const VehicleInspection = ({ navigation }) => {
 
   return (
     <>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle={isDark ? 'light-content' : 'dark-content'} />
       <Header
         onMenuPress={() => navigation.openDrawer()}
         title="Vehicle Inspection"
@@ -661,16 +663,16 @@ const VehicleInspection = ({ navigation }) => {
                   theme={{
                 backgroundColor: 'transparent',
                 calendarBackground: 'transparent',
-                textSectionTitleColor: '#E2E8F0',
+                textSectionTitleColor: theme.colors.textSecondary,
                 selectedDayBackgroundColor: '#4F46E5',
                 selectedDayTextColor: '#FFFFFF',
-                todayTextColor: '#818CF8',
-                dayTextColor: '#FFFFFF',
-                textDisabledColor: '#94A3B8',
+                todayTextColor: theme.colors.primary,
+                dayTextColor: theme.colors.text,
+                textDisabledColor: theme.colors.textMuted,
                 dotColor: '#4F46E5',
                 selectedDotColor: '#FFFFFF',
-                arrowColor: '#4F46E5',
-                monthTextColor: '#FFFFFF',
+                arrowColor: theme.colors.primary,
+                monthTextColor: theme.colors.text,
                 textDayFontWeight: '500',
                 textMonthFontWeight: 'bold',
                 textDayHeaderFontWeight: '600',
@@ -794,22 +796,22 @@ const VehicleInspection = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   scrollContainer: {
     padding: theme.spacing.lg,
     paddingBottom: theme.spacing.xxl,
   },
   progressContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.colors.cardBg,
     padding: theme.spacing.md,
     borderRadius: theme.radius.lg,
     marginBottom: theme.spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     ...theme.shadows.glow,
   },
   progressText: {
@@ -849,11 +851,11 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     minHeight: 52,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     fontSize: theme.typography.base,
     ...theme.shadows.sm,
   },
@@ -874,16 +876,16 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   dropdown: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.colors.inputBg,
+    borderColor: theme.colors.inputBorder,
     borderWidth: 1.5,
     borderRadius: theme.radius.md,
     minHeight: 52,
     ...theme.shadows.sm,
   },
   dropdownContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.colors.cardBg,
+    borderColor: theme.colors.inputBorder,
     borderWidth: 1.5,
     marginTop: theme.spacing.xs,
     borderRadius: theme.radius.md,
@@ -907,9 +909,9 @@ const styles = StyleSheet.create({
     minHeight: 52,
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     borderRadius: theme.radius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.inputBg,
     paddingHorizontal: theme.spacing.sm,
     ...theme.shadows.sm,
   },
@@ -939,10 +941,10 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.semibold,
   },
   tableContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.colors.cardBg,
     borderRadius: theme.radius.xl,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: theme.colors.inputBorder,
     paddingBottom: theme.spacing.sm,
     marginBottom: theme.spacing.lg,
     overflow: 'hidden',
@@ -975,8 +977,8 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
   statusDropdown: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.colors.inputBg,
+    borderColor: theme.colors.inputBorder,
     borderWidth: 1.5,
     borderRadius: theme.radius.md,
     minHeight: 48,

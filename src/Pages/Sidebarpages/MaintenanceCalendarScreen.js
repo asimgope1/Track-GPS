@@ -24,7 +24,6 @@ import moment from 'moment';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
 import { useAppTheme } from '../../theme/ThemeContext';
-import theme from '../../theme';
 
 const { height } = Dimensions.get('window');
 
@@ -41,6 +40,7 @@ const MaintenanceCalendarScreen = () => {
   const [currentMonth, setCurrentMonth] = useState(moment().format('YYYY-MM'));
   const { theme: appTheme, isDark } = useAppTheme();
   const c = appTheme.colors;
+  const styles = React.useMemo(() => makeStyles(appTheme), [appTheme]);
 
   // Filter dropdown states
   const [vehicleOpen, setVehicleOpen] = useState(false);
@@ -890,17 +890,17 @@ const MaintenanceCalendarScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
     padding: theme.spacing.sm,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   scrollContainer: {
     paddingBottom: theme.spacing.lg,
@@ -921,9 +921,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.md,
     marginBottom: theme.spacing.md,
     borderLeftWidth: 4,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    backgroundColor: theme.colors.cardBg,
     ...theme.shadows.sm,
   },
   cardTitle: {
@@ -982,17 +982,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dropdown: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.colors.inputBg,
+    borderColor: theme.colors.inputBorder,
     borderWidth: 1.5,
     borderRadius: theme.radius.md,
     minHeight: 52,
     ...theme.shadows.sm,
   },
   dropdownContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    borderWidth: 1.5,
+    backgroundColor: theme.colors.surfaceElevated,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
     borderRadius: theme.radius.md,
     ...theme.shadows.md,
   },
@@ -1015,10 +1015,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: theme.spacing.lg,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.lg,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     ...theme.shadows.sm,
   },
   emptyText: {
@@ -1111,10 +1111,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginVertical: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.md,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     ...theme.shadows.sm,
   },
   legendItem: {
