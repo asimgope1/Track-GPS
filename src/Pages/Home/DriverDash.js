@@ -24,6 +24,7 @@ import { getObjByKey } from '../../utils/Storage';
 import TripStart from '../Sidebarpages/TripStart';
 import TripStop from '../Sidebarpages/TripStop';
 import TripExpenses from '../Sidebarpages/TripExpenses';
+import { useAppTheme } from '../../theme/ThemeContext';
 import theme from '../../theme';
 
 const Dashboard = ({ navigation }) => {
@@ -42,6 +43,124 @@ const Dashboard = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [pageLoad, setPageLoad] = useState(false);
   const [DriverId, setDriverId] = useState('');
+  const { theme, isDark } = useAppTheme();
+ 
+  // Dynamic styles that react to theme changes
+  const dynamicStyles = useMemo(() => StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: theme.colors.backgroundSolid,
+    },
+    tripCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.md,
+      padding: theme.spacing.md,
+      marginBottom: theme.spacing.md,
+      borderLeftWidth: isDark ? 4 : 0,
+      borderLeftColor: theme.colors.primary,
+      borderWidth: isDark ? 0 : 1.5,
+      borderColor: isDark ? 'transparent' : theme.colors.borderLight,
+      ...theme.shadows.sm,
+    },
+    tripName: {
+      fontSize: theme.typography.lg,
+      fontWeight: theme.typography.semibold,
+      color: theme.colors.text,
+      flex: 1,
+    },
+    detailText: {
+      marginLeft: theme.spacing.sm,
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.sm,
+    },
+    metricText: {
+      marginLeft: theme.spacing.xxs,
+      color: theme.colors.textSecondary,
+      fontWeight: theme.typography.medium,
+    },
+    filterButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      height: 34,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 20,
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.surfaceElevated,
+      borderWidth: 1,
+      borderColor: isDark ? 'transparent' : theme.colors.borderLight,
+    },
+    activeFilter: {
+      backgroundColor: theme.colors.primary,
+    },
+    filterText: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+      fontWeight: '500',
+    },
+    activeFilterText: {
+      fontSize: 14,
+      color: '#fff',
+      fontWeight: '600',
+    },
+    metricsDivider: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.border,
+    },
+    searchInput: {
+      flex: 1,
+      paddingVertical: theme.spacing.sm,
+      fontSize: theme.typography.base,
+      color: theme.colors.text,
+    },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: 48,
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.colors.inputBg,
+      marginHorizontal: theme.spacing.md,
+      marginTop: theme.spacing.xs,
+      marginBottom: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.md,
+      borderRadius: theme.radius.sm,
+      borderWidth: isDark ? 1 : 1.5,
+      borderColor: isDark ? 'transparent' : theme.colors.border,
+    },
+    modalContent: {
+      backgroundColor: theme.colors.surfaceElevated,
+      borderRadius: theme.radius.lg,
+      padding: theme.spacing.xl,
+      width: '90%',
+      maxWidth: 400,
+      maxHeight: '85%',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      ...theme.shadows.lg,
+    },
+    modalTitle: {
+      fontSize: theme.typography.xl,
+      fontWeight: theme.typography.semibold,
+      color: theme.colors.text,
+    },
+    modalValue: {
+      fontSize: theme.typography.md,
+      color: theme.colors.text,
+    },
+    modalLabel: {
+      fontSize: theme.typography.sm,
+      color: theme.colors.textMuted,
+      marginBottom: theme.spacing.xxs,
+    },
+    buttonText: {
+      color: '#fff',
+      fontWeight: theme.typography.semibold,
+      fontSize: theme.typography.sm,
+    },
+    modalStatusText: {
+      color: '#fff',
+      fontWeight: '600',
+      fontSize: 14,
+    }
+  }), [theme, isDark]);
 
   const GetTrip = async (id, status) => {
     let url = `${BASE_URL}trips/trip_assignment/?driver_master_id=${id}`;
@@ -159,10 +278,10 @@ const Dashboard = ({ navigation }) => {
 
   const renderTripCard = useCallback(({ item: trip }) => (
     <TouchableOpacity
-      style={styles.tripCard}
+      style={dynamicStyles.tripCard}
       onPress={() => handleTripPress(trip)}>
       <View style={styles.tripHeader}>
-        <Text style={styles.tripName}>{trip.trip_name}</Text>
+        <Text style={dynamicStyles.tripName}>{trip.trip_name}</Text>
         <View
           style={[
             styles.statusBadge,
@@ -175,7 +294,7 @@ const Dashboard = ({ navigation }) => {
       <View style={styles.tripDetails}>
         <View style={styles.detailRow}>
           <Icon source="calendar" size={16} color="#555" />
-          <Text style={styles.detailText}>
+          <Text style={dynamicStyles.detailText}>
             {formatDateTime(trip.scheduled_datetime)}
           </Text>
         </View>
@@ -197,12 +316,12 @@ const Dashboard = ({ navigation }) => {
         <View style={styles.metricsContainer}>
           <View style={styles.metric}>
             <Icon source="map-marker-distance" size={16} color="#3498db" />
-            <Text style={styles.metricText}>{trip.estimated_distance} km</Text>
+            <Text style={dynamicStyles.metricText}>{trip.estimated_distance} km</Text>
           </View>
 
           <View style={styles.metric}>
             <Icon source="fuel" size={16} color="#f39c12" />
-            <Text style={styles.metricText}>{trip.estimated_fuel} L</Text>
+            <Text style={dynamicStyles.metricText}>{trip.estimated_fuel} L</Text>
           </View>
         </View>
 
@@ -213,13 +332,13 @@ const Dashboard = ({ navigation }) => {
                 style={styles.startButton}
                 onPress={() => handleStartTrip(trip)}>
                 <Icon source="play" size={16} color="#fff" />
-                <Text style={styles.buttonText}>Start</Text>
+                <Text style={dynamicStyles.buttonText}>Start</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.stopButton}
                 onPress={() => handleStopTrip(trip)}>
                 <Icon source="stop" size={16} color="#fff" />
-                <Text style={styles.buttonText}>Stop</Text>
+                <Text style={dynamicStyles.buttonText}>Stop</Text>
               </TouchableOpacity>
             </>
           )}
@@ -229,13 +348,13 @@ const Dashboard = ({ navigation }) => {
                 style={styles.stopButton}
                 onPress={() => handleStopTrip(trip)}>
                 <Icon source="stop" size={16} color="#fff" />
-                <Text style={styles.buttonText}>Stop</Text>
+                <Text style={dynamicStyles.buttonText}>Stop</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.expenseButton}
                 onPress={() => handleAddExpense(trip)}>
                 <Icon source="cash" size={16} color="#fff" />
-                <Text style={styles.buttonText}>Add Expense</Text>
+                <Text style={dynamicStyles.buttonText}>Add Expense</Text>
               </TouchableOpacity>
             </>
           )}
@@ -249,8 +368,8 @@ const Dashboard = ({ navigation }) => {
   const emptyComponent = useMemo(() => (
     <View style={styles.emptyState}>
       <Icon source="car" size={56} color={theme.colors.border} />
-      <Text style={styles.emptyStateText}>No trips found</Text>
-      <Text style={styles.emptyStateSubtext}>
+      <Text style={[styles.emptyStateText, { color: theme.colors.textMuted }]}>No trips found</Text>
+      <Text style={[styles.emptyStateSubtext, { color: theme.colors.textPlaceholder }]}>
         {searchQuery || statusFilter !== 'all'
           ? 'Try adjusting your search or filter'
           : 'No trips available at the moment'}
@@ -265,14 +384,14 @@ const Dashboard = ({ navigation }) => {
       style={styles.filterContainer}>
       <TouchableOpacity
         style={[
-          styles.filterButton,
-          statusFilter === 'all' && styles.activeFilter,
+          dynamicStyles.filterButton,
+          statusFilter === 'all' && dynamicStyles.activeFilter,
         ]}
         onPress={() => setStatusFilter('all')}>
         <Text
           style={[
-            styles.filterText,
-            statusFilter === 'all' && styles.activeFilterText,
+            dynamicStyles.filterText,
+            statusFilter === 'all' && dynamicStyles.activeFilterText,
           ]}>
           All
         </Text>
@@ -280,14 +399,14 @@ const Dashboard = ({ navigation }) => {
 
       <TouchableOpacity
         style={[
-          styles.filterButton,
-          statusFilter === 'scheduled' && styles.activeFilter,
+          dynamicStyles.filterButton,
+          statusFilter === 'scheduled' && dynamicStyles.activeFilter,
         ]}
         onPress={() => setStatusFilter('scheduled')}>
         <Text
           style={[
-            styles.filterText,
-            statusFilter === 'scheduled' && styles.activeFilterText,
+            dynamicStyles.filterText,
+            statusFilter === 'scheduled' && dynamicStyles.activeFilterText,
           ]}>
           Scheduled
         </Text>
@@ -295,14 +414,14 @@ const Dashboard = ({ navigation }) => {
 
       <TouchableOpacity
         style={[
-          styles.filterButton,
-          statusFilter === 'in_progress' && styles.activeFilter,
+          dynamicStyles.filterButton,
+          statusFilter === 'in_progress' && dynamicStyles.activeFilter,
         ]}
         onPress={() => setStatusFilter('in_progress')}>
         <Text
           style={[
-            styles.filterText,
-            statusFilter === 'in_progress' && styles.activeFilterText,
+            dynamicStyles.filterText,
+            statusFilter === 'in_progress' && dynamicStyles.activeFilterText,
           ]}>
           In Progress
         </Text>
@@ -310,14 +429,14 @@ const Dashboard = ({ navigation }) => {
 
       <TouchableOpacity
         style={[
-          styles.filterButton,
-          statusFilter === 'completed' && styles.activeFilter,
+          dynamicStyles.filterButton,
+          statusFilter === 'completed' && dynamicStyles.activeFilter,
         ]}
         onPress={() => setStatusFilter('completed')}>
         <Text
           style={[
-            styles.filterText,
-            statusFilter === 'completed' && styles.activeFilterText,
+            dynamicStyles.filterText,
+            statusFilter === 'completed' && dynamicStyles.activeFilterText,
           ]}>
           Completed
         </Text>
@@ -325,14 +444,14 @@ const Dashboard = ({ navigation }) => {
 
       <TouchableOpacity
         style={[
-          styles.filterButton,
-          statusFilter === 'cancelled' && styles.activeFilter,
+          dynamicStyles.filterButton,
+          statusFilter === 'cancelled' && dynamicStyles.activeFilter,
         ]}
         onPress={() => setStatusFilter('cancelled')}>
         <Text
           style={[
-            styles.filterText,
-            statusFilter === 'cancelled' && styles.activeFilterText,
+            dynamicStyles.filterText,
+            statusFilter === 'cancelled' && dynamicStyles.activeFilterText,
           ]}>
           Cancelled
         </Text>
@@ -342,13 +461,13 @@ const Dashboard = ({ navigation }) => {
 
   return (
     <Fragment>
-      <StatusBar backgroundColor="transparent" translucent barStyle="light-content" />
-      <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
+      <StatusBar translucent backgroundColor="transparent" barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <SafeAreaView style={dynamicStyles.safeArea}>
         <KeyboardAvoidingView
           style={styles.mainContent}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.topBar}>
-            <View style={styles.searchContainer}>
+            <View style={dynamicStyles.searchContainer}>
               <Icon
                 source="magnify"
                 size={20}
@@ -356,7 +475,7 @@ const Dashboard = ({ navigation }) => {
                 style={styles.searchIcon}
               />
               <TextInput
-                style={styles.searchInput}
+                style={dynamicStyles.searchInput}
                 placeholder="Search by trip name or vehicle..."
                 placeholderTextColor={theme.colors.textPlaceholder}
                 value={searchQuery}
@@ -394,11 +513,11 @@ const Dashboard = ({ navigation }) => {
             <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
               <View style={styles.modalOverlay}>
                 <TouchableWithoutFeedback>
-                  <View style={styles.modalContent}>
+                  <View style={dynamicStyles.modalContent}>
                     {selectedTrip && (
                       <>
                         <View style={styles.modalHeader}>
-                          <Text style={styles.modalTitle}>
+                          <Text style={dynamicStyles.modalTitle}>
                             {selectedTrip.trip_name}
                           </Text>
                           <TouchableOpacity
@@ -409,7 +528,7 @@ const Dashboard = ({ navigation }) => {
 
                         <View style={styles.modalBody}>
                           <View style={styles.modalDetail}>
-                            <Text style={styles.modalLabel}>Status</Text>
+                            <Text style={dynamicStyles.modalLabel}>Status</Text>
                             <View
                               style={[
                                 styles.modalStatus,
@@ -426,17 +545,17 @@ const Dashboard = ({ navigation }) => {
                           </View>
 
                           <View style={styles.modalDetail}>
-                            <Text style={styles.modalLabel}>
+                            <Text style={dynamicStyles.modalLabel}>
                               Scheduled Date & Time
                             </Text>
-                            <Text style={styles.modalValue}>
+                            <Text style={dynamicStyles.modalValue}>
                               {formatDateTime(selectedTrip.scheduled_datetime)}
                             </Text>
                           </View>
 
                           <View style={styles.modalDetail}>
-                            <Text style={styles.modalLabel}>Vehicle</Text>
-                            <Text style={styles.modalValue}>
+                            <Text style={dynamicStyles.modalLabel}>Vehicle</Text>
+                            <Text style={dynamicStyles.modalValue}>
                               {selectedTrip.thing_name || 'Not assigned'}
                             </Text>
                           </View>
@@ -593,10 +712,6 @@ const Dashboard = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  safeareacontainer: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
   mainContent: {
     flex: 1,
   },
@@ -605,170 +720,120 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     flexShrink: 0,
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 48,
-    maxHeight: 48,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    marginHorizontal: theme.spacing.md,
-    marginTop: theme.spacing.xs,
-    marginBottom: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.radius.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
   searchIcon: {
-    marginRight: theme.spacing.xs,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: theme.spacing.sm,
-    fontSize: theme.typography.base,
-    color: theme.colors.text,
+    marginRight: 8,
   },
   filterContainer: {
     height: 36,
-    marginBottom: theme.spacing.xxs,
+    marginBottom: 4,
   },
   filterContent: {
-    paddingHorizontal: theme.spacing.sm,
+    paddingHorizontal: 8,
     paddingVertical: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xxs,
+    gap: 4,
   },
   filterButton: {
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     height: 34,
     minHeight: 34,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: theme.radius.full,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   activeFilter: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#3b82f6',
   },
   filterText: {
-    fontSize: theme.typography.sm,
-    color: theme.colors.textSecondary,
-    fontWeight: theme.typography.medium,
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
   },
   activeFilterText: {
-    fontSize: theme.typography.sm,
-    color: theme.colors.white,
-    fontWeight: theme.typography.semibold,
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '600',
   },
   tripsContainer: {
     flex: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.xs,
-    paddingBottom: theme.spacing.lg,
-  },
-  tripCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: theme.radius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: theme.colors.primary,
-    ...theme.shadows.sm,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 24,
   },
   tripHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  tripName: {
-    fontSize: theme.typography.lg,
-    fontWeight: theme.typography.semibold,
-    color: theme.colors.text,
-    flex: 1,
+    marginBottom: 12,
   },
   statusBadge: {
-    paddingHorizontal: theme.spacing.sm,
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: theme.radius.full,
+    borderRadius: 20,
   },
   statusText: {
-    color: theme.colors.white,
+    color: '#ffffff',
     fontSize: 12,
-    fontWeight: theme.typography.semibold,
+    fontWeight: '600',
   },
   tripDetails: {
-    marginTop: theme.spacing.xs,
+    marginTop: 8,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,
-  },
-  detailText: {
-    marginLeft: theme.spacing.sm,
-    color: theme.colors.textSecondary,
-    fontSize: theme.typography.sm,
+    marginBottom: 8,
   },
   metricsContainer: {
     flexDirection: 'row',
-    marginTop: theme.spacing.sm,
-    paddingTop: theme.spacing.sm,
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.border,
+    borderTopColor: 'rgba(0,0,0,0.1)',
   },
   metric: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: theme.spacing.md,
-  },
-  metricText: {
-    marginLeft: theme.spacing.xxs,
-    color: theme.colors.textSecondary,
-    fontWeight: theme.typography.medium,
+    marginRight: 16,
   },
   actionButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    marginTop: theme.spacing.md,
-    gap: theme.spacing.sm,
+    marginTop: 16,
+    gap: 12,
   },
   startButton: {
-    backgroundColor: theme.colors.success,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.radius.full,
+    backgroundColor: '#10b981',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
     alignItems: 'center',
     flexDirection: 'row',
-    gap: theme.spacing.xxs,
+    gap: 4,
     minWidth: 76,
   },
   stopButton: {
-    backgroundColor: theme.colors.error,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.radius.full,
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
     alignItems: 'center',
     flexDirection: 'row',
-    gap: theme.spacing.xxs,
+    gap: 4,
     minWidth: 76,
   },
   expenseButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.radius.full,
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
     alignItems: 'center',
     flexDirection: 'row',
-    gap: theme.spacing.xxs,
+    gap: 4,
     minWidth: 76,
-  },
-  buttonText: {
-    color: theme.colors.white,
-    fontWeight: theme.typography.semibold,
-    fontSize: theme.typography.sm,
   },
   emptyState: {
     alignItems: 'center',
@@ -776,15 +841,15 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyStateText: {
-    fontSize: theme.typography.lg,
-    fontWeight: theme.typography.semibold,
-    color: theme.colors.textMuted,
-    marginTop: theme.spacing.sm,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#94a3b8',
+    marginTop: 12,
   },
   emptyStateSubtext: {
-    fontSize: theme.typography.sm,
-    color: theme.colors.textMuted,
-    marginTop: theme.spacing.xxs,
+    fontSize: 14,
+    color: '#94a3b8',
+    marginTop: 4,
     textAlign: 'center',
   },
   modalOverlay: {
@@ -792,59 +857,36 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.spacing.md,
-  },
-  modalContent: {
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-    borderRadius: theme.radius.lg,
-    padding: theme.spacing.xl,
-    width: '90%',
-    maxWidth: 400,
-    maxHeight: '85%',
-    ...theme.shadows.lg,
+    padding: 16,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  modalTitle: {
-    fontSize: theme.typography.xl,
-    fontWeight: theme.typography.semibold,
-    color: theme.colors.text,
+    marginBottom: 16,
   },
   modalBody: {
-    marginTop: theme.spacing.xs,
+    marginTop: 8,
   },
   modalDetail: {
-    marginBottom: theme.spacing.sm,
-  },
-  modalLabel: {
-    fontSize: theme.typography.sm,
-    color: theme.colors.textMuted,
-    marginBottom: theme.spacing.xxs,
-  },
-  modalValue: {
-    fontSize: theme.typography.md,
-    color: theme.colors.text,
+    marginBottom: 16,
   },
   modalStatus: {
     alignSelf: 'flex-start',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xxs,
-    borderRadius: theme.radius.full,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
   modalStatusText: {
-    color: theme.colors.white,
-    fontWeight: theme.typography.semibold,
-    fontSize: theme.typography.sm,
+    color: '#ffffff',
+    fontWeight: '600',
+    fontSize: 14,
   },
   modalActionButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    marginTop: theme.spacing.sm,
-    gap: theme.spacing.xs,
+    marginTop: 8,
+    gap: 8,
   },
 });
 

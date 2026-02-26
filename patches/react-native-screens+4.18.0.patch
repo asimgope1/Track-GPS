@@ -1,0 +1,32 @@
+diff --git a/node_modules/react-native-screens/src/fabric/SearchBarNativeComponent.ts b/node_modules/react-native-screens/src/fabric/SearchBarNativeComponent.ts
+index 8b1317c..d01aa4a 100644
+--- a/node_modules/react-native-screens/src/fabric/SearchBarNativeComponent.ts
++++ b/node_modules/react-native-screens/src/fabric/SearchBarNativeComponent.ts
+@@ -37,11 +37,11 @@ type AutoCapitalizeType =
+ type OptionalBoolean = 'undefined' | 'false' | 'true';
+ 
+ export interface NativeProps extends ViewProps {
+-  onSearchFocus?: DirectEventHandler<SearchBarEvent> | null;
+-  onSearchBlur?: DirectEventHandler<SearchBarEvent> | null;
+-  onSearchButtonPress?: DirectEventHandler<SearchButtonPressedEvent> | null;
+-  onCancelButtonPress?: DirectEventHandler<SearchBarEvent> | null;
+-  onChangeText?: DirectEventHandler<ChangeTextEvent> | null;
++  onSearchFocus?: DirectEventHandler<SearchBarEvent>;
++  onSearchBlur?: DirectEventHandler<SearchBarEvent>;
++  onSearchButtonPress?: DirectEventHandler<SearchButtonPressedEvent>;
++  onCancelButtonPress?: DirectEventHandler<SearchBarEvent>;
++  onChangeText?: DirectEventHandler<ChangeTextEvent>;
+   hideWhenScrolling?: WithDefault<boolean, true>;
+   autoCapitalize?: WithDefault<AutoCapitalizeType, 'systemDefault'>;
+   placeholder?: string;
+@@ -60,8 +60,8 @@ export interface NativeProps extends ViewProps {
+   disableBackButtonOverride?: boolean;
+   // TODO: consider creating enum here
+   inputType?: string;
+-  onClose?: DirectEventHandler<SearchBarEvent> | null;
+-  onOpen?: DirectEventHandler<SearchBarEvent> | null;
++  onClose?: DirectEventHandler<SearchBarEvent>;
++  onOpen?: DirectEventHandler<SearchBarEvent>;
+   hintTextColor?: ColorValue;
+   headerIconColor?: ColorValue;
+   shouldShowHintSearchIcon?: WithDefault<boolean, true>;

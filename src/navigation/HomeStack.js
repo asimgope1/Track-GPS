@@ -3,10 +3,9 @@ import {
   createDrawerNavigator,
   DrawerContentScrollView,
   DrawerItem,
-  DrawerItemList,
 } from '@react-navigation/drawer';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // Screens
@@ -24,440 +23,296 @@ import VehicleInspection from '../Pages/Sidebarpages/VehicleInspection';
 import RouteOptimization from '../Pages/Sidebarpages/RouteOptimization';
 import TripExpenses from '../Pages/Sidebarpages/TripExpenses';
 import DriverRating from '../Pages/Sidebarpages/DriverRating';
+import TripMaster from '../Pages/Sidebarpages/TripMaster';
 import { clearAll, getObjByKey } from '../utils/Storage';
 import { useDispatch } from 'react-redux';
 import { checkuserToken } from '../redux/actions/auth';
 import MaintenanceJob from '../Pages/Sidebarpages/MaintenanceJob';
 import TripStart from '../Pages/Sidebarpages/TripStart';
 import TripStop from '../Pages/Sidebarpages/TripStop';
-import { colors, spacing, typography } from '../theme';
+import { spacing, typography } from '../theme';
+import { useAppTheme } from '../theme/ThemeContext';
 
-// Create both navigators
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
 
-// Your existing stack navigator
+// ─── Stack ────────────────────────────────────────────────────────────────────
 function HomeStack() {
   return (
     <Stack.Navigator initialRouteName="Home">
-      <Stack.Screen
-        name="Home"
-        component={Home}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="DashBoard"
-        component={DashBoard}
-        options={{ headerShown: false }}
-      />
+      <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
+      <Stack.Screen name="DashBoard" component={DashBoard} options={{ headerShown: false }} />
       <Stack.Screen name="VehicleMap" component={VehicleMap} />
       <Stack.Screen name="Track" component={Track} />
       <Stack.Screen name="HistoryModal" component={HistoryModal} />
       <Stack.Screen name="DescriptionData" component={DescriptionData} />
-      <Stack.Screen
-        name="MaintenanceSchedule"
-        component={MaintenanceScheduleScreen}
-      />
+      <Stack.Screen name="MaintenanceSchedule" component={MaintenanceScheduleScreen} />
     </Stack.Navigator>
   );
 }
 
-// Complete list of all permissions from your system
-const ALL_PERMISSIONS = [
-  "create_user", "edit_user", "read_user", "delete_user",
-  "create_maintenance_master", "edit_maintenance_master", "read_maintenance_master", "delete_maintenance_master",
-  "create_driver", "edit_driver", "delete_driver", "read_driver",
-  "create_driver_checklist", "edit_driver_checklist", "read_driver_checklist", "delete_driver_checklist",
-  "create_expense_master", "edit_expense_master", "read_expense_master", "delete_expense_master",
-  "create_checklist", "edit_checklist", "read_checklist", "delete_checklist",
-  "create_maintenance_schedule", "edit_maintenance_schedule", "read_maintenance_schedule", "delete_maintenance_schedule",
-  "create_maintenance_job", "edit_maintenance_job", "read_maintenance_job", "delete_maintenance_job",
-  "view_maintenance_calendar",
-  "create_vehicle_inspection", "edit_vehicle_inspection", "read_vehicle_inspection", "delete_vehicle_inspection",
-  "create_vehicle_breakdown", "edit_vehicle_breakdown", "read_vehicle_breakdown", "delete_vehicle_breakdown",
-  "create_trip_request", "edit_trip_request", "read_trip_request", "delete_trip_request",
-  "create_trip_assignment", "edit_trip_assignment", "read_trip_assignment", "delete_trip_assignment",
-  "create_expense_entry", "edit_expense_entry", "read_expense_entry", "delete_expense_entry",
-  "create_driver_rating", "edit_driver_rating", "read_driver_rating", "delete_driver_rating",
-  "view_vehicle_analytics", "view_driver_analytics", "view_fuel_analytics", "view_maintenance_analytics",
-  "view_trip_report", "view_vehicle_report", "view_expense_report", "view_maintenance_report",
-  "view_breakdown_report", "view_vehicle_utilization_report", "view_driver_utilization_report"
-];
-
-// Permission-based menu configuration
+// ─── Permission config (unchanged) ───────────────────────────────────────────
 const menuConfig = {
-  // Maintenance related menus
   maintenance_schedule: {
-    label: 'Maintenance Schedule',
-    icon: 'schedule',
-    screen: 'MaintenanceSchedule',
-    permissions: {
-      create: 'create_maintenance_schedule',
-      read: 'read_maintenance_schedule',
-      edit: 'edit_maintenance_schedule',
-      delete: 'delete_maintenance_schedule'
-    }
+    label: 'Maintenance Schedule', icon: 'schedule', screen: 'MaintenanceSchedule',
+    permissions: { create: 'create_maintenance_schedule', read: 'read_maintenance_schedule', edit: 'edit_maintenance_schedule', delete: 'delete_maintenance_schedule' },
   },
   maintenance_calendar: {
-    label: 'Maintenance Calendar',
-    icon: 'calendar-today',
-    screen: 'MaintenanceCalendar',
-    permissions: {
-      view: 'view_maintenance_calendar'
-    }
+    label: 'Maintenance Calendar', icon: 'calendar-today', screen: 'MaintenanceCalendar',
+    permissions: { view: 'view_maintenance_calendar' },
   },
   maintenance_job: {
-    label: 'Maintenance Job',
-    icon: 'assignment',
-    screen: 'MaintenanceJob',
-    permissions: {
-      create: 'create_maintenance_job',
-      read: 'read_maintenance_job',
-      edit: 'edit_maintenance_job',
-      delete: 'delete_maintenance_job'
-    }
+    label: 'Maintenance Job', icon: 'assignment', screen: 'MaintenanceJob',
+    permissions: { create: 'create_maintenance_job', read: 'read_maintenance_job', edit: 'edit_maintenance_job', delete: 'delete_maintenance_job' },
   },
   vehicle_inspection: {
-    label: 'Vehicle Inspection',
-    icon: 'car-repair',
-    screen: 'VehicleInspection',
-    permissions: {
-      create: 'create_vehicle_inspection',
-      read: 'read_vehicle_inspection',
-      edit: 'edit_vehicle_inspection',
-      delete: 'delete_vehicle_inspection'
-    }
+    label: 'Vehicle Inspection', icon: 'car-repair', screen: 'VehicleInspection',
+    permissions: { create: 'create_vehicle_inspection', read: 'read_vehicle_inspection', edit: 'edit_vehicle_inspection', delete: 'delete_vehicle_inspection' },
   },
   vehicle_breakdown: {
-    label: 'Vehicle Breakdown',
-    icon: 'warning',
-    screen: 'VehicleBreakdown',
-    permissions: {
-      create: 'create_vehicle_breakdown',
-      read: 'read_vehicle_breakdown',
-      edit: 'edit_vehicle_breakdown',
-      delete: 'delete_vehicle_breakdown'
-    }
+    label: 'Vehicle Breakdown', icon: 'warning', screen: 'VehicleBreakdown',
+    permissions: { create: 'create_vehicle_breakdown', read: 'read_vehicle_breakdown', edit: 'edit_vehicle_breakdown', delete: 'delete_vehicle_breakdown' },
   },
   trip_assignment: {
-    label: 'Trip Assignment',
-    icon: 'assignment',
-    screen: 'TripAssignment',
-    permissions: {
-      create: 'create_trip_assignment',
-      read: 'read_trip_assignment',
-      edit: 'edit_trip_assignment',
-      delete: 'delete_trip_assignment'
-    }
+    label: 'Trip Assignment', icon: 'assignment', screen: 'TripAssignment',
+    permissions: { create: 'create_trip_assignment', read: 'read_trip_assignment', edit: 'edit_trip_assignment', delete: 'delete_trip_assignment' },
+  },
+  trip_master: {
+    label: 'Create Trip', icon: 'add-box', screen: 'TripMaster',
+    permissions: { create: 'create_trip_master', read: 'read_trip_master', edit: 'edit_trip_master', delete: 'delete_trip_master' },
   },
   trip_expenses: {
-    label: 'Trip Expenses',
-    icon: 'attach-money',
-    screen: 'TripExpenses',
-    permissions: {
-      create: 'create_expense_entry',
-      read: 'read_expense_entry',
-      edit: 'edit_expense_entry',
-      delete: 'delete_expense_entry'
-    }
+    label: 'Trip Expenses', icon: 'attach-money', screen: 'TripExpenses',
+    permissions: { create: 'create_expense_entry', read: 'read_expense_entry', edit: 'edit_expense_entry', delete: 'delete_expense_entry' },
   },
   driver_rating: {
-    label: 'Driver Rating',
-    icon: 'star-rate',
-    screen: 'DriverRating',
-    permissions: {
-      create: 'create_driver_rating',
-      read: 'read_driver_rating',
-      edit: 'edit_driver_rating',
-      delete: 'delete_driver_rating'
-    }
+    label: 'Driver Rating', icon: 'star-rate', screen: 'DriverRating',
+    permissions: { create: 'create_driver_rating', read: 'read_driver_rating', edit: 'edit_driver_rating', delete: 'delete_driver_rating' },
   },
   trip_start: {
-    label: 'Trip Start',
-    icon: 'play-arrow',
-    screen: 'TripStart',
-    permissions: {
-      create: 'create_trip_request',
-      read: 'read_trip_request'
-    }
+    label: 'Trip Start', icon: 'play-arrow', screen: 'TripStart',
+    permissions: { create: 'create_trip_request', read: 'read_trip_request' },
   },
   trip_stop: {
-    label: 'Trip Stop',
-    icon: 'stop',
-    screen: 'TripStop',
-    permissions: {
-      create: 'create_trip_request',
-      read: 'read_trip_request'
-    }
+    label: 'Trip Stop', icon: 'stop', screen: 'TripStop',
+    permissions: { create: 'create_trip_request', read: 'read_trip_request' },
   },
   route_optimization: {
-    label: 'Route Optimization',
-    icon: 'route',
-    screen: 'RouteOptimization',
-    permissions: {
-      view: 'view_trip_report'
-    }
-  }
+    label: 'Route Optimization', icon: 'route', screen: 'RouteOptimization',
+    permissions: { view: 'view_trip_report' },
+  },
 };
 
-// Custom Drawer Content Component
+// ─── Drawer content (fully theme-aware) ──────────────────────────────────────
 const CustomDrawerContent = props => {
   const [userData, setUserData] = React.useState(null);
   const Dispatch = useDispatch();
+  const { theme, isDark, toggleTheme } = useAppTheme();
+  const c = theme.colors;
+
   const currentRouteName = props.state.routeNames[props.state.index];
 
   React.useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const loginRes = await getObjByKey('loginResponse');
-        setUserData(loginRes?.data || null);
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-    fetchUserData();
+    getObjByKey('loginResponse')
+      .then(res => setUserData(res?.data || null))
+      .catch(err => console.error('Error fetching user data:', err));
   }, []);
 
-  // Check if user has "all" permission
-  const hasAllPermission = () => {
-    return userData?.permissions?.includes('all');
-  };
+  const hasAllPermission = () => userData?.permissions?.includes('all');
 
-  // Function to check if user has permission for a menu item
-  const hasPermission = (menuKey) => {
+  const hasPermission = menuKey => {
     if (!userData?.permissions) return false;
-
-    // If user has "all" permission, return true for everything
     if (hasAllPermission()) return true;
-
     const menu = menuConfig[menuKey];
     if (!menu) return false;
-
-    const permissionRules = menu.permissions;
-    const userPermissions = userData.permissions;
-
-    // Check if user has any of the required permissions for this menu
-    const requiredPermissions = Object.values(permissionRules);
-    return requiredPermissions.some(permission =>
-      userPermissions.includes(permission)
-    );
+    return Object.values(menu.permissions).some(p => userData.permissions.includes(p));
   };
 
-  // Function to check if user has any of the view permissions for analytics/reports
   const hasViewPermissions = () => {
     if (!userData?.permissions) return false;
-
-    // If user has "all" permission, return true
     if (hasAllPermission()) return true;
-
-    const viewPermissions = [
-      'view_vehicle_analytics',
-      'view_driver_analytics',
-      'view_fuel_analytics',
-      'view_maintenance_analytics',
-      'view_trip_report',
-      'view_vehicle_report',
-      'view_expense_report',
-      'view_maintenance_report',
-      'view_breakdown_report',
-      'view_vehicle_utilization_report',
-      'view_driver_utilization_report'
+    const vp = [
+      'view_vehicle_analytics', 'view_driver_analytics', 'view_fuel_analytics',
+      'view_maintenance_analytics', 'view_trip_report', 'view_vehicle_report',
+      'view_expense_report', 'view_maintenance_report', 'view_breakdown_report',
+      'view_vehicle_utilization_report', 'view_driver_utilization_report',
     ];
-
-    return viewPermissions.some(permission =>
-      userData.permissions.includes(permission)
-    );
+    return vp.some(p => userData.permissions.includes(p));
   };
 
-  // Get available menu items based on permissions (drivers always get Trip Start & Trip Stop)
   const getAvailableMenuItems = () => {
     if (!userData) return [];
-
-    if (hasAllPermission()) {
-      return Object.values(menuConfig);
-    }
-
-    const permissionKeys = Object.keys(menuConfig).filter(menuKey =>
-      hasPermission(menuKey)
-    );
-
-    // Drivers always see Trip Start and Trip Stop in the drawer
+    if (hasAllPermission()) return Object.values(menuConfig);
+    const keys = Object.keys(menuConfig).filter(k => hasPermission(k));
     const isDriver = userData.user_type === 'driver';
-    const driverMenuKeys = isDriver ? ['trip_start', 'trip_stop'] : [];
-    const allKeys = [...new Set([...permissionKeys, ...driverMenuKeys])];
-
-    return allKeys.map(menuKey => menuConfig[menuKey]);
+    const driverKeys = isDriver ? ['trip_start', 'trip_stop'] : [];
+    return [...new Set([...keys, ...driverKeys])].map(k => menuConfig[k]);
   };
+
+  // Theme-aware dynamic styles
+  const drawerBg   = isDark ? 'rgba(15, 23, 42, 0.97)' : '#FFFFFF';
+  const divider    = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(99,102,241,0.12)';
+  const focusedBg  = c.primary;
+  const focusedTxt = '#FFFFFF';                          // always white on indigo pill
+  const normalTxt  = c.text;                             // dark slate in light, white in dark
+  const normalIcon = isDark ? 'rgba(255,255,255,0.55)' : '#64748B';
+  const toggleTrackOn  = c.primary;
+  const toggleTrackOff = isDark ? '#374151' : '#E2E8F0'; // dark gray / light gray
+  const toggleAccent   = isDark ? '#818CF8' : '#6366F1';
 
   if (!userData) {
     return (
-      <DrawerContentScrollView {...props}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Fleet Management</Text>
-          <Text style={styles.loadingText}>Loading...</Text>
+      <DrawerContentScrollView {...props} style={{ backgroundColor: drawerBg }}>
+        <View style={[dynStyles.header, { borderBottomColor: divider }]}>
+          <Text style={[dynStyles.headerTitle, { color: c.text }]}>Fleet Management</Text>
+          <Text style={[dynStyles.loadingText, { color: c.textMuted }]}>Loading...</Text>
         </View>
       </DrawerContentScrollView>
     );
   }
 
   const availableMenus = getAvailableMenuItems();
-  const canViewAnalytics = hasViewPermissions();
   const hasAllPermissions = hasAllPermission();
 
   return (
-    <DrawerContentScrollView {...props}>
+    <DrawerContentScrollView
+      {...props}
+      style={{ backgroundColor: drawerBg }}
+      contentContainerStyle={{ paddingBottom: spacing.lg }}>
+
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Fleet Management</Text>
-        <Text style={styles.userInfo}>
+      <View style={[dynStyles.header, { borderBottomColor: divider }]}>
+        <Text style={[dynStyles.headerTitle, { color: c.text }]}>Fleet Management</Text>
+        <Text style={[dynStyles.userInfo, { color: c.textSecondary }]}>
           {userData.user_type?.charAt(0).toUpperCase() + userData.user_type?.slice(1)}
           {hasAllPermissions && (
-            <Text style={styles.allPermissionsBadge}> • ALL PERMISSIONS</Text>
+            <Text style={{ color: c.warning, fontWeight: typography.bold, fontSize: typography.xs }}>
+              {'  '}• ALL PERMISSIONS
+            </Text>
           )}
         </Text>
-        <Text style={styles.permissionInfo}>
+        <Text style={[dynStyles.permissionInfo, { color: c.textMuted }]}>
           {hasAllPermissions ? 'Full system access' : `${userData.permissions?.length} permissions available`}
         </Text>
+
+        {/* Theme toggle */}
+        <View style={dynStyles.themeRow}>
+          <Icon
+            name={isDark ? 'nightlight-round' : 'wb-sunny'}
+            size={14}
+            color={toggleAccent}
+          />
+          <Text style={[dynStyles.themeLabel, { color: c.textMuted }]}>
+            {isDark ? 'Dark Mode' : 'Light Mode'}
+          </Text>
+          <View style={[dynStyles.toggleTrack, { backgroundColor: isDark ? toggleTrackOn : toggleTrackOff }]}>
+            <View
+              style={[
+                dynStyles.toggleThumb,
+                { transform: [{ translateX: isDark ? 20 : 2 }], backgroundColor: isDark ? '#FFFFFF' : '#6366F1' },
+              ]}
+            />
+          </View>
+        </View>
       </View>
 
-      {/* Home Drawer Item - Always visible */}
+      {/* Home */}
       <DrawerItem
         label="Home"
-        icon={({ color, size }) => (
+        icon={({ size }) => (
           <Icon
             name="home"
-            color={currentRouteName === 'HomeStack' ? colors.white : colors.textSecondary}
+            color={currentRouteName === 'HomeStack' ? focusedTxt : normalIcon}
             size={size}
           />
         )}
         focused={currentRouteName === 'HomeStack'}
         labelStyle={{
-          color: currentRouteName === 'HomeStack' ? colors.white : colors.text,
+          color: currentRouteName === 'HomeStack' ? focusedTxt : normalTxt,
           fontWeight: currentRouteName === 'HomeStack' ? typography.bold : typography.medium,
         }}
         style={{
-          backgroundColor: currentRouteName === 'HomeStack' ? colors.primary : 'transparent',
+          backgroundColor: currentRouteName === 'HomeStack' ? focusedBg : 'transparent',
           borderRadius: 10,
           marginHorizontal: spacing.xs,
-          shadowColor: currentRouteName === 'HomeStack' ? colors.primary : 'transparent',
-          shadowOffset: currentRouteName === 'HomeStack' ? { width: 0, height: 4 } : { width: 0, height: 0 },
-          shadowOpacity: currentRouteName === 'HomeStack' ? 0.3 : 0,
-          shadowRadius: currentRouteName === 'HomeStack' ? 8 : 0,
-          elevation: currentRouteName === 'HomeStack' ? 5 : 0,
         }}
         onPress={() => props.navigation.navigate('HomeStack')}
       />
 
-      {/* Analytics/Reports Section - Show if user has any view permissions */}
-      {/* {canViewAnalytics && (
-        <>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Analytics & Reports</Text>
-          </View>
+      {/* Dynamic menu items */}
+      {availableMenus.map((item, index) => {
+        const isFocused = currentRouteName === item.screen;
+        return (
           <DrawerItem
-            label="Dashboard & Reports"
-            icon={({color, size}) => (
+            key={index}
+            label={item.label}
+            icon={({ size }) => (
               <Icon
-                name="analytics"
-                color={currentRouteName === 'DashBoard' ? colors.primary : color}
+                name={item.icon}
+                color={isFocused ? focusedTxt : normalIcon}
                 size={size}
               />
             )}
-            focused={currentRouteName === 'DashBoard'}
+            focused={isFocused}
             labelStyle={{
-              color: currentRouteName === 'DashBoard' ? colors.primary : colors.text,
-              fontWeight: currentRouteName === 'DashBoard' ? 'bold' : 'normal',
+              color: isFocused ? focusedTxt : normalTxt,
+              fontWeight: isFocused ? typography.bold : typography.medium,
             }}
             style={{
-              backgroundColor: currentRouteName === 'DashBoard' ? colors.infoLight : 'transparent',
-              borderRadius: 6,
-              marginHorizontal: 4,
+              backgroundColor: isFocused ? focusedBg : 'transparent',
+              borderRadius: 10,
+              marginHorizontal: spacing.xs,
             }}
-            onPress={() => props.navigation.navigate('HomeStack', { 
-              screen: 'DashBoard' 
-            })}
+            onPress={() => props.navigation.navigate(item.screen)}
           />
-        </>
-      )} */}
+        );
+      })}
 
-      {/* Operations Section */}
-      {availableMenus.length > 0 && (
-        <>
-          {/* <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              Operations
-              {hasAllPermissions && (
-                <Text style={styles.allAccessText}> • Full Access</Text>
-              )}
-            </Text>
-          </View> */}
-          {availableMenus.map((item, index) => {
-            const isFocused = currentRouteName === item.screen;
-            return (
-              <DrawerItem
-                key={index}
-                label={item.label}
-                icon={({ color, size }) => (
-                  <Icon
-                    name={item.icon}
-                    color={isFocused ? colors.white : colors.textSecondary}
-                    size={size}
-                  />
-                )}
-                focused={isFocused}
-                labelStyle={{
-                  color: isFocused ? colors.white : colors.text,
-                  fontWeight: isFocused ? typography.bold : typography.medium,
-                }}
-                style={{
-                  backgroundColor: isFocused ? colors.primary : 'transparent',
-                  borderRadius: 10,
-                  marginHorizontal: spacing.xs,
-                  shadowColor: isFocused ? colors.primary : 'transparent',
-                  shadowOffset: isFocused ? { width: 0, height: 4 } : { width: 0, height: 0 },
-                  shadowOpacity: isFocused ? 0.3 : 0,
-                  shadowRadius: isFocused ? 8 : 0,
-                  elevation: isFocused ? 5 : 0,
-                }}
-                onPress={() => props.navigation.navigate(item.screen)}
-              />
-            );
-          })}
-        </>
-      )}
-
-      {/* No Permissions Message (only show if user doesn't have "all" and no specific permissions) */}
-      {!hasAllPermissions && availableMenus.length === 0 && !canViewAnalytics && (
-        <View style={styles.noPermissions}>
-          <Text style={styles.noPermissionsText}>
+      {!hasAllPermissions && availableMenus.length === 0 && (
+        <View style={dynStyles.noPermissions}>
+          <Text style={[dynStyles.noPermissionsText, { color: c.textMuted }]}>
             No menu items available for your current permissions.
           </Text>
         </View>
       )}
 
-      {/* Footer */}
-      <View style={styles.footer}>
+      {/* Footer – logout */}
+      <View style={[dynStyles.footer, { borderTopColor: c.border }]}>
         <DrawerItem
           label="Logout"
-          icon={({ color, size }) => (
-            <Icon name="exit-to-app" color={colors.error} size={size} />
-          )}
-          onPress={() => {
-            clearAll();
-            Dispatch(checkuserToken());
-          }}
-          labelStyle={{
-            color: colors.error,
-            fontWeight: typography.bold,
-          }}
+          icon={({ size }) => <Icon name="exit-to-app" color={c.error} size={size} />}
+          onPress={() => { clearAll(); Dispatch(checkuserToken()); }}
+          labelStyle={{ color: c.error, fontWeight: typography.bold }}
         />
       </View>
     </DrawerContentScrollView>
   );
 };
 
-// Main App Navigator with Drawer
+// ─── Helper ───────────────────────────────────────────────────────────────────
+function getScreenComponent(screenName) {
+  const map = {
+    MaintenanceSchedule: MaintenanceScheduleScreen,
+    MaintenanceCalendar: MaintenanceCalendarScreen,
+    MaintenanceJob: MaintenanceJob,
+    VehicleInspection: VehicleInspection,
+    VehicleBreakdown: VehicleBreakdown,
+    TripAssignment: TripAssignment,
+    TripMaster: TripMaster,
+    TripExpenses: TripExpenses,
+    DriverRating: DriverRating,
+    TripStart: TripStart,
+    TripStop: TripStop,
+    RouteOptimization: RouteOptimization,
+  };
+  return map[screenName] || MaintenanceScheduleScreen;
+}
+
+// ─── App Navigator (drawer) ───────────────────────────────────────────────────
 function AppNavigator() {
+  const { theme, isDark } = useAppTheme();
+  const c = theme.colors;
+
   return (
     <Drawer.Navigator
       initialRouteName="HomeStack"
@@ -466,61 +321,35 @@ function AppNavigator() {
         headerShown: false,
         drawerPosition: 'left',
         drawerType: 'front',
-        drawerActiveTintColor: colors.primary,
-        drawerInactiveTintColor: colors.text,
+        drawerActiveTintColor: c.primary,
+        drawerInactiveTintColor: c.text,
         sceneContainerStyle: { backgroundColor: 'transparent' },
-        drawerStyle: { backgroundColor: 'rgba(15, 23, 42, 0.95)', width: 280 },
-        drawerLabelStyle: {
-          marginLeft: -15,
-          fontSize: typography.md,
+        // Drawer panel background adapts to theme
+        drawerStyle: {
+          backgroundColor: isDark
+            ? 'rgba(15, 23, 42, 0.97)'
+            : 'rgba(248, 250, 252, 0.98)',
+          width: 280,
         },
+        drawerLabelStyle: { marginLeft: -15, fontSize: typography.md },
       }}>
-      <Drawer.Screen
-        name="HomeStack"
-        component={HomeStack}
-        options={{ title: 'Home' }}
-      />
-
-      {/* Add all screens that might be navigated to from the drawer */}
+      <Drawer.Screen name="HomeStack" component={HomeStack} options={{ title: 'Home' }} />
       {Object.values(menuConfig).map((menu, index) => (
-        <Drawer.Screen
-          key={index}
-          name={menu.screen}
-          component={getScreenComponent(menu.screen)}
-        />
+        <Drawer.Screen key={index} name={menu.screen} component={getScreenComponent(menu.screen)} />
       ))}
     </Drawer.Navigator>
   );
 }
 
-// Helper function to get screen components
-function getScreenComponent(screenName) {
-  const screenComponents = {
-    'MaintenanceSchedule': MaintenanceScheduleScreen,
-    'MaintenanceCalendar': MaintenanceCalendarScreen,
-    'MaintenanceJob': MaintenanceJob,
-    'VehicleInspection': VehicleInspection,
-    'VehicleBreakdown': VehicleBreakdown,
-    'TripAssignment': TripAssignment,
-    'TripExpenses': TripExpenses,
-    'DriverRating': DriverRating,
-    'TripStart': TripStart,
-    'TripStop': TripStop,
-    'RouteOptimization': RouteOptimization,
-  };
-
-  return screenComponents[screenName] || MaintenanceScheduleScreen; // fallback
-}
-
-const styles = StyleSheet.create({
+// ─── Static styles (layout only, no colours) ─────────────────────────────────
+const dynStyles = StyleSheet.create({
   header: {
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
-    backgroundColor: 'transparent',
-    borderBottomWidth: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: spacing.xs,
   },
   headerTitle: {
-    color: colors.white,
     fontSize: typography.lg,
     fontWeight: typography.bold,
     textAlign: 'center',
@@ -528,54 +357,42 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   userInfo: {
-    color: colors.textSecondary,
     fontSize: typography.sm,
     textAlign: 'center',
     marginBottom: spacing.xxs,
   },
-  allPermissionsBadge: {
-    color: colors.warning,
-    fontWeight: typography.bold,
-    fontSize: typography.xs,
-  },
   permissionInfo: {
-    color: colors.textMuted,
     fontSize: typography.xs,
     textAlign: 'center',
+    marginBottom: spacing.sm,
   },
-  loadingText: {
-    color: colors.white,
-    fontSize: typography.sm,
-    textAlign: 'center',
-  },
-  sectionHeader: {
-    padding: spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  sectionTitle: {
-    fontSize: typography.sm,
-    fontWeight: typography.bold,
-    color: colors.textSecondary,
-  },
-  allAccessText: {
-    color: colors.success,
-    fontSize: typography.xs,
-    fontWeight: typography.regular,
-  },
-  noPermissions: {
-    padding: spacing.xl,
-    alignItems: 'center',
-  },
-  noPermissionsText: {
-    color: colors.textMuted,
-    fontSize: typography.sm,
-    textAlign: 'center',
-  },
+  loadingText: { fontSize: typography.sm, textAlign: 'center' },
+  noPermissions: { padding: spacing.xl, alignItems: 'center' },
+  noPermissionsText: { fontSize: typography.sm, textAlign: 'center' },
   footer: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
     marginTop: spacing.sm,
     paddingTop: spacing.xs,
+  },
+  themeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: spacing.xs,
+  },
+  themeLabel: { fontSize: typography.xs, flex: 1 },
+  toggleTrack: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+  },
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    position: 'absolute',
   },
 });
 

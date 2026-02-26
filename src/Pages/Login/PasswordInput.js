@@ -25,6 +25,8 @@ const PasswordInput = ({ password, setPassword }) => {
           onPress={() => setShowPassword(!showPassword)}
         />
       }
+      textColor="#1E293B"
+      theme={{ colors: { background: '#F8FAFC', onSurfaceVariant: '#94A3B8' } }}
     />
   );
 };

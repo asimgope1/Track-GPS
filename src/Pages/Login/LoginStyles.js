@@ -24,7 +24,7 @@ export const loginStyles = StyleSheet.create({
     alignSelf: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: radius.xl,
-    padding: spacing.xxl,
+    padding: spacing.xl, // Slightly reduced padding to give more room for content
     overflow: 'hidden',
     ...shadows.lg,
     borderWidth: 1,
@@ -32,7 +32,7 @@ export const loginStyles = StyleSheet.create({
   },
   logoBox: {
     alignItems: 'center',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.xl,
   },
   logo: {
     width: 72,
@@ -42,22 +42,22 @@ export const loginStyles = StyleSheet.create({
   title: {
     fontSize: RFValue(typography.xl),
     fontWeight: typography.bold,
-    color: colors.text,
+    color: '#1E293B', // Dark slate text on white card
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: RFValue(typography.sm),
-    color: colors.textSecondary,
+    color: '#64748B', // Medium slate text on white card
     marginTop: spacing.xs,
     fontWeight: typography.medium,
   },
   inputWrap: {
     width: '100%',
-    marginBottom: spacing.lg,
-    backgroundColor: colors.borderLight,
+    marginBottom: spacing.md,
+    backgroundColor: '#F8FAFC', // Light grayish-blue input bg
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#E2E8F0', // Light border
   },
   input: {
     backgroundColor: 'transparent',
@@ -71,14 +71,18 @@ export const loginStyles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: spacing.xs,
     marginBottom: spacing.xl,
+    flexWrap: 'wrap', // Prevent overflow on small screens
+    gap: 10,
   },
   rememberLabel: {
     fontSize: RFValue(typography.sm),
-    color: colors.textSecondary,
+    color: '#475569', // Slate
     fontWeight: typography.medium,
+    flexShrink: 1,
   },
   forgotLink: {
     paddingVertical: spacing.xxs,
+    flexShrink: 1,
   },
   forgotText: {
     fontSize: RFValue(typography.sm),

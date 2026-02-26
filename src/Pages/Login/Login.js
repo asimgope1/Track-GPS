@@ -136,8 +136,7 @@ const Login = ({ navigation, route }) => {
   useFocusEffect(
     React.useCallback(() => {
       const backAction = () => {
-        setExitModal(true);
-        setAlertMsg('Are you sure you want to exit the app?');
+        BackHandler.exitApp();
         return true;
       };
       const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
@@ -188,7 +187,8 @@ const Login = ({ navigation, route }) => {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  theme={{ colors: { background: 'white' } }}
+                  textColor="#1E293B"
+                  theme={{ colors: { background: '#F8FAFC', onSurfaceVariant: '#94A3B8' } }}
                 />
 
                 <PasswordInput password={password} setPassword={setPassword} />
@@ -242,14 +242,7 @@ const Login = ({ navigation, route }) => {
           onClose={() => setAlertModal(false)}
         />
       )}
-      {exitModal && (
-        <Exitmodal
-          visible={exitModal}
-          message="Are you sure you want to exit?"
-          onClose={() => setExitModal(false)}
-          onConfirm={() => BackHandler.exitApp()}
-        />
-      )}
+      {/* Exit modal removed */}
       <Loader visible={pageLoad} />
       <Toast />
     </Fragment>

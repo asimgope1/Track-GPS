@@ -19,12 +19,7 @@ const Track = ({
 
   const mapRef = useRef();
 
-  console.log('track page', showTrack,
-    latitude,
-    longitude,
-    visible,
-    onClose,
-    projectedTrack,)
+  // console.log removed
 
   // Log the data for debugging purposes
 
@@ -100,12 +95,12 @@ const Track = ({
         setMarkerPosition(showTrack[i]);
 
         // Check if all coordinates have been added, and clear the interval
-        if (i === showTrack.length - 1) {
+        if (i >= showTrack.length - 1) {
           clearInterval(interval);
         } else {
           i++;
         }
-      }, 100); // Adjust interval time to control the animation speed
+      }, 250); // Adjust interval time to control the animation speed (250ms is smoother for JS thread)
     }
   }, [showTrack]);
 
@@ -116,7 +111,7 @@ const Track = ({
   const handleMarkerPress = (title, description) => {
     setSelectedMarker({ title, description }); // Update the selected marker state
   };
-  console.log('filteredShowTrack', filteredShowTrack);
+  // console.log removed
   return (
     <Modal
       visible={visible}

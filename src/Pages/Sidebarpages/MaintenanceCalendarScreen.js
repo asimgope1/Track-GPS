@@ -23,6 +23,7 @@ import { GETNETWORK } from '../../utils/Network';
 import moment from 'moment';
 import { Loader } from '../../components/Loader';
 import Toast from 'react-native-toast-message';
+import { useAppTheme } from '../../theme/ThemeContext';
 import theme from '../../theme';
 
 const { height } = Dimensions.get('window');
@@ -38,6 +39,8 @@ const MaintenanceCalendarScreen = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(moment().format('YYYY-MM'));
+  const { theme: appTheme, isDark } = useAppTheme();
+  const c = appTheme.colors;
 
   // Filter dropdown states
   const [vehicleOpen, setVehicleOpen] = useState(false);
@@ -622,8 +625,8 @@ const MaintenanceCalendarScreen = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <StatusBar translucent backgroundColor="transparent" barStyle={isDark ? 'light-content' : 'dark-content'} />
       <Header
         title="Maintenance Calendar"
         onMenuPress={() => navigation.openDrawer()}
@@ -652,7 +655,7 @@ const MaintenanceCalendarScreen = () => {
 
             {/* Filter Section */}
             <View style={styles.filterWrapper}>
-              <Text style={styles.filterTitle}>Filters</Text>
+              <Text style={[styles.filterTitle, { color: c.text }]}>Filters</Text>
               <TouchableOpacity onPress={clearAllFilters}>
                 <Text style={styles.clearButtonText}>Clear All</Text>
               </TouchableOpacity>
@@ -671,10 +674,10 @@ const MaintenanceCalendarScreen = () => {
                   setValue={setVehicleValue}
                   setItems={setVehicleItems}
                   placeholder="Select Vehicle"
-                  style={styles.dropdown}
-                  dropDownContainerStyle={styles.dropdownContainer}
-                  textStyle={styles.dropdownText}
-                  placeholderStyle={styles.dropdownPlaceholder}
+                  style={[styles.dropdown, { backgroundColor: c.surface, borderColor: c.border }]}
+                  dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: c.surfaceElevated, borderColor: c.border }]}
+                  textStyle={[styles.dropdownText, { color: c.text }]}
+                  placeholderStyle={[styles.dropdownPlaceholder, { color: c.textMuted }]}
                   listMode="SCROLLVIEW"
                   scrollViewProps={{ nestedScrollEnabled: true }}
                 />
@@ -691,10 +694,10 @@ const MaintenanceCalendarScreen = () => {
                   setValue={setStatusValue}
                   setItems={setStatusItems}
                   placeholder="Select Status"
-                  style={styles.dropdown}
-                  dropDownContainerStyle={styles.dropdownContainer}
-                  textStyle={styles.dropdownText}
-                  placeholderStyle={styles.dropdownPlaceholder}
+                  style={[styles.dropdown, { backgroundColor: c.surface, borderColor: c.border }]}
+                  dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: c.surfaceElevated, borderColor: c.border }]}
+                  textStyle={[styles.dropdownText, { color: c.text }]}
+                  placeholderStyle={[styles.dropdownPlaceholder, { color: c.textMuted }]}
                   listMode="SCROLLVIEW"
                   scrollViewProps={{ nestedScrollEnabled: true }}
                 />
@@ -719,16 +722,16 @@ const MaintenanceCalendarScreen = () => {
               theme={{
                 backgroundColor: 'transparent',
                 calendarBackground: 'transparent',
-                textSectionTitleColor: '#E2E8F0',
-                selectedDayBackgroundColor: '#4F46E5',
+                textSectionTitleColor: c.textMuted,
+                selectedDayBackgroundColor: c.primary,
                 selectedDayTextColor: '#FFFFFF',
-                todayTextColor: '#818CF8',
-                dayTextColor: '#FFFFFF',
-                textDisabledColor: '#94A3B8',
-                dotColor: '#4F46E5',
+                todayTextColor: c.primary,
+                dayTextColor: c.text,
+                textDisabledColor: c.textPlaceholder,
+                dotColor: c.primary,
                 selectedDotColor: '#FFFFFF',
-                arrowColor: '#4F46E5',
-                monthTextColor: '#FFFFFF',
+                arrowColor: c.primary,
+                monthTextColor: c.text,
                 textDayFontWeight: '500',
                 textMonthFontWeight: 'bold',
                 textDayHeaderFontWeight: '600',
@@ -736,18 +739,18 @@ const MaintenanceCalendarScreen = () => {
             />
 
             {/* Legend for calendar dots */}
-            <View style={styles.legendContainer}>
+            <View style={[styles.legendContainer, { backgroundColor: c.surface }]}>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: '#0284c7' }]} />
-                <Text style={styles.legendText}>Scheduled</Text>
+                <Text style={[styles.legendText, { color: c.textSecondary }]}>Scheduled</Text>
               </View>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: theme.colors.error }]} />
-                <Text style={styles.legendText}>Overdue</Text>
+                <Text style={[styles.legendText, { color: c.textSecondary }]}>Overdue</Text>
               </View>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
-                <Text style={styles.legendText}>Completed</Text>
+                <Text style={[styles.legendText, { color: c.textSecondary }]}>Completed</Text>
               </View>
             </View>
 
@@ -770,8 +773,8 @@ const MaintenanceCalendarScreen = () => {
                 </View>
               </View>
             ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>
+              <View style={[styles.emptyState, { backgroundColor: c.surfaceElevated, borderColor: c.border }]}>
+                <Text style={[styles.emptyText, { color: c.textMuted }]}>
                   {appointments.filter(a => a.date === selectedDate).length === 0
                     ? 'No appointments on selected date'
                     : 'No appointments match current filters'}
@@ -783,31 +786,31 @@ const MaintenanceCalendarScreen = () => {
           {/* Appointment Details Modal */}
           <Modal visible={modalVisible} transparent animationType="slide">
             <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Appointment Details</Text>
+              <View style={[styles.modalContent, { backgroundColor: c.surface }]}>
+                <Text style={[styles.modalTitle, { color: c.primary }]}>Appointment Details</Text>
                 {selectedAppointment && validateAppointmentData(selectedAppointment) ? (
                   <>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Date:</Text>
-                      <Text style={styles.detailValue}>
+                      <Text style={[styles.detailLabel, { color: c.text }]}>Date:</Text>
+                      <Text style={[styles.detailValue, { color: c.textSecondary }]}>
                         {moment(selectedAppointment.date).format('DD MMM YYYY')}{' '}
                         {selectedAppointment.time}
                       </Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Vehicle:</Text>
-                      <Text style={styles.detailValue}>
+                      <Text style={[styles.detailLabel, { color: c.text }]}>Vehicle:</Text>
+                      <Text style={[styles.detailValue, { color: c.textSecondary }]}>
                         {selectedAppointment.vehicleName}
                       </Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Maintenance:</Text>
-                      <Text style={styles.detailValue}>
+                      <Text style={[styles.detailLabel, { color: c.text }]}>Maintenance:</Text>
+                      <Text style={[styles.detailValue, { color: c.textSecondary }]}>
                         {selectedAppointment.maintenanceName}
                       </Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Status:</Text>
+                      <Text style={[styles.detailLabel, { color: c.text }]}>Status:</Text>
                       <Text
                         style={[
                           styles.detailValue,
@@ -822,26 +825,26 @@ const MaintenanceCalendarScreen = () => {
                     </View>
                     {selectedAppointment.remarks && (
                       <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>
+                        <Text style={[styles.detailLabel, { color: c.text }]}>
                           {selectedAppointment.status === 'completed' ? 'Work Performed:' : 'Remarks:'}
                         </Text>
-                        <Text style={[styles.detailValue, styles.remarksText]}>
+                        <Text style={[styles.detailValue, styles.remarksText, { color: c.textSecondary }]}>
                           {selectedAppointment.remarks}
                         </Text>
                       </View>
                     )}
                     {selectedAppointment.partsReplaced && (
                       <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Parts Replaced:</Text>
-                        <Text style={styles.detailValue}>
+                        <Text style={[styles.detailLabel, { color: c.text }]}>Parts Replaced:</Text>
+                        <Text style={[styles.detailValue, { color: c.textSecondary }]}>
                           {selectedAppointment.partsReplaced}
                         </Text>
                       </View>
                     )}
                     {selectedAppointment.estimatedCost && (
                       <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Estimated Cost:</Text>
-                        <Text style={styles.detailValue}>
+                        <Text style={[styles.detailLabel, { color: c.text }]}>Estimated Cost:</Text>
+                        <Text style={[styles.detailValue, { color: c.textSecondary }]}>
                           ₹{selectedAppointment.estimatedCost}
                         </Text>
                       </View>

@@ -329,7 +329,6 @@ const Dash = ({ }) => {
   };
 
   const onMessage = event => {
-    setPageLoad(true);
     try {
       // Parse the incoming message
       const json_data = JSON.parse(event.data);
@@ -357,28 +356,21 @@ const Dash = ({ }) => {
         acceleration,
       };
 
-      // Log the updated datalog for debugging
-      console.log('Updated datalog:', updatedDatalog);
-
       // Set the updated datalog state
       setDatalog(updatedDatalog);
-      setPageLoad(false);
     } catch (error) {
       console.error('Error processing onMessage:', error);
-      setPageLoad(false);
     }
   };
 
   // WebSocket close event handler
   const onClose = event => {
-    console.log('WebSocket closed:', event.code, event.reason);
-    setPageLoad(false);
+    // console.log('WebSocket closed:', event.code, event.reason);
   };
 
   // WebSocket error event handler
   const onError = event => {
     console.error('WebSocket error:', event.message);
-    setPageLoad(false);
   };
 
   const GetUser = async () => {
